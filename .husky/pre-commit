@@ -1,0 +1,54 @@
+#!/bin/sh
+
+BRANCH=$(git branch --show-current)
+VALID_PREFIXES="^(feat|fix|hotfix|chore|docs|refactor|test|release|ci)/"
+PROTECTED_BRANCHES="^(main|master)$"
+
+# Hotfix — skip everything
+if echo "$BRANCH" | grep -qE "^hotfix/"; then
+  echo "⚡ Hotfix branch — skipping pre-commit hooks"
+  exit 0
+fi
+
+# Validate branch name (skip on main/master)
+if ! echo "$BRANCH" | grep -qE "$PROTECTED_BRANCHES"; then
+  if ! echo "$BRANCH" | grep -qE "$VALID_PREFIXES"; then
+    echo ""
+    echo "❌ Branch name '$BRANCH' does not follow naming convention."
+    echo ""
+    echo "   Valid prefixes:"
+    echo "   feat/     → new feature"
+    echo "   fix/      → bug fix"
+    echo "   hotfix/   → critical fix (bypasses hooks)"
+    echo "   chore/    → maintenance"
+    echo "   docs/     → documentation"
+    echo "   refactor/ → refactoring"
+    echo "   test/     → tests"
+    echo "   release/  → release"
+    echo "   ci/       → CI/CD changes"
+    echo ""
+    exit 1
+  fi
+fi
+
+# Run ESLint
+echo "🔍 Running ESLint..."
+if ! pnpm lint; then
+  echo ""
+  echo "❌ ESLint found errors. Fix them before committing."
+  echo "   Run: pnpm lint:fix"
+  echo ""
+  exit 1
+fi
+
+# Run Prettier check
+echo "🎨 Running Prettier check..."
+if ! pnpm format:check; then
+  echo ""
+  echo "❌ Prettier found formatting issues. Fix them before committing."
+  echo "   Run: pnpm format"
+  echo ""
+  exit 1
+fi
+
+echo "✅ All checks passed"
