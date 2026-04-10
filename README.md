@@ -55,16 +55,19 @@ The initial version will focus on the MVP, which includes the following capabili
 ### Feature Breakdown
 
 #### 👥 Customer Management
+
 - Create and manage customer records
 - Store contact information
 - Keep notes and job history
 
 #### 🚙 Vehicle Management
+
 - Register vehicles linked to customers
 - Track make, model, year, color, VIN, and license plate
 - Store notes and optional photos
 
 #### 🛎️ Service Catalog
+
 - Define standard services such as:
   - Full wrap
   - Partial wrap
@@ -77,6 +80,7 @@ The initial version will focus on the MVP, which includes the following capabili
 - Configure service category, estimated duration, and base price
 
 #### 📋 Work Orders
+
 - Create and manage work orders
 - Link customers and vehicles to each job
 - Add one or multiple services to a work order
@@ -91,6 +95,7 @@ The initial version will focus on the MVP, which includes the following capabili
   - Cancelled
 
 #### 📦 General Inventory
+
 - Manage consumables and shop materials such as:
   - Chemicals
   - Coatings
@@ -102,6 +107,7 @@ The initial version will focus on the MVP, which includes the following capabili
 - Track stock levels, minimum stock thresholds, unit type, and supplier information
 
 #### 🎞️ Wrap Roll Inventory
+
 - Track wrap-specific materials with domain-specific fields such as:
   - Brand
   - Series / line
@@ -116,12 +122,14 @@ The initial version will focus on the MVP, which includes the following capabili
 - Monitor material availability and low-stock conditions
 
 #### 📊 Material Usage Tracking
+
 - Record materials consumed per work order
 - Associate wrap roll usage with jobs
 - Track estimated or actual usage
 - Register waste or leftover notes when needed
 
 #### 🖥️ Operational Dashboard
+
 - View active work orders
 - Track jobs scheduled for today
 - Monitor recently delivered work
@@ -130,6 +138,7 @@ The initial version will focus on the MVP, which includes the following capabili
 - Show estimated revenue from open jobs
 
 #### 🏢 Multi-Tenant Organization Support
+
 - Support multiple organizations (shops) within the platform
 - Isolate data by organization
 - Invite team members
@@ -139,11 +148,11 @@ The initial version will focus on the MVP, which includes the following capabili
 
 The initial MVP includes the following user roles:
 
-| Role | Description |
-|---|---|
-| **Owner** | Full access to all features and settings |
-| **Manager** | Manages operations, staff, and inventory |
-| **Technician** | Views and updates assigned work orders |
+| Role           | Description                                        |
+| -------------- | -------------------------------------------------- |
+| **Owner**      | Full access to all features and settings           |
+| **Manager**    | Manages operations, staff, and inventory           |
+| **Technician** | Views and updates assigned work orders             |
 | **Front Desk** | Handles customers, vehicles, and work order intake |
 
 ---
@@ -182,6 +191,7 @@ The current domain model is centered around the following core entities:
 ## 🛠️ Technologies
 
 ### Frontend
+
 - **Next.js**
 - **TypeScript**
 - **Tailwind CSS**
@@ -190,6 +200,7 @@ The current domain model is centered around the following core entities:
 - **Zod**
 
 ### Backend
+
 - **NestJS**
 - **TypeScript**
 - **PostgreSQL**
@@ -197,14 +208,17 @@ The current domain model is centered around the following core entities:
 - **Redis**
 
 ### 🔐 Authentication & Authorization
+
 - **JWT**
 - Role-based access control (RBAC)
 
 ### ⚙️ Infrastructure & DevOps
+
 - **Docker**
 - **GitHub Actions**
 
 ### 🔮 Future Integrations
+
 - **Stripe** for subscriptions and billing
 - **AWS** for cloud infrastructure
 - **Terraform** for infrastructure as code
@@ -285,15 +299,15 @@ glossops/
 
 ## 📜 Available Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start all apps in development mode |
-| `pnpm build` | Build all apps for production |
-| `pnpm test` | Run all tests |
-| `pnpm lint` | Run linter across the project |
-| `pnpm db:migrate` | Run Prisma database migrations |
-| `pnpm db:studio` | Open Prisma Studio |
-| `pnpm db:seed` | Seed the database with sample data |
+| Command           | Description                        |
+| ----------------- | ---------------------------------- |
+| `pnpm dev`        | Start all apps in development mode |
+| `pnpm build`      | Build all apps for production      |
+| `pnpm test`       | Run all tests                      |
+| `pnpm lint`       | Run linter across the project      |
+| `pnpm db:migrate` | Run Prisma database migrations     |
+| `pnpm db:studio`  | Open Prisma Studio                 |
+| `pnpm db:seed`    | Seed the database with sample data |
 
 ---
 
