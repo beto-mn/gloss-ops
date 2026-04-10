@@ -48,10 +48,10 @@ The domain revolves around a shop's daily operations:
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
+| Layer    | Technology                                                              |
+| -------- | ----------------------------------------------------------------------- |
 | Frontend | Next.js, TypeScript, Tailwind CSS, TanStack Query, React Hook Form, Zod |
-| Backend | NestJS, TypeScript, PostgreSQL, Prisma ORM, Redis |
-| Auth | JWT + RBAC |
-| DevOps | Docker, GitHub Actions |
-| Future | Stripe, AWS, Terraform |
+| Backend  | NestJS, TypeScript, PostgreSQL, Prisma ORM, Redis                       |
+| Auth     | JWT + RBAC                                                              |
+| DevOps   | Docker, GitHub Actions                                                  |
+| Future   | Stripe, AWS, Terraform                                                  |
