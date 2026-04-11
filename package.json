@@ -1,0 +1,31 @@
+{
+  "name": "gloss-ops",
+  "version": "1.0.0-alpha",
+  "description": "GlossOps is an operations platform built for wrap, detailing, and automotive restyling shops. It centralizes customers, vehicles, work orders, inventory, and day-to-day shop operations in one place — helping teams stay organized, reduce operational chaos, and maintain better control over materials, jobs, and deliveries.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint -- --fix",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.27.0",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^17.0.0",
+    "prettier": "^3.8.1",
+    "turbo": "^2.9.5",
+    "typescript-eslint": "^8.20.0"
+  }
+}

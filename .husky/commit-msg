@@ -1,0 +1,86 @@
+#!/bin/sh
+
+BRANCH=$(git branch --show-current)
+COMMIT_MSG=$(cat "$1")
+TYPES="feat|fix|hotfix|chore|docs|refactor|test|release|ci"
+
+# Hotfix — skip everything
+if echo "$BRANCH" | grep -qE "^hotfix/"; then
+  echo "⚡ Hotfix branch — skipping commit-msg validation"
+  exit 0
+fi
+
+# Returns the expected gitmoji for a given type
+expected_emoji() {
+  case "$1" in
+    feat)     echo "✨" ;;
+    fix)      echo "🐛" ;;
+    hotfix)   echo "🚑" ;;
+    chore)    echo "🔧" ;;
+    docs)     echo "📝" ;;
+    refactor) echo "♻️" ;;
+    test)     echo "🧪" ;;
+    release)  echo "🚀" ;;
+    ci)       echo "👷" ;;
+    *)        echo "" ;;
+  esac
+}
+
+print_help() {
+  echo ""
+  echo "  Format (without gitmoji):  <type>(<scope>): <description>"
+  echo "  Format (with gitmoji):     <emoji> <type>(<scope>): <description>"
+  echo ""
+  echo "  Types and gitmojis:"
+  echo "  ✨  feat      → new feature"
+  echo "  🐛  fix       → bug fix"
+  echo "  🚑  hotfix    → critical fix"
+  echo "  🔧  chore     → maintenance"
+  echo "  📝  docs      → documentation"
+  echo "  ♻️   refactor  → refactoring"
+  echo "  🧪  test      → tests"
+  echo "  🚀  release   → release"
+  echo "  👷  ci        → CI/CD changes"
+  echo ""
+  echo "  Examples:"
+  echo "  feat: add customer module"
+  echo "  ✨ feat: add customer module"
+  echo "  🐛 fix(auth): correct token expiration"
+  echo ""
+}
+
+# Extract first word and the rest of the message
+FIRST_WORD=$(echo "$COMMIT_MSG" | awk '{print $1}')
+REST=$(echo "$COMMIT_MSG" | cut -d' ' -f2-)
+
+# Check if message has a gitmoji prefix (first word is not a type)
+if echo "$REST" | grep -qE "^($TYPES)(\(.+\))?: .+"; then
+  # Message has gitmoji prefix — validate emoji matches type
+  EMOJI="$FIRST_WORD"
+  TYPE=$(echo "$REST" | grep -oE "^($TYPES)")
+  EXPECTED=$(expected_emoji "$TYPE")
+
+  if [ "$EMOJI" != "$EXPECTED" ]; then
+    echo ""
+    echo "❌ Gitmoji mismatch for type '$TYPE'"
+    echo "   Expected: $EXPECTED"
+    echo "   You used: $EMOJI"
+    print_help
+    exit 1
+  fi
+
+  echo "✅ Commit message is valid"
+  exit 0
+fi
+
+# Check if message follows conventional commit without gitmoji
+if echo "$COMMIT_MSG" | grep -qE "^($TYPES)(\(.+\))?: .+"; then
+  echo "✅ Commit message is valid"
+  exit 0
+fi
+
+# Invalid format
+echo ""
+echo "❌ Invalid commit message: '$COMMIT_MSG'"
+print_help
+exit 1
