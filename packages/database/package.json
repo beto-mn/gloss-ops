@@ -1,0 +1,10 @@
+{
+  "name": "@glossops/database",
+  "version": "0.0.1",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@prisma/client": "^7.7.0",
+    "dotenv": "^16.5.0",
+    "prisma": "^7.7.0"
+  }
+}
