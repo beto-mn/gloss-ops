@@ -1,0 +1,31 @@
+#!/bin/sh
+
+BRANCH=$(git branch --show-current)
+
+# Hotfix — skip everything
+if echo "$BRANCH" | grep -qE "^hotfix/"; then
+  echo "⚡ Hotfix branch — skipping pre-push hooks"
+  exit 0
+fi
+
+# Run ESLint
+echo "🔍 Running ESLint..."
+if ! pnpm lint; then
+  echo ""
+  echo "❌ ESLint found errors. Fix them before pushing."
+  echo "   Run: pnpm lint:fix"
+  echo ""
+  exit 1
+fi
+
+# Run Prettier check
+echo "🎨 Running Prettier check..."
+if ! pnpm format:check; then
+  echo ""
+  echo "❌ Prettier found formatting issues. Fix them before pushing."
+  echo "   Run: pnpm format"
+  echo ""
+  exit 1
+fi
+
+echo "✅ All checks passed"
