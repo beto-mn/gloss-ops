@@ -1,7 +1,12 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// GlossOps — Prisma Schema
+// Multi-tenant SaaS platform for automotive wrap, detailing, and restyling shops
+// PostgreSQL 16+ | Prisma 7
+//
+// Naming conventions:
+//   Model names  : PascalCase  (Prisma)
+//   Field names  : camelCase   (Prisma)
+//   Table names  : snake_case  (@@map)
+//   Column names : snake_case  (@map on every multi-word field)
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +15,588 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  MANAGER
+  TECHNICIAN
+  FRONT_DESK
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum WorkOrderType {
+  STANDARD
+  WARRANTY_CLAIM
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  CANCELLED
+}
+
+enum CfdiPaymentMethod {
+  PUE
+  PPD
+}
+
+enum CheckpointType {
+  RECEPTION
+  DELIVERY
+}
+
+enum FuelLevel {
+  EMPTY
+  QUARTER
+  HALF
+  THREE_QUARTERS
+  FULL
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+}
+
+enum ActivityAction {
+  CREATED
+  UPDATED
+  DELETED
+  STATUS_CHANGED
+  ASSIGNED
+}
+
+enum InventoryType {
+  ITEM
+  ROLL
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  CONFIRMED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// GLOBAL CATALOGS
+// organizationId = NULL  →  system-seeded, visible to all tenants
+// organizationId = set   →  private to that organization
+// ─────────────────────────────────────────────
+
+model Brand {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String?   @map("organization_id") @db.Uuid
+  name           String
+  slug           String
+  logoUrl        String?   @map("logo_url")
+  category       String
+  isSeeded       Boolean   @default(false) @map("is_seeded")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization   Organization?   @relation(fields: [organizationId], references: [id])
+  customerAssets CustomerAsset[]
+  inventory      Inventory[]
+
+  @@unique([organizationId, slug])
+  @@map("brand")
+}
+
+// ─────────────────────────────────────────────
+// IDENTITY & TENANCY
+// ─────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String   @unique
+  logoUrl   String?  @map("logo_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  branches       Branch[]
+  fiscalProfiles OrganizationFiscalProfile[]
+  customers      Customer[]
+  services       Service[]
+  suppliers      Supplier[]
+  brands         Brand[]
+  activityLogs   ActivityLog[]
+
+  @@map("organization")
+}
+
+model OrganizationFiscalProfile {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  legalName      String    @map("legal_name")
+  taxId          String    @map("tax_id")
+  fiscalRegime   String    @map("fiscal_regime")
+  address        String
+  zipCode        String    @map("zip_code")
+  isDefault      Boolean   @default(false) @map("is_default")
+  isActive       Boolean   @default(true) @map("is_active")
+
+  csdCertificateUrl    String?   @map("csd_certificate_url")
+  csdKeyUrl            String?   @map("csd_key_url")
+  csdCertificateNumber String?   @map("csd_certificate_number")
+  csdExpiresAt         DateTime? @map("csd_expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, taxId])
+  @@map("organization_fiscal_profile")
+}
+
+model Branch {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  address        String?
+  phone          String?
+  email          String?
+  isMain         Boolean  @default(false) @map("is_main")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization   Organization         @relation(fields: [organizationId], references: [id])
+  members        OrganizationMember[]
+  workOrders     WorkOrder[]
+  invoices       Invoice[]
+  inventory      Inventory[]
+  purchaseOrders PurchaseOrder[]
+  activityLogs   ActivityLog[]
+
+  @@map("branch")
+}
+
+model Account {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memberships  OrganizationMember[]
+  checkpoints  AssetCheckpoint[]
+  activityLogs ActivityLog[]
+
+  @@map("account")
+}
+
+model OrganizationMember {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  role      Role     @default(FRONT_DESK)
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  branch      Branch                @relation(fields: [branchId], references: [id])
+  account     Account               @relation(fields: [accountId], references: [id])
+  assignments WorkOrderAssignment[]
+
+  @@unique([accountId, branchId])
+  @@map("organization_member")
+}
+
+// ─────────────────────────────────────────────
+// CUSTOMERS & ASSETS
+// Scoped at organization level — shared across all branches
+// ─────────────────────────────────────────────
+
+model Customer {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  firstName      String   @map("first_name")
+  lastName       String   @map("last_name")
+  email          String?
+  phone          String?
+  address        String?
+  taxId          String?  @map("tax_id")
+  fiscalRegime   String?  @map("fiscal_regime")
+  zipCode        String?  @map("zip_code")
+  source         String?
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  assets       CustomerAsset[]
+
+  @@map("customer")
+}
+
+model CustomerAsset {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  brandId    String?  @map("brand_id") @db.Uuid
+  assetType  String   @map("asset_type")
+  model      String?
+  year       Int?
+  identifier String?
+  color      String?
+  metadata   Json?
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  brand      Brand?      @relation(fields: [brandId], references: [id])
+  workOrders WorkOrder[]
+
+  @@map("customer_asset")
+}
+
+// ─────────────────────────────────────────────
+// SERVICES CATALOG
+// Scoped at organization level — shared across all branches
+// ─────────────────────────────────────────────
+
+model Service {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  description    String?
+  basePrice      Decimal  @default(0) @map("base_price") @db.Decimal(10, 2)
+  isActive       Boolean  @default(true) @map("is_active")
+
+  claveProdServ String? @map("clave_prod_serv")
+  claveUnidad   String? @map("clave_unidad")
+
+  warrantyDays        Int?    @map("warranty_days")
+  warrantyDescription String? @map("warranty_description")
+  warrantyTerm        String? @map("warranty_term")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  workOrderItems WorkOrderItem[]
+  warranties     Warranty[]
+
+  @@map("service")
+}
+
+// ─────────────────────────────────────────────
+// WORK ORDERS
+// Scoped at branch level — a job happens at a specific location
+// ─────────────────────────────────────────────
+
+model WorkOrder {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId        String          @map("branch_id") @db.Uuid
+  assetId         String          @map("asset_id") @db.Uuid
+  type            WorkOrderType   @default(STANDARD)
+  warrantyClaimId String?         @map("warranty_claim_id") @db.Uuid
+  status          WorkOrderStatus @default(DRAFT)
+  scheduledAt     DateTime?       @map("scheduled_at")
+  completedAt     DateTime?       @map("completed_at")
+  totalAmount     Decimal         @default(0) @map("total_amount") @db.Decimal(10, 2)
+  note            String?
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  branch        Branch                @relation(fields: [branchId], references: [id])
+  asset         CustomerAsset         @relation(fields: [assetId], references: [id])
+  warrantyClaim Warranty?             @relation("WarrantyClaim", fields: [warrantyClaimId], references: [id])
+  assignments   WorkOrderAssignment[]
+  items         WorkOrderItem[]
+  invoice       Invoice?
+  usages        InventoryUsage[]
+  checkpoints   AssetCheckpoint[]
+
+  @@map("work_order")
+}
+
+model WorkOrderAssignment {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId String   @map("work_order_id") @db.Uuid
+  memberId    String   @map("member_id") @db.Uuid
+  role        String   @default("assistant")
+  assignedAt  DateTime @default(now()) @map("assigned_at")
+
+  workOrder WorkOrder          @relation(fields: [workOrderId], references: [id])
+  member    OrganizationMember @relation(fields: [memberId], references: [id])
+
+  @@unique([workOrderId, memberId])
+  @@map("work_order_assignment")
+}
+
+model WorkOrderItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId String   @map("work_order_id") @db.Uuid
+  serviceId   String   @map("service_id") @db.Uuid
+  description String?
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @map("unit_price") @db.Decimal(10, 2)
+  discount    Decimal  @default(0) @db.Decimal(10, 2)
+  subtotal    Decimal  @db.Decimal(10, 2)
+  isBillable  Boolean  @default(true) @map("is_billable")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workOrder  WorkOrder  @relation(fields: [workOrderId], references: [id])
+  service    Service    @relation(fields: [serviceId], references: [id])
+  warranties Warranty[]
+
+  @@map("work_order_item")
+}
+
+// ─────────────────────────────────────────────
+// BILLING & DOCUMENTS
+// ─────────────────────────────────────────────
+
+model Invoice {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId    String            @map("branch_id") @db.Uuid
+  workOrderId String            @unique @map("work_order_id") @db.Uuid
+  status      InvoiceStatus     @default(DRAFT)
+  folio       String
+
+  subtotal  Decimal @default(0) @db.Decimal(10, 2)
+  taxRate   Decimal @default(0.16) @map("tax_rate") @db.Decimal(5, 4)
+  taxAmount Decimal @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  total     Decimal @default(0) @db.Decimal(10, 2)
+
+  customerTaxId        String?           @map("customer_tax_id")
+  customerName         String?           @map("customer_name")
+  customerAddress      String?           @map("customer_address")
+  customerZipCode      String?           @map("customer_zip_code")
+  customerFiscalRegime String?           @map("customer_fiscal_regime")
+  cfdiUse              String?           @map("cfdi_use")
+  paymentMethod        CfdiPaymentMethod? @map("payment_method")
+  paymentForm          String?           @map("payment_form")
+
+  cfdiUuid     String?   @map("cfdi_uuid")
+  cfdiXml      String?   @map("cfdi_xml")
+  cfdiSealedAt DateTime? @map("cfdi_sealed_at")
+
+  issuedAt  DateTime? @map("issued_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  branch    Branch    @relation(fields: [branchId], references: [id])
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@map("invoice")
+}
+
+model Warranty {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderItemId String   @map("work_order_item_id") @db.Uuid
+  serviceId       String   @map("service_id") @db.Uuid
+  description     String
+  term            String?
+  validFrom       DateTime @map("valid_from")
+  validUntil      DateTime @map("valid_until")
+  isVoid          Boolean  @default(false) @map("is_void")
+  voidReason      String?  @map("void_reason")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workOrderItem   WorkOrderItem @relation(fields: [workOrderItemId], references: [id])
+  service         Service       @relation(fields: [serviceId], references: [id])
+  claimedByOrders WorkOrder[]   @relation("WarrantyClaim")
+
+  @@map("warranty")
+}
+
+model AssetCheckpoint {
+  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId          String         @map("work_order_id") @db.Uuid
+  type                 CheckpointType
+  mileage              Int?
+  fuelLevel            FuelLevel?     @map("fuel_level")
+  generalCondition     AssetCondition @map("general_condition")
+  note                 String?
+  photo                Json           @default("[]")
+  customerSignatureUrl String?        @map("customer_signature_url")
+  recordedAt           DateTime       @default(now()) @map("recorded_at")
+  recordedById         String         @map("recorded_by_id") @db.Uuid
+
+  workOrder  WorkOrder @relation(fields: [workOrderId], references: [id])
+  recordedBy Account   @relation(fields: [recordedById], references: [id])
+
+  @@unique([workOrderId, type])
+  @@map("asset_checkpoint")
+}
+
+// ─────────────────────────────────────────────
+// SUPPLIERS
+// Scoped at organization level — shared across all branches
+// ─────────────────────────────────────────────
+
+model Supplier {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  contactName    String?  @map("contact_name")
+  phone          String?
+  email          String?
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  inventory      Inventory[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("supplier")
+}
+
+// ─────────────────────────────────────────────
+// PURCHASING
+// Scoped at branch level — each branch manages its own orders
+// ─────────────────────────────────────────────
+
+model PurchaseOrder {
+  id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId   String              @map("branch_id") @db.Uuid
+  supplierId String              @map("supplier_id") @db.Uuid
+  status     PurchaseOrderStatus @default(DRAFT)
+  expectedAt DateTime?           @map("expected_at")
+  receivedAt DateTime?           @map("received_at")
+  note       String?
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+
+  branch   Branch              @relation(fields: [branchId], references: [id])
+  supplier Supplier            @relation(fields: [supplierId], references: [id])
+  items    PurchaseOrderItem[]
+
+  @@map("purchase_order")
+}
+
+model PurchaseOrderItem {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchaseOrderId  String   @map("purchase_order_id") @db.Uuid
+  inventoryId      String   @map("inventory_id") @db.Uuid
+  quantity         Decimal  @db.Decimal(10, 3)
+  receivedQuantity Decimal  @default(0) @map("received_quantity") @db.Decimal(10, 3)
+  unitCost         Decimal  @map("unit_cost") @db.Decimal(10, 2)
+  note             String?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  inventory     Inventory     @relation(fields: [inventoryId], references: [id])
+
+  @@map("purchase_order_item")
+}
+
+// ─────────────────────────────────────────────
+// INVENTORY (class table inheritance)
+// inventory      — base record, common fields for all types
+// inventory_item — extension for discrete units or measured quantities
+// material_roll  — extension for roll-format materials tracked by length
+// ─────────────────────────────────────────────
+
+model Inventory {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId   String        @map("branch_id") @db.Uuid
+  supplierId String?       @map("supplier_id") @db.Uuid
+  brandId    String?       @map("brand_id") @db.Uuid
+  type       InventoryType
+  name       String
+  unitCost   Decimal       @default(0) @map("unit_cost") @db.Decimal(10, 2)
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  branch        Branch              @relation(fields: [branchId], references: [id])
+  supplier      Supplier?           @relation(fields: [supplierId], references: [id])
+  brand         Brand?              @relation(fields: [brandId], references: [id])
+  inventoryItem InventoryItem?
+  materialRoll  MaterialRoll?
+  usages        InventoryUsage[]
+  purchaseItems PurchaseOrderItem[]
+
+  @@map("inventory")
+}
+
+model InventoryItem {
+  id            String   @id @db.Uuid
+  sku           String?
+  description   String?
+  stock         Decimal  @default(0) @db.Decimal(10, 3)
+  unit          String
+  lowStockAlert Decimal? @map("low_stock_alert") @db.Decimal(10, 3)
+
+  inventory Inventory @relation(fields: [id], references: [id])
+
+  @@map("inventory_item")
+}
+
+model MaterialRoll {
+  id              String  @id @db.Uuid
+  series          String
+  finish          String
+  color           String
+  width           Decimal @db.Decimal(6, 3)
+  remainingLength Decimal @map("remaining_length") @db.Decimal(10, 3)
+  lotNumber       String? @map("lot_number")
+
+  inventory Inventory @relation(fields: [id], references: [id])
+
+  @@map("material_roll")
+}
+
+// ─────────────────────────────────────────────
+// INVENTORY USAGE
+// ─────────────────────────────────────────────
+
+model InventoryUsage {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId  String   @map("work_order_id") @db.Uuid
+  inventoryId  String   @map("inventory_id") @db.Uuid
+  quantityUsed Decimal  @map("quantity_used") @db.Decimal(10, 3)
+  costAtUsage  Decimal  @map("cost_at_usage") @db.Decimal(10, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@map("inventory_usage")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT
+// ─────────────────────────────────────────────
+
+model ActivityLog {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  branchId       String?        @map("branch_id") @db.Uuid
+  accountId      String?        @map("account_id") @db.Uuid
+  action         ActivityAction
+  entity         String
+  entityId       String         @map("entity_id")
+  metadata       Json?
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+  account      Account?     @relation(fields: [accountId], references: [id])
+
+  @@map("activity_log")
 }

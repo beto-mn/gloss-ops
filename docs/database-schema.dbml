@@ -1,0 +1,692 @@
+// GlossOps — Database Schema
+// Multi-tenant SaaS platform for service shops
+// Scope hierarchy:
+//   global       → brand (system-seeded, no organization_id)
+//   organization → customer, customer_asset, service, supplier, brand (private)
+//   branch       → organization_member, work_order, inventory_item, material_roll
+// Note: organization_member, inventory_item, material_roll have no organization_id — always derived via branch.organization_id
+// ─────────────────────────────────────────────
+//
+// Naming conventions:
+//   Table names  : snake_case (singular)
+//   Column names : snake_case
+// ─────────────────────────────────────────────
+
+Project GlossOps {
+  database_type: 'PostgreSQL'
+  Note: 'Multi-tenant SaaS — generic enough to serve any service shop vertical'
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+Enum role {
+  OWNER       [note: 'Full access to all branches — branch_id is NULL']
+  MANAGER     [note: 'Full ops access within their branch']
+  TECHNICIAN  [note: 'Access to their assigned work orders only']
+  FRONT_DESK  [note: 'Customers, scheduling, read-only inventory']
+}
+
+Enum work_order_status {
+  DRAFT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+Enum work_order_type {
+  STANDARD        [note: 'Regular service order']
+  WARRANTY_CLAIM  [note: 'Return visit to fix a service under warranty — warranty_claim_id must be set']
+}
+
+Enum invoice_status {
+  DRAFT
+  ISSUED
+  PAID
+  CANCELLED
+}
+
+Enum cfdi_payment_method {
+  PUE   [note: 'Pago en una sola exhibición']
+  PPD   [note: 'Pago en parcialidades o diferido']
+}
+
+Enum checkpoint_type {
+  RECEPTION
+  DELIVERY
+}
+
+Enum fuel_level {
+  EMPTY
+  QUARTER
+  HALF
+  THREE_QUARTERS
+  FULL
+}
+
+Enum asset_condition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+}
+
+Enum activity_action {
+  CREATED
+  UPDATED
+  DELETED
+  STATUS_CHANGED
+  ASSIGNED
+}
+
+Enum inventory_type {
+  ITEM  [note: 'Discrete units or measured quantities — extends inventory_item']
+  ROLL  [note: 'Roll-format material tracked by remaining length — extends material_roll']
+}
+
+Enum purchase_order_status {
+  DRAFT              [note: 'Being prepared — not yet sent to supplier']
+  SENT               [note: 'Sent to supplier — awaiting confirmation']
+  CONFIRMED          [note: 'Supplier confirmed the order']
+  PARTIALLY_RECEIVED [note: 'Some items arrived — order still open']
+  RECEIVED           [note: 'All items received — triggers stock update']
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// GLOBAL CATALOGS
+// organization_id = NULL  →  system-seeded, visible to all tenants
+// organization_id = set   →  private to that organization
+// ─────────────────────────────────────────────
+
+Table brand {
+  id              String   [pk, default: `gen_random_uuid()`]
+  organization_id String   [ref: > organization.id, note: 'NULL = global/seeded. Set = org-private brand']
+  name            String   [not null]
+  slug            String   [not null]
+  logo_url        String   [note: 'S3 key — resolved to CDN URL at read time']
+  category        String   [not null, note: 'vehicle_make | material | product | other']
+  is_seeded       Boolean  [not null, default: false, note: 'True = pre-populated by system, not editable by orgs']
+  created_at      DateTime [default: `now()`]
+  updated_at      DateTime
+
+  indexes {
+    (organization_id, slug) [unique, note: 'slug unique within scope (global or per-org)']
+  }
+
+  Note: '''
+    Global brand catalog shared across all tenants.
+    System seeds vehicle makes (Toyota, Ford, BMW…) with is_seeded=true, organization_id=NULL.
+    Organizations can add their own material/product brands — these are org-private.
+    logo_url stores an S3 key resolved to a CDN URL at read time, so storage can be moved
+    without touching the database.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// IDENTITY & TENANCY
+// ─────────────────────────────────────────────
+
+Table organization {
+  id         String   [pk, default: `gen_random_uuid()`]
+  name       String   [not null]
+  slug       String   [unique, not null]
+  logo_url   String   [note: 'S3 key']
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+
+  Note: '''
+    Represents a business (tenant) using the platform — the top of the data hierarchy.
+    A business can have one or many branches (see branch table).
+    Customer, asset, service and supplier data are shared across all branches of the same org.
+    The slug is used in URLs and API paths (e.g. /orgs/wrap-studio).
+    Examples: "Wrap Studio México", "Premium Detailing Group".
+  '''
+}
+
+Table organization_fiscal_profile {
+  id              String   [pk, default: `gen_random_uuid()`]
+  organization_id String   [not null, ref: > organization.id]
+  legal_name      String   [not null, note: 'Razón social exacta registrada ante el SAT']
+  tax_id          String   [not null, note: 'RFC del negocio emisor']
+  fiscal_regime   String   [not null, note: 'Clave SAT: 601 General Ley PM, 612 PF Actividad Empresarial, 626 Simplificado Confianza']
+  address         String   [not null, note: 'Domicilio fiscal completo']
+  zip_code        String   [not null, note: 'Código postal fiscal — requerido por SAT en CFDI 4.0']
+  is_default      Boolean  [not null, default: false, note: 'True = perfil usado por defecto al generar facturas']
+  is_active       Boolean  [not null, default: true]
+
+  // CSD (Certificado de Sello Digital) — nullable until PAC integration is built
+  csd_certificate_url    String   [note: 'S3 key del archivo .cer — set when CSD is uploaded']
+  csd_key_url            String   [note: 'S3 key del archivo .key cifrado — set when CSD is uploaded']
+  csd_certificate_number String   [note: 'Número de certificado emitido por el SAT']
+  csd_expires_at         DateTime [note: 'Fecha de vencimiento del CSD — alertar antes de que expire']
+
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+
+  indexes {
+    (organization_id, tax_id) [unique, note: 'An organization cannot register the same RFC twice']
+  }
+
+  Note: '''
+    Fiscal identity of the organization as invoice issuer.
+    Separated from organization to keep identity and fiscal data concerns apart.
+    An organization can have multiple fiscal profiles (e.g. a business group with several RFCs),
+    but only one can be is_default=true at a time — enforced at the application layer.
+    legal_name, tax_id, fiscal_regime, address and zip_code are the fields required by SAT for CFDI 4.0.
+    zip_code is mandatory since CFDI 4.0 — it identifies the fiscal address in SAT records.
+    CSD fields (csd_certificate_url, csd_key_url, etc.) remain NULL until the PAC integration is built.
+    csd_expires_at should trigger a notification workflow before expiry — an expired CSD
+    blocks invoice timbrado entirely.
+  '''
+}
+
+Table branch {
+  id              String   [pk, default: `gen_random_uuid()`]
+  organization_id String   [not null, ref: > organization.id]
+  name            String   [not null, note: 'Displayed on all customer-facing documents']
+  address         String
+  phone           String
+  email           String   [note: 'Contact email shown on customer documents']
+  is_main         Boolean  [not null, default: false, note: 'True = the headquarters/principal branch']
+  created_at      DateTime [default: `now()`]
+  updated_at      DateTime
+
+  Note: '''
+    A physical location belonging to an organization.
+    Every organization has at least one branch — even single-location businesses.
+    Branch is the operational unit: employees, work orders and inventory are scoped here.
+    name, address, phone and email appear on all customer-facing documents.
+    Customer and asset data are NOT scoped to a branch — they belong to the org and
+    can be served at any branch without duplicating data.
+    Examples: "Sucursal CDMX", "Sucursal MTY", "Taller Principal".
+  '''
+}
+
+Table account {
+  id            String   [pk, default: `gen_random_uuid()`]
+  email         String   [unique, not null]
+  password_hash String   [not null]
+  first_name    String   [not null]
+  last_name     String   [not null]
+  avatar_url    String   [note: 'S3 key']
+  created_at    DateTime [default: `now()`]
+  updated_at    DateTime
+
+  Note: '''
+    Global user account — exists independently of any organization or branch.
+    A user can belong to multiple organizations and multiple branches.
+    Credentials and identity live here; permissions and branch assignment live in organization_member.
+    Example: a technician who works at two branches of the same shop uses one account.
+  '''
+}
+
+Table organization_member {
+  id         String   [pk, default: `gen_random_uuid()`]
+  branch_id  String   [not null, ref: > branch.id]
+  account_id String   [not null, ref: > account.id]
+  role       role     [not null, default: 'FRONT_DESK']
+  joined_at  DateTime [default: `now()`]
+
+  indexes {
+    (account_id, branch_id) [unique, note: 'An account can only have one role per branch']
+  }
+
+  Note: '''
+    Defines which accounts belong to which branch and with what role.
+    organization_id is intentionally absent — it is always derived through branch.organization_id,
+    since every organization is guaranteed to have at least one branch.
+    Role = OWNER or MANAGER grants cross-branch access to all branches under the same org.
+    Role = TECHNICIAN or FRONT_DESK restricts access to their assigned branch only.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// CUSTOMERS & ASSETS
+// Scoped at organization level — shared across all branches.
+// A customer registered at branch CDMX is immediately visible at branch MTY.
+// ─────────────────────────────────────────────
+
+Table customer {
+  id              String   [pk, default: `gen_random_uuid()`]
+  organization_id String   [not null, ref: > organization.id]
+  first_name      String   [not null]
+  last_name       String   [not null]
+  email           String
+  phone           String
+  address         String   [note: 'Full address — used for invoicing and home delivery']
+
+  // Fiscal fields — required for CFDI 4.0 timbrado
+  tax_id        String   [note: 'RFC del cliente — required for CFDI']
+  fiscal_regime String   [note: 'Régimen fiscal del cliente: 605, 606, 612, 626, etc.']
+  zip_code      String   [note: 'Código postal fiscal — required by SAT in CFDI 4.0']
+
+  source     String   [note: 'Acquisition channel: referral | google | instagram | walk_in | other']
+  note       String
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+
+  Note: '''
+    A person or business that brings assets in for service.
+    Scoped at the organization level — visible and accessible across all branches.
+    Fiscal fields (tax_id, fiscal_regime, zip_code) are nullable — not required for a service note,
+    but all three must be present to generate a valid CFDI 4.0.
+    When an invoice is issued, these values are copied as snapshots into invoice
+    so historical records stay accurate if the customer updates their fiscal data later.
+    source tracks the acquisition channel for marketing reporting.
+  '''
+}
+
+Table customer_asset {
+  id         String   [pk, default: `gen_random_uuid()`]
+  customer_id String  [not null, ref: > customer.id]
+  brand_id   String   [ref: > brand.id, note: 'Points to the global brand catalog (e.g. Toyota, Ford)']
+  asset_type String   [not null, note: 'Free-text: vehicle | motorcycle | boat | other']
+  model      String
+  year       Int      [note: 'Nullable for non-vehicle assets']
+  identifier String   [note: 'Plate, VIN, serial number, or any unique identifier']
+  color      String
+  metadata   Json     [note: 'Flexible extra fields — e.g. { engine: "V8", trim: "Sport", mileage: 45000 }']
+  note       String
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+
+  Note: '''
+    A physical item owned by a customer that is brought in for service.
+    organization_id is intentionally absent — always derived through customer.organization_id.
+    When a customer brings their asset to any branch of the same org,
+    the asset and its full work order history are visible without re-registration.
+    metadata absorbs domain-specific fields without requiring schema changes per vertical.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// SERVICES CATALOG
+// Scoped at organization level — shared across all branches.
+// ─────────────────────────────────────────────
+
+Table service {
+  id              String   [pk, default: `gen_random_uuid()`]
+  organization_id String   [not null, ref: > organization.id]
+  name            String   [not null]
+  description     String
+  base_price      Decimal  [not null, default: 0]
+  is_active       Boolean  [not null, default: true]
+
+  // Fiscal fields — required for CFDI concepto
+  clave_prod_serv String   [note: 'Clave SAT del producto o servicio — e.g. 78101803']
+  clave_unidad    String   [note: 'Clave SAT de unidad — e.g. E48 (Servicio), H87 (Pieza)']
+
+  // Warranty configuration
+  warranty_days        Int    [note: 'NULL = no warranty. Set = auto-generate warranty on work order completion']
+  warranty_description String [note: 'What is covered — e.g. "Delamination, bubbling, discoloration"']
+  warranty_term        String [note: 'Exclusions and conditions — e.g. "Does not apply if high-pressure washed"']
+
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+
+  Note: '''
+    The organization's catalog of offered services — shared across all branches.
+    base_price is the reference price when creating a work_order_item — can be
+    overridden per job in work_order_item.unit_price without touching the catalog.
+    warranty_days drives automatic warranty generation: when a work_order transitions
+    to COMPLETED, the system creates a warranty record for each work_order_item
+    whose service has warranty_days set.
+    warranty_description and warranty_term are copied as snapshots into warranty.
+    clave_prod_serv and clave_unidad are required by SAT for CFDI — nullable until configured.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// WORK ORDERS
+// Scoped at branch level — a job happens at a specific location.
+// ─────────────────────────────────────────────
+
+Table work_order {
+  id                String            [pk, default: `gen_random_uuid()`]
+  branch_id         String            [not null, ref: > branch.id]
+  asset_id          String            [not null, ref: > customer_asset.id]
+  type              work_order_type   [not null, default: 'STANDARD']
+  warranty_claim_id String            [ref: > warranty.id, note: 'Set when type = WARRANTY_CLAIM']
+  status            work_order_status [not null, default: 'DRAFT']
+  scheduled_at      DateTime
+  completed_at      DateTime
+  total_amount      Decimal           [not null, default: 0]
+  note              String
+  created_at        DateTime          [default: `now()`]
+  updated_at        DateTime
+
+  Note: '''
+    The central operational record — a job performed on a customer asset at a specific branch.
+    branch_id is the only scope reference needed — organization is derived via branch.organization_id,
+    and customer is derived via asset.customer_id. No denormalization needed.
+    Technician assignments are handled by work_order_assignment — supports multiple technicians per job.
+    type = WARRANTY_CLAIM means this is a return visit to fix a service under warranty.
+      - warranty_claim_id must be set, pointing to the warranty being claimed
+      - All work_order_items must have is_billable = false
+      - Cannot generate an invoice — see docs/database-constraints.md Rule 1
+      - warranty_claim_id must reference a non-void, non-expired warranty — Rule 2
+    Lifecycle: DRAFT → CONFIRMED → IN_PROGRESS → COMPLETED (or CANCELLED at any point).
+    total_amount is always the sum of work_order_item.subtotal — never edited directly.
+    completed_at is set automatically when status transitions to COMPLETED.
+  '''
+}
+
+Table work_order_assignment {
+  id            String   [pk, default: `gen_random_uuid()`]
+  work_order_id String   [not null, ref: > work_order.id]
+  member_id     String   [not null, ref: > organization_member.id]
+  role          String   [not null, default: 'assistant', note: 'lead = responsible technician | assistant = support role']
+  assigned_at   DateTime [default: `now()`]
+
+  indexes {
+    (work_order_id, member_id) [unique, note: 'A technician can only be assigned once per work order']
+  }
+
+  Note: '''
+    Assigns one or more technicians to a work order.
+    role differentiates the lead technician (responsible, appears on documents)
+    from assistants (support roles, tracked for productivity reports).
+    Every work order should have exactly one lead — enforced at the application layer.
+  '''
+}
+
+Table work_order_item {
+  id            String   [pk, default: `gen_random_uuid()`]
+  work_order_id String   [not null, ref: > work_order.id]
+  service_id    String   [not null, ref: > service.id]
+  description   String   [note: 'Override or complement the service name for this specific job']
+  quantity      Int      [not null, default: 1]
+  unit_price    Decimal  [not null, note: 'Snapshot of service.base_price at time of creation']
+  discount      Decimal  [not null, default: 0, note: 'Discount amount per unit — maps to Descuento field in CFDI concepto']
+  subtotal      Decimal  [not null, note: 'Always (unit_price - discount) * quantity — never edited directly']
+  is_billable   Boolean  [not null, default: true, note: 'False = excluded from invoice']
+  created_at    DateTime [default: `now()`]
+
+  Note: '''
+    Line item within a work order — one row per service included in the job.
+    unit_price is a snapshot so historical records remain accurate after price changes.
+    discount maps directly to the Descuento field in a CFDI 4.0 concepto.
+    subtotal is always recalculated as (unit_price - discount) * quantity.
+    is_billable = false excludes the item from invoice generation.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// BILLING & DOCUMENTS
+// ─────────────────────────────────────────────
+
+Table invoice {
+  id            String              [pk, default: `gen_random_uuid()`]
+  branch_id     String              [not null, ref: > branch.id]
+  work_order_id String              [not null, ref: > work_order.id]
+  status        invoice_status      [not null, default: 'DRAFT']
+  folio         String              [not null, note: 'Sequential number per org — e.g. A-0001']
+
+  // Amounts
+  subtotal   Decimal [not null, default: 0]
+  tax_rate   Decimal [not null, default: 0.16, note: 'IVA rate at time of invoice — snapshot']
+  tax_amount Decimal [not null, default: 0]
+  total      Decimal [not null, default: 0]
+
+  // Fiscal fields — snapshots taken at issuance, required for CFDI 4.0
+  customer_tax_id        String              [note: 'RFC del cliente — snapshot from customer.tax_id at issuance']
+  customer_name          String              [note: 'Razón social del cliente — snapshot at issuance']
+  customer_address       String              [note: 'Domicilio fiscal del cliente — snapshot at issuance']
+  customer_zip_code      String              [note: 'Código postal fiscal del cliente — required by SAT in CFDI 4.0']
+  customer_fiscal_regime String              [note: 'Régimen fiscal del cliente — snapshot at issuance']
+  cfdi_use               String              [note: 'Clave de uso del CFDI: G03, P01, D10, etc.']
+  payment_method         cfdi_payment_method [note: 'PUE = una exhibición, PPD = parcialidades']
+  payment_form           String              [note: 'Forma de pago SAT: 01 efectivo, 03 transferencia, 04 tarjeta, etc.']
+
+  // CFDI timbrado — nullable until PAC integration is built
+  cfdi_uuid      String   [note: 'UUID del Timbre Fiscal Digital — set after timbrado']
+  cfdi_xml       String   [note: 'XML completo del CFDI timbrado — set after timbrado']
+  cfdi_sealed_at DateTime [note: 'Timestamp del timbrado por el PAC']
+
+  issued_at  DateTime
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+
+  Note: '''
+    Formal fiscal document generated from a work order.
+    organization_id and customer_id are intentionally absent — derived via
+    work_order.branch_id → branch.organization_id and
+    work_order.asset_id → customer_asset.customer_id.
+    CONSTRAINT: work_order.type = WARRANTY_CLAIM cannot generate an invoice.
+      See docs/database-constraints.md — Rule 1.
+    All customer fiscal fields are snapshots taken at issuance.
+    CFDI fields (cfdi_uuid, cfdi_xml, cfdi_sealed_at) remain NULL until PAC integration is built.
+  '''
+}
+
+Table warranty {
+  id                String   [pk, default: `gen_random_uuid()`]
+  work_order_item_id String  [not null, ref: > work_order_item.id]
+  service_id         String  [not null, ref: > service.id, note: 'Traces which service config originated this warranty']
+  description        String  [not null, note: 'Snapshot of service.warranty_description at time of issue']
+  term               String  [note: 'Snapshot of service.warranty_term at time of issue']
+  valid_from         DateTime [not null, note: 'Set to work_order.completed_at at generation time']
+  valid_until        DateTime [not null, note: 'Set to valid_from + service.warranty_days at generation time']
+  is_void            Boolean  [not null, default: false, note: 'True if claimed, expired early, or cancelled']
+  void_reason        String   [note: 'Why the warranty was voided']
+  created_at         DateTime [default: `now()`]
+  updated_at         DateTime
+
+  Note: '''
+    Issued warranty document — auto-generated when a work_order transitions to COMPLETED,
+    one record per work_order_item whose service has warranty_days set.
+    service_id traces the origin config. description and term are snapshots from service.
+    valid_from = work_order.completed_at, valid_until = valid_from + service.warranty_days.
+    is_void + void_reason handle early cancellation.
+    When a customer claims a warranty: set is_void = true, create a new work_order
+    with type = WARRANTY_CLAIM referencing this warranty.
+  '''
+}
+
+Table asset_checkpoint {
+  id                     String          [pk, default: `gen_random_uuid()`]
+  work_order_id          String          [not null, ref: > work_order.id]
+  type                   checkpoint_type [not null, note: 'RECEPTION = asset drop-off, DELIVERY = asset pick-up']
+  mileage                Int             [note: 'Odometer reading at checkpoint — nullable for non-vehicle assets']
+  fuel_level             fuel_level      [note: 'Nullable for non-vehicle assets']
+  general_condition      asset_condition [not null]
+  note                   String          [note: 'Observed damage, missing parts, special instructions']
+  photo                  Json            [not null, default: '[]', note: 'Array of S3 keys — pre/post condition photos']
+  customer_signature_url String          [note: 'S3 key of the signed delivery/reception form']
+  recorded_at            DateTime        [not null, default: `now()`]
+  recorded_by_id         String          [not null, ref: > account.id]
+
+  indexes {
+    (work_order_id, type) [unique, note: 'One reception and one delivery per work order']
+  }
+
+  Note: '''
+    Records the physical condition of the asset at drop-off (RECEPTION) and pick-up (DELIVERY).
+    One work order has exactly two checkpoints — enforced by the unique index on (work_order_id, type).
+    photo is a JSON array of S3 keys capturing condition evidence — critical for dispute resolution.
+    customer_signature_url stores the signed reception/delivery form in S3.
+    recorded_by_id tracks which staff member performed the inspection.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// SUPPLIERS
+// Scoped at organization level — shared across all branches.
+// ─────────────────────────────────────────────
+
+Table supplier {
+  id              String   [pk, default: `gen_random_uuid()`]
+  organization_id String   [not null, ref: > organization.id]
+  name            String   [not null]
+  contact_name    String
+  phone           String
+  email           String
+  note            String
+  created_at      DateTime [default: `now()`]
+  updated_at      DateTime
+
+  Note: '''
+    Companies or individuals that supply materials and inventory to the organization.
+    Scoped at org level — supplier relationships are managed at the business level,
+    not per branch. All branches can use any supplier from the org's directory.
+    A supplier can provide both inventory_item and material_roll.
+    Examples: "Distribuidor 3M México", "Proveedor Avery CDMX", "Ferretería Local".
+  '''
+}
+
+// ─────────────────────────────────────────────
+// PURCHASING
+// Scoped at branch level — each branch manages its own orders.
+// ─────────────────────────────────────────────
+
+Table purchase_order {
+  id          String                [pk, default: `gen_random_uuid()`]
+  branch_id   String                [not null, ref: > branch.id]
+  supplier_id String                [not null, ref: > supplier.id]
+  status      purchase_order_status [not null, default: 'DRAFT']
+  expected_at DateTime              [note: 'Expected delivery date agreed with supplier']
+  received_at DateTime              [note: 'Actual date all items were received — set when status → RECEIVED']
+  note        String
+  created_at  DateTime              [default: `now()`]
+  updated_at  DateTime
+
+  Note: '''
+    A purchase order placed by a branch to a supplier.
+    Scoped at branch level — each branch manages its own purchasing independently.
+    When status transitions to RECEIVED, the application increments stock in
+    inventory_item or remaining_length in material_roll for each purchase_order_item.
+    PARTIALLY_RECEIVED allows tracking split deliveries — received_quantity
+    in purchase_order_item tracks what has actually arrived.
+  '''
+}
+
+Table purchase_order_item {
+  id                String   [pk, default: `gen_random_uuid()`]
+  purchase_order_id String   [not null, ref: > purchase_order.id]
+  inventory_id      String   [not null, ref: > inventory.id]
+  quantity          Decimal  [not null, note: 'Quantity ordered']
+  received_quantity Decimal  [not null, default: 0, note: 'Quantity actually received — enables partial delivery tracking']
+  unit_cost         Decimal  [not null, note: 'Negotiated price with supplier for this order']
+  note              String
+  created_at        DateTime [default: `now()`]
+
+  Note: '''
+    Line item within a purchase order.
+    References inventory.id directly — works for any inventory type without XOR constraints.
+    unit_cost is the negotiated price for this specific order — may differ from inventory.unit_cost.
+    When the purchase order is received, inventory.unit_cost is updated to reflect the latest price.
+    received_quantity enables partial delivery tracking.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// INVENTORY (class table inheritance)
+// inventory      — base record, common fields for all inventory types
+// inventory_item — extension for discrete units or measured quantities
+// material_roll  — extension for roll-format materials tracked by length
+// Adding a new inventory type = new enum value + new extension table.
+// inventory_usage and purchase_order_item reference inventory.id — no XOR needed.
+// ─────────────────────────────────────────────
+
+Table inventory {
+  id          String         [pk, default: `gen_random_uuid()`]
+  branch_id   String         [not null, ref: > branch.id]
+  supplier_id String         [ref: > supplier.id]
+  brand_id    String         [ref: > brand.id]
+  type        inventory_type [not null]
+  name        String         [not null]
+  unit_cost   Decimal        [not null, default: 0]
+  created_at  DateTime       [default: `now()`]
+  updated_at  DateTime
+
+  Note: '''
+    Base inventory record — one row per physical inventory entry regardless of type.
+    type drives which extension table holds the type-specific fields:
+      ITEM → inventory_item (sku, stock, unit, low_stock_alert)
+      ROLL → material_roll (series, finish, color, width, remaining_length, lot_number)
+    Adding a new inventory type requires a new enum value and a new extension table —
+    no changes to this table, inventory_usage, or purchase_order_item.
+    organization_id is derived via branch.organization_id — not stored here.
+    unit_cost is the current cost per unit/meter — updated when a purchase order is received.
+  '''
+}
+
+Table inventory_item {
+  id              String  [pk, ref: - inventory.id, note: '1-to-1 FK to inventory.id — no separate PK']
+  sku             String  [note: 'Internal reference code — unique per branch (enforced at app layer)']
+  description     String
+  stock           Decimal [not null, default: 0, note: 'Current available quantity']
+  unit            String  [not null, note: 'e.g. piece, liter, ml, kg, meter']
+  low_stock_alert Decimal [note: 'Trigger alert when stock falls below this threshold']
+
+  Note: '''
+    Extension table for ITEM-type inventory.
+    stock is decremented on inventory_usage insert.
+    SKU uniqueness per branch is enforced at the application layer since branch_id
+    lives on the base inventory table.
+    Examples: "Ceramic coating 50ml", "Isopropyl alcohol 1L", "Microfiber cloth".
+  '''
+}
+
+Table material_roll {
+  id               String  [pk, ref: - inventory.id, note: '1-to-1 FK to inventory.id — no separate PK']
+  series           String  [not null, note: 'Product line: e.g. 1080, Supreme Wrapping Film']
+  finish           String  [not null, note: 'e.g. Gloss, Matte, Satin, Brushed, Chrome']
+  color            String  [not null]
+  width            Decimal [not null, note: 'In meters']
+  remaining_length Decimal [not null, note: 'In meters — decremented on each usage']
+  lot_number       String  [note: 'Batch/lot identifier from the supplier — critical for color consistency']
+
+  Note: '''
+    Extension table for ROLL-type inventory.
+    Each physical roll is its own record — two rolls of the same product but different
+    lot numbers are separate rows.
+    remaining_length is decremented each time an inventory_usage is recorded.
+    Generic enough for vinyl wrap, PPF, window film, fabric rolls, etc.
+  '''
+}
+
+Table inventory_usage {
+  id            String   [pk, default: `gen_random_uuid()`]
+  work_order_id String   [not null, ref: > work_order.id]
+  inventory_id  String   [not null, ref: > inventory.id]
+  quantity_used Decimal  [not null]
+  cost_at_usage Decimal  [not null, note: 'Snapshot of inventory.unit_cost at time of consumption']
+  created_at    DateTime [default: `now()`]
+
+  Note: '''
+    Records which inventory was consumed in a work order and how much.
+    References inventory.id directly — works for any inventory type without XOR constraints.
+    cost_at_usage is a snapshot so job costing stays accurate after price changes.
+    On insert: decrements inventory_item.stock or material_roll.remaining_length
+    depending on inventory.type.
+    This table is the basis for cost-of-goods calculations per work order.
+  '''
+}
+
+// ─────────────────────────────────────────────
+// AUDIT
+// ─────────────────────────────────────────────
+
+Table activity_log {
+  id              String          [pk, default: `gen_random_uuid()`]
+  organization_id String          [not null, ref: > organization.id]
+  branch_id       String          [ref: > branch.id, note: 'NULL for org-level events, set for branch-level events']
+  account_id      String          [ref: > account.id]
+  action          activity_action [not null]
+  entity          String          [not null, note: 'Table name — e.g. work_order, customer_asset, inventory']
+  entity_id       String          [not null]
+  metadata        Json            [note: 'Before/after state snapshot']
+  created_at      DateTime        [default: `now()`]
+
+  Note: '''
+    Append-only audit trail for all significant operational events.
+    Rows are never updated or deleted — this is an immutable log.
+    branch_id is nullable: org-level events (customer created, service added) have branch_id=NULL.
+    entity + entity_id identify the affected record.
+    metadata stores a before/after JSON snapshot for forensic and compliance use.
+  '''
+}

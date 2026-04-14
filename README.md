@@ -43,14 +43,18 @@ The initial version will focus on the MVP, which includes the following capabili
 ### MVP Features
 
 - 👥 Customer management
-- 🚙 Vehicle management
-- 🛎️ Service catalog
-- 📋 Work order management
-- 📦 General inventory tracking
-- 🎞️ Specialized wrap roll inventory
-- 📊 Material usage tracking per job
+- 🚗 Asset management (vehicles, motorcycles, boats, and more)
+- 🏢 Multi-branch organization support
+- 🛎️ Service catalog with warranty configuration
+- 📋 Work order management with warranty claim support
+- 🧾 Invoice generation with CFDI 4.0 support (Mexico)
+- 🛡️ Warranty management — auto-generated on job completion
+- 📸 Asset reception and delivery checkpoints with photos and signature
+- 📦 Inventory tracking (discrete items and roll-format materials)
+- 🛒 Purchase order management per branch
+- 📊 Material usage and job cost tracking
 - 🖥️ Operational dashboard
-- 🏢 Organization and role-based access control
+- 🔐 Role-based access control per branch
 
 ### Feature Breakdown
 
@@ -60,11 +64,12 @@ The initial version will focus on the MVP, which includes the following capabili
 - Store contact information
 - Keep notes and job history
 
-#### 🚙 Vehicle Management
+#### 🚗 Asset Management
 
-- Register vehicles linked to customers
-- Track make, model, year, color, VIN, and license plate
-- Store notes and optional photos
+- Register assets linked to customers — vehicles, motorcycles, boats, and more
+- Track brand, model, year, color, and identifier (plate, VIN, serial number)
+- Flexible metadata for domain-specific fields (engine type, trim level, hull type)
+- Full work order history per asset, visible across all branches
 
 #### 🛎️ Service Catalog
 
@@ -77,56 +82,46 @@ The initial version will focus on the MVP, which includes the following capabili
   - PPF
   - Window tint
   - Custom services
-- Configure service category, estimated duration, and base price
+- Configure base price per service
+- Set warranty terms per service — auto-generated on job completion
+- CFDI fiscal codes (`claveProdServ`, `claveUnidad`) per service for invoicing
 
 #### 📋 Work Orders
 
-- Create and manage work orders
-- Link customers and vehicles to each job
-- Add one or multiple services to a work order
-- Track scheduling, status, assigned technician, notes, and photos
-- Support work order statuses such as:
-  - Draft
-  - Scheduled
-  - In Progress
-  - Waiting for Material
-  - Ready for Delivery
-  - Delivered
-  - Cancelled
+- Create and manage work orders linked to customer assets
+- Add one or multiple services per job
+- Assign one or multiple technicians with lead/assistant roles
+- Track scheduling, status, and notes
+- Support for `WARRANTY_CLAIM` type — return visits covered by an existing warranty
+- Work order statuses: `DRAFT` → `CONFIRMED` → `IN_PROGRESS` → `COMPLETED` / `CANCELLED`
+- Auto-generate warranties on completion for qualifying services
+- Asset reception and delivery checkpoints with photos and customer signature
 
-#### 📦 General Inventory
+#### 📦 Inventory
 
-- Manage consumables and shop materials such as:
-  - Chemicals
-  - Coatings
-  - Applicators
-  - Microfibers
-  - Tools
-  - Blades
-  - Other shop supplies
-- Track stock levels, minimum stock thresholds, unit type, and supplier information
+Two types of inventory, both scoped per branch:
 
-#### 🎞️ Wrap Roll Inventory
+**Discrete items** (chemicals, coatings, applicators, microfibers, tools, blades):
+- Track stock levels, unit type, SKU, and supplier
+- Low stock alert threshold per item
 
-- Track wrap-specific materials with domain-specific fields such as:
-  - Brand
-  - Series / line
-  - Color
-  - Finish
-  - Width
-  - Initial length
-  - Remaining length
-  - Lot number
-  - Supplier
-  - Roll cost
-- Monitor material availability and low-stock conditions
+**Roll-format materials** (vinyl wrap, PPF, window film, fabric):
+- Track by remaining length in meters
+- Domain-specific fields: brand, series, finish, color, width, lot number
+- Lot number tracking — critical for color consistency across multi-panel jobs
 
-#### 📊 Material Usage Tracking
+#### 🛒 Purchase Orders
 
-- Record materials consumed per work order
-- Associate wrap roll usage with jobs
-- Track estimated or actual usage
-- Register waste or leftover notes when needed
+- Create purchase orders per branch and supplier
+- Track ordered vs received quantities (supports partial deliveries)
+- Automatically update stock when order is received
+- Order statuses: `DRAFT` → `SENT` → `CONFIRMED` → `PARTIALLY_RECEIVED` → `RECEIVED`
+
+#### 📊 Material Usage & Job Costing
+
+- Record all materials consumed per work order
+- Cost snapshot at time of consumption — historical accuracy guaranteed
+- Basis for profitability analysis per job, per service, per branch
 
 #### 🖥️ Operational Dashboard
 
@@ -140,9 +135,11 @@ The initial version will focus on the MVP, which includes the following capabili
 #### 🏢 Multi-Tenant Organization Support
 
 - Support multiple organizations (shops) within the platform
-- Isolate data by organization
-- Invite team members
-- Manage roles and permissions
+- Each organization can have multiple branches (physical locations)
+- Customer and asset data shared across branches — no re-registration
+- Inventory and work orders scoped per branch
+- Invite team members and assign roles per branch
+- Fiscal profiles (RFC, CSD) for CFDI 4.0 invoice generation
 
 ### 👤 Roles
 
@@ -159,32 +156,31 @@ The initial MVP includes the following user roles:
 
 ## 🗃️ Main Entities
 
-The current domain model is centered around the following core entities:
+The domain model is organized around a strict scope hierarchy: **global → organization → branch**.
 
-- **User**
-- **Organization**
-- **OrganizationMember**
-- **Customer**
-- **Vehicle**
-- **Service**
-- **WorkOrder**
-- **WorkOrderItem**
-- **InventoryItem**
-- **WrapRoll**
-- **InventoryUsage**
-- **Supplier**
-- **ActivityLog**
+| Scope | Entities |
+|---|---|
+| Global | `Brand` (system-seeded catalog) |
+| Organization | `Organization`, `OrganizationFiscalProfile`, `Branch`, `Customer`, `CustomerAsset`, `Service`, `Supplier` |
+| Branch | `OrganizationMember`, `WorkOrder`, `Inventory`, `PurchaseOrder` |
+| Derived | `WorkOrderItem`, `WorkOrderAssignment`, `Invoice`, `Warranty`, `AssetCheckpoint`, `InventoryUsage`, `PurchaseOrderItem`, `ActivityLog` |
 
 ### Core Relationships
 
-- An **Organization** represents a shop and acts as the tenant boundary
-- A **User** can belong to one or more organizations through **OrganizationMember**
-- A **Customer** can own one or more **Vehicles**
-- A **Vehicle** can have many **WorkOrders**
-- A **WorkOrder** can include multiple **WorkOrderItems**
-- A **WorkOrder** can consume one or more **InventoryItems** or **WrapRolls**
-- **InventoryUsage** records the materials used for each work order
-- **ActivityLog** keeps a timeline of important operational events
+- An **Organization** is the tenant boundary — all data is isolated here
+- An **Organization** has one or more **Branches** (physical locations)
+- An **Account** belongs to branches via **OrganizationMember**, with a role per branch
+- A **Customer** belongs to the organization and is visible at all branches
+- A **CustomerAsset** belongs to a customer — vehicles, motorcycles, boats, or any physical item
+- A **WorkOrder** is created at a branch, linked to an asset
+- A **WorkOrder** can have multiple technicians via **WorkOrderAssignment**
+- A **WorkOrder** can be of type `WARRANTY_CLAIM`, referencing a prior **Warranty**
+- **Warranty** records are auto-generated on work order completion per service configuration
+- **Invoice** is generated from a work order — includes CFDI 4.0 fiscal fields
+- **Inventory** uses class table inheritance: base record + **InventoryItem** or **MaterialRoll** extension
+- **InventoryUsage** records materials consumed per job with cost snapshot
+- **PurchaseOrder** is placed by a branch to a **Supplier**
+- **ActivityLog** is an append-only audit trail of all operational events
 
 ---
 
@@ -362,210 +358,46 @@ GlossOps is intended to become a purpose-built operational system for automotive
 
 ## 🗄️ Database
 
+> Full schema with field-level documentation: [`docs/database-schema.dbml`](docs/database-schema.dbml)  
+> Design decisions and architecture: [`docs/database-design.md`](docs/database-design.md)  
+> Cross-table constraints and triggers: [`docs/database-constraints.md`](docs/database-constraints.md)
+
 ```mermaid
 erDiagram
-    ORGANIZATION {
-        string id PK
-        string name
-        string slug
-        string email
-        string phone
-        string timezone
-        string createdAt
-        string updatedAt
-    }
-
-    USER {
-        string id PK
-        string firstName
-        string lastName
-        string email
-        string passwordHash
-        string status
-        string createdAt
-        string updatedAt
-    }
-
-    ORGANIZATION_MEMBER {
-        string id PK
-        string organizationId FK
-        string userId FK
-        string role
-        string status
-        string joinedAt
-        string createdAt
-        string updatedAt
-    }
-
-    CUSTOMER {
-        string id PK
-        string organizationId FK
-        string firstName
-        string lastName
-        string phone
-        string email
-        string notes
-        string createdAt
-        string updatedAt
-    }
-
-    VEHICLE {
-        string id PK
-        string organizationId FK
-        string customerId FK
-        string make
-        string model
-        int year
-        string color
-        string vin
-        string licensePlate
-        string notes
-        string createdAt
-        string updatedAt
-    }
-
-    SERVICE {
-        string id PK
-        string organizationId FK
-        string name
-        string category
-        string description
-        decimal basePrice
-        int estimatedDurationMinutes
-        boolean isActive
-        string createdAt
-        string updatedAt
-    }
-
-    WORK_ORDER {
-        string id PK
-        string organizationId FK
-        string customerId FK
-        string vehicleId FK
-        string assignedTechnicianId FK
-        string status
-        date scheduledDate
-        decimal estimatedTotal
-        decimal finalTotal
-        string customerNotes
-        string internalNotes
-        string createdAt
-        string updatedAt
-    }
-
-    WORK_ORDER_ITEM {
-        string id PK
-        string workOrderId FK
-        string serviceId FK
-        string name
-        int quantity
-        decimal unitPrice
-        decimal totalPrice
-        string notes
-        string createdAt
-        string updatedAt
-    }
-
-    INVENTORY_ITEM {
-        string id PK
-        string organizationId FK
-        string supplierId FK
-        string name
-        string category
-        string unit
-        decimal stockQuantity
-        decimal minimumStock
-        decimal unitCost
-        boolean isActive
-        string createdAt
-        string updatedAt
-    }
-
-    WRAP_ROLL {
-        string id PK
-        string organizationId FK
-        string supplierId FK
-        string brand
-        string series
-        string color
-        string finish
-        decimal width
-        decimal initialLength
-        decimal remainingLength
-        string lotNumber
-        decimal rollCost
-        string status
-        string createdAt
-        string updatedAt
-    }
-
-    INVENTORY_USAGE {
-        string id PK
-        string organizationId FK
-        string workOrderId FK
-        string inventoryItemId FK
-        string wrapRollId FK
-        decimal quantityUsed
-        string unit
-        string usageType
-        string notes
-        string createdAt
-        string updatedAt
-    }
-
-    SUPPLIER {
-        string id PK
-        string organizationId FK
-        string name
-        string contactName
-        string email
-        string phone
-        string notes
-        string createdAt
-        string updatedAt
-    }
-
-    ACTIVITY_LOG {
-        string id PK
-        string organizationId FK
-        string actorUserId FK
-        string entityType
-        string entityId
-        string action
-        string metadata
-        string createdAt
-    }
-
-    ORGANIZATION ||--o{ ORGANIZATION_MEMBER : has
-    USER ||--o{ ORGANIZATION_MEMBER : belongs_to
-
+    ORGANIZATION ||--o{ BRANCH : has
     ORGANIZATION ||--o{ CUSTOMER : has
-    ORGANIZATION ||--o{ VEHICLE : has
     ORGANIZATION ||--o{ SERVICE : has
-    ORGANIZATION ||--o{ WORK_ORDER : has
-    ORGANIZATION ||--o{ INVENTORY_ITEM : has
-    ORGANIZATION ||--o{ WRAP_ROLL : has
     ORGANIZATION ||--o{ SUPPLIER : has
-    ORGANIZATION ||--o{ INVENTORY_USAGE : has
-    ORGANIZATION ||--o{ ACTIVITY_LOG : has
+    ORGANIZATION ||--|{ ORGANIZATION_FISCAL_PROFILE : has
 
-    CUSTOMER ||--o{ VEHICLE : owns
-    CUSTOMER ||--o{ WORK_ORDER : requests
+    BRANCH ||--o{ ORGANIZATION_MEMBER : has
+    BRANCH ||--o{ WORK_ORDER : has
+    BRANCH ||--o{ INVENTORY : has
+    BRANCH ||--o{ PURCHASE_ORDER : has
 
-    VEHICLE ||--o{ WORK_ORDER : assigned_to
+    ACCOUNT ||--o{ ORGANIZATION_MEMBER : belongs_to
 
-    USER ||--o{ WORK_ORDER : assigned_as_technician
-    USER ||--o{ ACTIVITY_LOG : performs
+    CUSTOMER ||--o{ CUSTOMER_ASSET : owns
+    CUSTOMER_ASSET ||--o{ WORK_ORDER : triggers
 
     WORK_ORDER ||--o{ WORK_ORDER_ITEM : contains
+    WORK_ORDER ||--o{ WORK_ORDER_ASSIGNMENT : has
+    WORK_ORDER ||--o| INVOICE : generates
+    WORK_ORDER ||--o{ INVENTORY_USAGE : consumes
+    WORK_ORDER ||--o{ ASSET_CHECKPOINT : has
+    WORK_ORDER_ITEM ||--o{ WARRANTY : generates
+
     SERVICE ||--o{ WORK_ORDER_ITEM : referenced_by
 
-    WORK_ORDER ||--o{ INVENTORY_USAGE : consumes
-    INVENTORY_ITEM ||--o{ INVENTORY_USAGE : used_as
-    WRAP_ROLL ||--o{ INVENTORY_USAGE : used_as
+    INVENTORY ||--o| INVENTORY_ITEM : extends
+    INVENTORY ||--o| MATERIAL_ROLL : extends
+    INVENTORY ||--o{ INVENTORY_USAGE : used_in
+    INVENTORY ||--o{ PURCHASE_ORDER_ITEM : ordered_in
 
-    SUPPLIER ||--o{ INVENTORY_ITEM : provides
-    SUPPLIER ||--o{ WRAP_ROLL : provides
+    SUPPLIER ||--o{ PURCHASE_ORDER : receives
+    PURCHASE_ORDER ||--o{ PURCHASE_ORDER_ITEM : contains
+
+    WARRANTY ||--o{ WORK_ORDER : claimed_by
 ```
 
 ---
