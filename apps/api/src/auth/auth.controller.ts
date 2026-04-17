@@ -5,7 +5,7 @@ import { LoginDto } from './dto/login.dto'
 import { TokenResponseDto } from './dto/token-response.dto'
 import { Public } from './decorators/public.decorator'
 import { CurrentAccount } from './decorators/current-account.decorator'
-import { AuthContext } from './guards/auth.guard'
+import type { AuthContext } from './guards/auth.guard'
 
 @Controller('auth')
 export class AuthController {
