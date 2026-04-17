@@ -4,8 +4,10 @@ if (typeof globalThis['__dirname'] === 'undefined') {
 }
 
 import { getPrismaClientClass } from '../generated/prisma/internal/class'
-export type { PrismaClient } from '../generated/prisma/internal/class'
 
+// PrismaClient value (constructor) and PrismaClient type (instance) share the same name
 export const PrismaClient = getPrismaClientClass()
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type PrismaClient = InstanceType<typeof PrismaClient>
 
 export * from '../generated/prisma/enums'
