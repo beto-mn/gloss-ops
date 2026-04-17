@@ -14,7 +14,7 @@ import { RolesGuard } from './guards/roles.guard'
     PrismaModule,
     JwtModule.register({
       secret: envs.jwt.accessSecret,
-      signOptions: { expiresIn: envs.jwt.accessExpiresIn },
+      signOptions: { expiresIn: envs.jwt.accessExpiresIn as any },
     }),
   ],
   controllers: [AuthController],
