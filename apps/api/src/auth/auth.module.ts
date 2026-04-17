@@ -25,6 +25,6 @@ import { RolesGuard } from './guards/roles.guard'
     AuthGuard,
     RolesGuard,
   ],
-  exports: [AuthGuard, RolesGuard],
+  exports: [AuthGuard, RolesGuard, TokenService, RedisTokenStore, JwtModule],
 })
 export class AuthModule {}
