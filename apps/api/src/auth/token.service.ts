@@ -1,19 +1,11 @@
-import { randomUUID } from 'crypto'
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { envs } from '../config/envs'
+import { randomUUID } from 'crypto'
+
+import type { JwtPayload, TokenPair } from '@auth/interfaces'
+import { envs } from '@config'
+
 import { RedisTokenStore } from './redis-token.store'
-
-export interface JwtPayload {
-  sub: string
-  memberId: string | null
-}
-
-export interface TokenPair {
-  accessToken: string
-  refreshToken: string
-  expiresIn: number
-}
 
 @Injectable()
 export class TokenService {
@@ -37,7 +29,7 @@ export class TokenService {
     return {
       accessToken,
       refreshToken: `${accountId}:${tokenId}`,
-      expiresIn: 900,
+      expiresIn: envs.jwt.accessExpiresInSeconds,
     }
   }
 

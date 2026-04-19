@@ -1,13 +1,16 @@
+import { Reflector } from '@nestjs/core'
+import { Request } from 'express'
 import {
-  CanActivate,
-  ExecutionContext,
   ForbiddenException,
+  ExecutionContext,
+  CanActivate,
   Injectable,
 } from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
+
 import { Role } from '@glossops/database'
-import { ROLES_KEY } from '../decorators/roles.decorator'
-import { AuthContext } from './auth.guard'
+
+import type { AuthContext } from '@auth/interfaces'
+import { ROLES_KEY } from '@auth/decorators'
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -20,7 +23,9 @@ export class RolesGuard implements CanActivate {
     ])
     if (!requiredRoles?.length) return true
 
-    const user: AuthContext = context.switchToHttp().getRequest()['user']
+    const { user } = context
+      .switchToHttp()
+      .getRequest<Request & { user: AuthContext }>()
 
     if (!user?.role) {
       throw new ForbiddenException({ error: 'no_membership' })

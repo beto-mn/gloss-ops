@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common'
 import Redis from 'ioredis'
-import { envs } from '../config/envs'
+
+import { envs } from '@config'
 
 @Injectable()
 export class RedisTokenStore implements OnModuleDestroy {
@@ -10,7 +11,11 @@ export class RedisTokenStore implements OnModuleDestroy {
     this.client = new Redis(envs.redis.url)
   }
 
-  async save(accountId: string, tokenId: string, ttlDays: number): Promise<void> {
+  async save(
+    accountId: string,
+    tokenId: string,
+    ttlDays: number
+  ): Promise<void> {
     const key = `refresh:${accountId}:${tokenId}`
     await this.client.set(key, '1', 'EX', ttlDays * 24 * 60 * 60)
   }
