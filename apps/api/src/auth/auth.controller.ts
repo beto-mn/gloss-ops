@@ -1,11 +1,10 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common'
+
+import { RegisterDto, LoginDto, TokenResponseDto } from '@auth/dto'
+import { CurrentAccount, Public } from '@auth/decorators'
+import type { AuthContext } from '@auth/interfaces'
+
 import { AuthService } from './auth.service'
-import { RegisterDto } from './dto/register.dto'
-import { LoginDto } from './dto/login.dto'
-import { TokenResponseDto } from './dto/token-response.dto'
-import { Public } from './decorators/public.decorator'
-import { CurrentAccount } from './decorators/current-account.decorator'
-import type { AuthContext } from './guards/auth.guard'
 
 @Controller('auth')
 export class AuthController {

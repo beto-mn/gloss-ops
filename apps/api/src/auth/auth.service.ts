@@ -1,14 +1,16 @@
+import * as bcrypt from 'bcrypt'
 import {
+  UnauthorizedException,
   ConflictException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common'
-import * as bcrypt from 'bcrypt'
-import { PrismaService } from '../prisma/prisma.service'
-import { TokenService, TokenPair } from './token.service'
+
+import { RegisterDto, LoginDto } from '@auth/dto'
+import type { TokenPair } from '@auth/interfaces'
+import { PrismaService } from '@prisma'
+
 import { RedisTokenStore } from './redis-token.store'
-import { RegisterDto } from './dto/register.dto'
-import { LoginDto } from './dto/login.dto'
+import { TokenService } from './token.service'
 
 @Injectable()
 export class AuthService {

@@ -1,24 +1,17 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
-import { Role } from '@glossops/database'
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator'
-import { TokenService } from '../token.service'
-import { PrismaService } from '../../prisma/prisma.service'
+import {
+  UnauthorizedException,
+  ExecutionContext,
+  CanActivate,
+  Injectable,
+} from '@nestjs/common'
 
-export interface AuthContext {
-  sub: string
-  memberId: string | null
-  email: string
-  branchId: string | null
-  organizationId: string | null
-  role: Role | null
-}
+import type { AuthContext } from '@auth/interfaces'
+import { IS_PUBLIC_KEY } from '@auth/decorators'
+import { PrismaService } from '@prisma'
+
+import { TokenService } from '../token.service'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -42,8 +35,8 @@ export class AuthGuard implements CanActivate {
     let payload: { sub: string; memberId: string | null }
     try {
       payload = await this.tokenService.verifyAccessToken(token)
-    } catch (e: any) {
-      if (e?.name === 'TokenExpiredError') {
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'TokenExpiredError') {
         throw new UnauthorizedException({ error: 'token_expired' })
       }
       throw new UnauthorizedException()
