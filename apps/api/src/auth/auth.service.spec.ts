@@ -1,16 +1,19 @@
-import { Test } from '@nestjs/testing'
 import { ConflictException, UnauthorizedException } from '@nestjs/common'
+import { Test } from '@nestjs/testing'
 import * as bcrypt from 'bcrypt'
-import { AuthService } from './auth.service'
-import { TokenService, TokenPair } from './token.service'
+
+import type { TokenPair } from '@auth/interfaces'
+import { PrismaService } from '@prisma'
+
 import { RedisTokenStore } from './redis-token.store'
-import { PrismaService } from '../prisma/prisma.service'
+import { TokenService } from './token.service'
+import { AuthService } from './auth.service'
 
 jest.mock('@glossops/database', () => ({
   PrismaClient: class {},
 }))
 
-jest.mock('../config/envs', () => ({
+jest.mock('@config', () => ({
   envs: { redis: { url: 'redis://localhost:6379' } },
 }))
 
@@ -81,7 +84,7 @@ describe('AuthService', () => {
 
     it('hashes password with bcrypt before storing', async () => {
       prisma.account.findUnique.mockResolvedValue(null)
-      ;(bcrypt.hash as jest.Mock).mockResolvedValue('hashed-pw')
+      jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       prisma.account.create.mockResolvedValue({ id: 'new-id' })
 
       await service.register(dto)
@@ -98,7 +101,7 @@ describe('AuthService', () => {
 
     it('issues tokens with null memberId for new account', async () => {
       prisma.account.findUnique.mockResolvedValue(null)
-      ;(bcrypt.hash as jest.Mock).mockResolvedValue('hashed-pw')
+      jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       prisma.account.create.mockResolvedValue({ id: 'new-id' })
 
       await service.register(dto)
@@ -122,13 +125,13 @@ describe('AuthService', () => {
 
     it('throws UnauthorizedException when password is wrong', async () => {
       prisma.account.findUnique.mockResolvedValue(accountWithMember)
-      ;(bcrypt.compare as jest.Mock).mockResolvedValue(false)
+      jest.mocked(bcrypt.compare).mockResolvedValue(false as never)
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException)
     })
 
     it('issues tokens with memberId when membership exists', async () => {
       prisma.account.findUnique.mockResolvedValue(accountWithMember)
-      ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
+      jest.mocked(bcrypt.compare).mockResolvedValue(true as never)
 
       await service.login(dto)
 
@@ -140,7 +143,7 @@ describe('AuthService', () => {
         ...accountWithMember,
         memberships: [],
       })
-      ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
+      jest.mocked(bcrypt.compare).mockResolvedValue(true as never)
 
       await service.login(dto)
 
@@ -161,7 +164,7 @@ describe('AuthService', () => {
         accountId: 'acc',
         tokenId: 'tok',
       })
-      ;(redisStore.exists as jest.Mock).mockResolvedValue(false)
+      redisStore.exists.mockResolvedValue(false)
       await expect(service.refresh('acc:tok')).rejects.toThrow(
         UnauthorizedException
       )
@@ -172,7 +175,7 @@ describe('AuthService', () => {
         accountId: 'acc-id',
         tokenId: 'tok-id',
       })
-      ;(redisStore.exists as jest.Mock).mockResolvedValue(true)
+      redisStore.exists.mockResolvedValue(true)
       prisma.account.findUnique.mockResolvedValue(null)
       await expect(service.refresh('acc-id:tok-id')).rejects.toThrow(
         UnauthorizedException
@@ -184,7 +187,7 @@ describe('AuthService', () => {
         accountId: 'acc-id',
         tokenId: 'tok-id',
       })
-      ;(redisStore.exists as jest.Mock).mockResolvedValue(true)
+      redisStore.exists.mockResolvedValue(true)
       prisma.account.findUnique.mockResolvedValue({
         id: 'acc-id',
         memberships: [{ id: 'mem-id' }],
