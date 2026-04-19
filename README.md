@@ -13,6 +13,7 @@ The platform is designed for vinyl wrap shops, detailing studios, PPF installers
 ## 📋 Table of Contents
 
 - [🚗 GlossOps](#-glossops)
+- [🏗️ Build Status](#️-build-status)
 - [📸 Screenshots](#-screenshots)
 - [✨ Current Scope](#-current-scope)
 - [🗃️ Main Entities](#️-main-entities)
@@ -25,6 +26,24 @@ The platform is designed for vinyl wrap shops, detailing studios, PPF installers
 - [🗺️ Vision](#️-vision)
 - [🗄️ Database](#️-database)
 - [📄 License](#-license)
+
+---
+
+## 🏗️ Build Status
+
+> Last updated: April 2026
+
+| Component | Status | Details |
+| --------- | ------ | ------- |
+| Database schema | ✅ Done | Full Prisma schema, migrations, seed |
+| API — Config | ✅ Done | Zod-validated env vars |
+| API — Auth module | ✅ Done | JWT + Redis refresh tokens, RBAC, 36 unit tests |
+| API — Domain modules | ⏳ Next | organizations, customers, work-orders, inventory |
+| Web — Auth + layout | ⏳ Pending | — |
+| Web — Core pages | ⏳ Pending | — |
+| Infrastructure | ⏳ Pending | Dockerfiles, CI |
+
+Full roadmap: [`docs/next-steps.md`](docs/next-steps.md)
 
 ---
 
@@ -102,10 +121,12 @@ The initial version will focus on the MVP, which includes the following capabili
 Two types of inventory, both scoped per branch:
 
 **Discrete items** (chemicals, coatings, applicators, microfibers, tools, blades):
+
 - Track stock levels, unit type, SKU, and supplier
 - Low stock alert threshold per item
 
 **Roll-format materials** (vinyl wrap, PPF, window film, fabric):
+
 - Track by remaining length in meters
 - Domain-specific fields: brand, series, finish, color, width, lot number
 - Lot number tracking — critical for color consistency across multi-panel jobs
@@ -158,12 +179,12 @@ The initial MVP includes the following user roles:
 
 The domain model is organized around a strict scope hierarchy: **global → organization → branch**.
 
-| Scope | Entities |
-|---|---|
-| Global | `Brand` (system-seeded catalog) |
-| Organization | `Organization`, `OrganizationFiscalProfile`, `Branch`, `Customer`, `CustomerAsset`, `Service`, `Supplier` |
-| Branch | `OrganizationMember`, `WorkOrder`, `Inventory`, `PurchaseOrder` |
-| Derived | `WorkOrderItem`, `WorkOrderAssignment`, `Invoice`, `Warranty`, `AssetCheckpoint`, `InventoryUsage`, `PurchaseOrderItem`, `ActivityLog` |
+| Scope        | Entities                                                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Global       | `Brand` (system-seeded catalog)                                                                                                        |
+| Organization | `Organization`, `OrganizationFiscalProfile`, `Branch`, `Customer`, `CustomerAsset`, `Service`, `Supplier`                              |
+| Branch       | `OrganizationMember`, `WorkOrder`, `Inventory`, `PurchaseOrder`                                                                        |
+| Derived      | `WorkOrderItem`, `WorkOrderAssignment`, `Invoice`, `Warranty`, `AssetCheckpoint`, `InventoryUsage`, `PurchaseOrderItem`, `ActivityLog` |
 
 ### Core Relationships
 
@@ -281,11 +302,24 @@ The app should now be running at `http://localhost:3000` and the API at `http://
 ```
 glossops/
 ├── apps/
-│   ├── web/              # Next.js frontend
-│   └── api/              # NestJS backend
+│   ├── web/                        # Next.js frontend (scaffolded)
+│   └── api/                        # NestJS backend
+│       └── src/
+│           ├── auth/               # Auth module (complete)
+│           │   ├── decorators/     # @Public(), @Roles(), @CurrentAccount()
+│           │   ├── dto/            # RegisterDto, LoginDto, TokenResponseDto
+│           │   ├── guards/         # AuthGuard, RolesGuard
+│           │   └── interfaces/     # AuthContext, JwtPayload, TokenPair
+│           ├── config/             # Zod env validation
+│           └── prisma/             # PrismaService
 ├── packages/
-│   ├── database/         # Prisma schema and migrations
-│   └── shared/           # Shared types and utilities
+│   ├── database/                   # Prisma schema, migrations, seed
+│   └── shared/                     # Shared types (pending)
+├── docs/
+│   ├── database-design.md
+│   ├── database-constraints.md
+│   ├── database-schema.dbml
+│   └── next-steps.md
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
@@ -295,15 +329,34 @@ glossops/
 
 ## 📜 Available Scripts
 
+### Root
+
 | Command           | Description                        |
 | ----------------- | ---------------------------------- |
 | `pnpm dev`        | Start all apps in development mode |
 | `pnpm build`      | Build all apps for production      |
 | `pnpm test`       | Run all tests                      |
 | `pnpm lint`       | Run linter across the project      |
-| `pnpm db:migrate` | Run Prisma database migrations     |
-| `pnpm db:studio`  | Open Prisma Studio                 |
-| `pnpm db:seed`    | Seed the database with sample data |
+
+### Database (`pnpm --filter @glossops/database <script>`)
+
+| Command        | Description                            |
+| -------------- | -------------------------------------- |
+| `db:migrate`   | Apply pending Prisma migrations        |
+| `db:reset`     | Reset database and re-run migrations   |
+| `db:seed`      | Seed the database with sample data     |
+| `db:studio`    | Open Prisma Studio                     |
+| `build`        | Compile the package to `dist/`         |
+
+### API (`pnpm --filter api <script>`)
+
+| Command        | Description                            |
+| -------------- | -------------------------------------- |
+| `start:dev`    | Start NestJS in watch mode             |
+| `test`         | Run Jest unit tests                    |
+| `test:cov`     | Run tests with coverage report         |
+| `lint`         | Run ESLint                             |
+| `build`        | Build for production                   |
 
 ---
 
