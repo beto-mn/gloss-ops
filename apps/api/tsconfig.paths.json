@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@auth": ["./src/auth/index.ts"],
+      "@auth/decorators": ["./src/auth/decorators/index.ts"],
+      "@auth/dto": ["./src/auth/dto/index.ts"],
+      "@auth/guards": ["./src/auth/guards/index.ts"],
+      "@auth/interfaces": ["./src/auth/interfaces/index.ts"],
+      "@config": ["./src/config/index.ts"],
+      "@prisma": ["./src/prisma/index.ts"]
+    }
+  }
+}
