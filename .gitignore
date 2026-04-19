@@ -2,6 +2,9 @@
 **/node_modules/
 .pnpm-store/
 
+# Coverage
+coverage/
+
 # Build outputs
 dist/
 .next/
