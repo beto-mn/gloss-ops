@@ -102,10 +102,12 @@ The initial version will focus on the MVP, which includes the following capabili
 Two types of inventory, both scoped per branch:
 
 **Discrete items** (chemicals, coatings, applicators, microfibers, tools, blades):
+
 - Track stock levels, unit type, SKU, and supplier
 - Low stock alert threshold per item
 
 **Roll-format materials** (vinyl wrap, PPF, window film, fabric):
+
 - Track by remaining length in meters
 - Domain-specific fields: brand, series, finish, color, width, lot number
 - Lot number tracking — critical for color consistency across multi-panel jobs
@@ -158,12 +160,12 @@ The initial MVP includes the following user roles:
 
 The domain model is organized around a strict scope hierarchy: **global → organization → branch**.
 
-| Scope | Entities |
-|---|---|
-| Global | `Brand` (system-seeded catalog) |
-| Organization | `Organization`, `OrganizationFiscalProfile`, `Branch`, `Customer`, `CustomerAsset`, `Service`, `Supplier` |
-| Branch | `OrganizationMember`, `WorkOrder`, `Inventory`, `PurchaseOrder` |
-| Derived | `WorkOrderItem`, `WorkOrderAssignment`, `Invoice`, `Warranty`, `AssetCheckpoint`, `InventoryUsage`, `PurchaseOrderItem`, `ActivityLog` |
+| Scope        | Entities                                                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Global       | `Brand` (system-seeded catalog)                                                                                                        |
+| Organization | `Organization`, `OrganizationFiscalProfile`, `Branch`, `Customer`, `CustomerAsset`, `Service`, `Supplier`                              |
+| Branch       | `OrganizationMember`, `WorkOrder`, `Inventory`, `PurchaseOrder`                                                                        |
+| Derived      | `WorkOrderItem`, `WorkOrderAssignment`, `Invoice`, `Warranty`, `AssetCheckpoint`, `InventoryUsage`, `PurchaseOrderItem`, `ActivityLog` |
 
 ### Core Relationships
 
