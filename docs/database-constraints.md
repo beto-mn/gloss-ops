@@ -17,6 +17,7 @@ by an existing warranty. Generating an invoice for it is not allowed.
 **Enforcement layers:**
 
 ### Application layer (NestJS)
+
 Validate before inserting into `invoice`:
 
 ```typescript
@@ -28,6 +29,7 @@ if (workOrder.type === 'WARRANTY_CLAIM') {
 ```
 
 ### Database layer (PostgreSQL trigger)
+
 Last line of defense — rejects any direct `INSERT` into `invoice` that bypasses
 the application:
 
@@ -66,14 +68,19 @@ and must reference a warranty that is not void and has not expired.
 **Enforcement layers:**
 
 ### Application layer (NestJS)
+
 Validate before creating a `WARRANTY_CLAIM` work order:
 
 ```typescript
 if (type === 'WARRANTY_CLAIM') {
   if (!warrantyClaimId) {
-    throw new BadRequestException('warrantyClaimId is required for WARRANTY_CLAIM orders')
+    throw new BadRequestException(
+      'warrantyClaimId is required for WARRANTY_CLAIM orders'
+    )
   }
-  const warranty = await prisma.warranty.findUnique({ where: { id: warrantyClaimId } })
+  const warranty = await prisma.warranty.findUnique({
+    where: { id: warrantyClaimId },
+  })
   if (!warranty || warranty.isVoid || warranty.validUntil < new Date()) {
     throw new BadRequestException('Referenced warranty is void or expired')
   }

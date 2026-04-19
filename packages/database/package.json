@@ -1,8 +1,11 @@
 {
   "name": "@glossops/database",
   "version": "0.0.1",
-  "main": "./src/index.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "build:watch": "tsc --project tsconfig.json --watch",
     "db:seed": "tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
@@ -19,6 +22,8 @@
     "prisma": "^7.7.0"
   },
   "devDependencies": {
-    "tsx": "^4.19.2"
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
   }
 }

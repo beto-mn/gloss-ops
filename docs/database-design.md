@@ -51,12 +51,12 @@ The only exceptions are tables that are explicitly org-scoped and need `organiza
 
 All identifiers follow snake_case at the database level:
 
-| Layer | Convention | Example |
-|---|---|---|
-| Table names | `snake_case` singular | `work_order`, `customer_asset` |
-| Column names | `snake_case` | `organization_id`, `created_at`, `is_active` |
-| Enum names | `snake_case` | `work_order_status`, `inventory_type` |
-| Enum values | `UPPER_SNAKE_CASE` | `WARRANTY_CLAIM`, `IN_PROGRESS` |
+| Layer        | Convention            | Example                                      |
+| ------------ | --------------------- | -------------------------------------------- |
+| Table names  | `snake_case` singular | `work_order`, `customer_asset`               |
+| Column names | `snake_case`          | `organization_id`, `created_at`, `is_active` |
+| Enum names   | `snake_case`          | `work_order_status`, `inventory_type`        |
+| Enum values  | `UPPER_SNAKE_CASE`    | `WARRANTY_CLAIM`, `IN_PROGRESS`              |
 
 In the Prisma schema, models and fields use PascalCase/camelCase (Prisma convention). The mapping to snake_case is handled transparently by `@@map()` on every model and `@map()` on every multi-word field. Application code always uses camelCase (`workOrder.totalAmount`), the database always stores snake_case (`total_amount`).
 
@@ -83,6 +83,7 @@ The customer is derived via `work_order.assetId → customer_asset.customerId`. 
 ### 3.5 Multi-technician support via `work_order_assignment`
 
 A work order can involve multiple technicians. Rather than a single `assignedToId` FK, a separate `work_order_assignment` table handles this with a `role` field (`lead` | `assistant`). This supports:
+
 - Productivity reporting per technician
 - Correct attribution on service notes and warranties (lead technician)
 - Future commission calculations
@@ -105,6 +106,7 @@ Two types of inventory exist with fundamentally different fields:
 A single `inventory` base table holds the common fields (`branchId`, `supplierId`, `brandId`, `name`, `unitCost`, `type`). Each extension table shares the same `id` as its base record (1-to-1 FK).
 
 This pattern was chosen over a single wide table with nullable columns because:
+
 - A roll will never have `sku` or `unit`. An item will never have `remainingLength` or `lotNumber`. Nullable columns that are structurally impossible are a schema smell.
 - Adding a new inventory type in the future requires only a new enum value and a new extension table — `inventory_usage` and `purchase_order_item` do not change.
 
@@ -114,14 +116,14 @@ The trade-off is that reading full inventory requires two LEFT JOINs. This is an
 
 The following fields are snapshotted at the moment they are used, not referenced via FK:
 
-| Table | Snapshotted fields | Why |
-|---|---|---|
-| `work_order_item` | `unitPrice` | Service prices change — job history must reflect what was charged |
-| `work_order_item` | `discount` | Discount agreed at job creation — not a catalog value |
-| `invoice` | `customerTaxId`, `customerName`, `customerAddress`, `customerZipCode`, `customerFiscalRegime` | CFDI 4.0 requires the receptor data at issuance — updating RFC later cannot alter a stamped invoice |
-| `invoice` | `taxRate` | IVA rate is set by law but can change — historical invoices must reflect the rate in effect at the time |
-| `warranty` | `description`, `term` | Service warranty config can change — issued warranties must reflect what was promised |
-| `inventory_usage` | `costAtUsage` | Inventory costs change with every purchase order — job profitability must use the cost at time of consumption |
+| Table             | Snapshotted fields                                                                            | Why                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `work_order_item` | `unitPrice`                                                                                   | Service prices change — job history must reflect what was charged                                             |
+| `work_order_item` | `discount`                                                                                    | Discount agreed at job creation — not a catalog value                                                         |
+| `invoice`         | `customerTaxId`, `customerName`, `customerAddress`, `customerZipCode`, `customerFiscalRegime` | CFDI 4.0 requires the receptor data at issuance — updating RFC later cannot alter a stamped invoice           |
+| `invoice`         | `taxRate`                                                                                     | IVA rate is set by law but can change — historical invoices must reflect the rate in effect at the time       |
+| `warranty`        | `description`, `term`                                                                         | Service warranty config can change — issued warranties must reflect what was promised                         |
+| `inventory_usage` | `costAtUsage`                                                                                 | Inventory costs change with every purchase order — job profitability must use the cost at time of consumption |
 
 ### 3.10 Purchase orders are scoped to branch, suppliers to organization
 
@@ -138,9 +140,9 @@ All cross-table constraints are documented in `docs/database-constraints.md`. Th
 
 Current constraints:
 
-| Rule | Description |
-|---|---|
-| Rule 1 | `WARRANTY_CLAIM` work orders cannot generate an invoice |
+| Rule   | Description                                                                         |
+| ------ | ----------------------------------------------------------------------------------- |
+| Rule 1 | `WARRANTY_CLAIM` work orders cannot generate an invoice                             |
 | Rule 2 | `WARRANTY_CLAIM` work orders must reference a valid, non-void, non-expired warranty |
 
 Branch consistency for `inventory_usage` (the consumed inventory must belong to the same branch as the work order) is enforced at the application layer only — a trigger would require a cross-table lookup on every usage insert and is not justified for the MVP.
@@ -151,25 +153,25 @@ Branch consistency for `inventory_usage` (the consumed inventory must belong to 
 
 Indexes defined in the schema:
 
-| Table | Index | Purpose |
-|---|---|---|
-| `brand` | `(organizationId, slug)` unique | Slug uniqueness per scope |
-| `organization` | `slug` unique | URL-safe org identifier |
-| `organization_member` | `(accountId, branchId)` unique | One role per account per branch |
-| `asset_checkpoint` | `(workOrderId, type)` unique | One reception and one delivery per work order |
-| `inventory_item` | SKU uniqueness enforced at app layer | branchId lives on base `inventory` table — cross-table unique index not possible in standard SQL |
+| Table                 | Index                                | Purpose                                                                                          |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `brand`               | `(organizationId, slug)` unique      | Slug uniqueness per scope                                                                        |
+| `organization`        | `slug` unique                        | URL-safe org identifier                                                                          |
+| `organization_member` | `(accountId, branchId)` unique       | One role per account per branch                                                                  |
+| `asset_checkpoint`    | `(workOrderId, type)` unique         | One reception and one delivery per work order                                                    |
+| `inventory_item`      | SKU uniqueness enforced at app layer | branchId lives on base `inventory` table — cross-table unique index not possible in standard SQL |
 
 **⚠️ Missing indexes that should be added before production:**
 
-| Table | Index | Query it serves |
-|---|---|---|
-| `activity_log` | `(entity, entityId)` | "Show all history for this work order" |
-| `activity_log` | `(organizationId, createdAt DESC)` | Organization-level audit feed |
-| `work_order` | `(branchId, status)` | "Show all open work orders for this branch" |
-| `inventory` | `(branchId, type)` | "Show all inventory for this branch" |
-| `inventory_usage` | `(workOrderId)` | "Show all materials used in this job" |
-| `customer` | `(organizationId, email)` | Customer lookup by email |
-| `purchase_order` | `(branchId, status)` | "Show all pending orders for this branch" |
+| Table             | Index                              | Query it serves                             |
+| ----------------- | ---------------------------------- | ------------------------------------------- |
+| `activity_log`    | `(entity, entityId)`               | "Show all history for this work order"      |
+| `activity_log`    | `(organizationId, createdAt DESC)` | Organization-level audit feed               |
+| `work_order`      | `(branchId, status)`               | "Show all open work orders for this branch" |
+| `inventory`       | `(branchId, type)`                 | "Show all inventory for this branch"        |
+| `inventory_usage` | `(workOrderId)`                    | "Show all materials used in this job"       |
+| `customer`        | `(organizationId, email)`          | Customer lookup by email                    |
+| `purchase_order`  | `(branchId, status)`               | "Show all pending orders for this branch"   |
 
 These will be added as part of the Prisma schema implementation.
 
@@ -180,34 +182,42 @@ These will be added as part of the Prisma schema implementation.
 The following were discussed and deliberately excluded from the MVP. Each has a note on what it would require to add.
 
 ### 6.1 Supplier fiscal data (RFC, bank account, payment terms)
+
 **Why excluded:** Not needed for operations. Required for accounts payable and tax deductibility.  
 **To add:** New fields on `supplier` — `taxId`, `bankAccount`, `paymentTerms`, `fiscalRegime`. No structural changes needed.
 
 ### 6.2 Technician commissions
+
 **Why excluded:** Commission structures vary widely per business. Premature to model.  
 **To add:** A `commission_rule` table linked to `service` or `organization_member`, plus a `commission_record` table populated when a work order completes.
 
 ### 6.3 Inventory expiration dates
+
 **Why excluded:** Relevant for primers, coatings, and consumables with shelf life — but not universal.  
 **To add:** `expiresAt` field on `inventory_item`. Add a scheduled job to alert on approaching expiry.
 
 ### 6.4 Inventory location within branch (bin/shelf)
+
 **Why excluded:** Most shops at this scale don't need bin-level tracking.  
 **To add:** `location` field on `inventory` base table. Simple text field — "Shelf A3", "Cabinet 2".
 
 ### 6.5 Multi-currency support
+
 **Why excluded:** All amounts are stored as `Decimal` without currency code. Assumes a single currency per organization.  
 **To add:** `currency` field on `organization`. All monetary fields already use `Decimal` — no type changes needed. Exchange rate logic would live in the application layer.
 
 ### 6.6 Customer portal / public-facing documents
+
 **Why excluded:** Out of scope for the operational MVP.  
 **To add:** No schema changes needed for read-only access. A signed URL strategy for `asset_checkpoint.photo`, `customerSignatureUrl`, and CFDI XML would need to be defined.
 
 ### 6.7 Stripe / payment processing
+
 **Why excluded:** Payments are tracked via `invoice.status` (PAID) but no payment method or transaction ID is stored.  
 **To add:** `payment` table with `invoiceId`, `amount`, `method`, `externalId` (Stripe charge ID), `paidAt`.
 
 ### 6.8 Automated low stock reordering
+
 **Why excluded:** `inventory_item.lowStockAlert` is the foundation but the trigger mechanism is not built.  
 **To add:** A scheduled job that queries `inventory_item WHERE stock < lowStockAlert` and creates a `DRAFT` purchase order or sends a notification.
 
@@ -252,6 +262,7 @@ The class table inheritance pattern on `inventory` was chosen precisely to suppo
 `inventory_usage` and `purchase_order_item` do not require schema changes.
 
 Example future types:
+
 - `liquid_container` — coating sold by volume with expiration date
 - `gas_canister` — pressurized gas tracked by pressure/weight
 - `precut_panel` — pre-cut vinyl panels with fixed dimensions
