@@ -1,13 +1,16 @@
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '@glossops/database'
-import { envs } from '../config/envs'
+
+import { Prisma, PrismaClient } from '@glossops/database'
+
+import { envs } from '@config'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
     const adapter = new PrismaPg({ connectionString: envs.database.url })
-    super({ adapter } as any)
+    const options: Prisma.PrismaClientOptions = { adapter }
+    super(options)
   }
 
   async onModuleInit() {
