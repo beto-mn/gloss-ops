@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing'
+
 import { RedisTokenStore } from './redis-token.store'
 
-jest.mock('../config/envs', () => ({
+jest.mock('@config', () => ({
   envs: { redis: { url: 'redis://localhost:6379' } },
 }))
 

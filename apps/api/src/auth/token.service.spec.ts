@@ -1,10 +1,11 @@
-import { Test } from '@nestjs/testing'
 import { JwtService } from '@nestjs/jwt'
-import { TokenService, TokenPair } from './token.service'
-import { RedisTokenStore } from './redis-token.store'
+import { Test } from '@nestjs/testing'
 
-jest.mock('../config/envs', () => ({
-  envs: { jwt: { refreshExpiresInDays: 30 } },
+import { RedisTokenStore } from './redis-token.store'
+import { TokenService } from './token.service'
+
+jest.mock('@config', () => ({
+  envs: { jwt: { refreshExpiresInDays: 30, accessExpiresInSeconds: 900 } },
 }))
 
 describe('TokenService', () => {
