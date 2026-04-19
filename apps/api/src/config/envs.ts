@@ -1,23 +1,39 @@
-const required = (key: string): string => {
-  const value = process.env[key]
-  if (!value) throw new Error(`Missing required env var: ${key}`)
-  return value
+import { z } from 'zod'
+
+const schema = z.object({
+  PORT: z.coerce.number().int().positive().default(3000),
+  DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
+  JWT_ACCESS_SECRET: z.string().min(16),
+  JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(30),
+  JWT_ACCESS_EXPIRES_IN_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(900),
+})
+
+const parsed = schema.safeParse(process.env)
+
+if (!parsed.success) {
+  console.error('Invalid environment variables:')
+  console.error(parsed.error.flatten().fieldErrors)
+  process.exit(1)
 }
 
+const env = parsed.data
+
 export const envs = {
-  port: parseInt(process.env.PORT ?? '3000', 10),
+  port: env.PORT,
   database: {
-    url: required('DATABASE_URL'),
+    url: env.DATABASE_URL,
   },
   redis: {
-    url: required('REDIS_URL'),
+    url: env.REDIS_URL,
   },
   jwt: {
-    accessSecret: required('JWT_ACCESS_SECRET'),
-    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
-    refreshExpiresInDays: parseInt(
-      process.env.JWT_REFRESH_EXPIRES_IN_DAYS ?? '30',
-      10
-    ),
+    accessSecret: env.JWT_ACCESS_SECRET,
+    accessExpiresInSeconds: env.JWT_ACCESS_EXPIRES_IN_SECONDS,
+    refreshExpiresInDays: env.JWT_REFRESH_EXPIRES_IN_DAYS,
   },
 }
