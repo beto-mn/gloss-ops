@@ -3,7 +3,11 @@ import type { TokenStoreInterface } from '@auth/interfaces'
 export class InMemoryTokenStore implements TokenStoreInterface {
   private readonly tokens = new Map<string, true>()
 
-  async save(accountId: string, tokenId: string, _ttlDays: number): Promise<void> {
+  async save(
+    accountId: string,
+    tokenId: string,
+    _ttlDays: number
+  ): Promise<void> {
     this.tokens.set(`${accountId}:${tokenId}`, true)
   }
 
