@@ -1,7 +1,8 @@
 import { JwtService } from '@nestjs/jwt'
 import { Test } from '@nestjs/testing'
 
-import { RedisTokenStore } from './redis-token.store'
+import { TOKEN_STORE } from './auth.tokens'
+import { InMemoryTokenStore } from './infrastructure/in-memory-token.store'
 import { TokenService } from './token.service'
 
 jest.mock('@config', () => ({
@@ -10,7 +11,7 @@ jest.mock('@config', () => ({
 
 describe('TokenService', () => {
   let tokenService: TokenService
-  let redisStore: jest.Mocked<RedisTokenStore>
+  let tokenStore: InMemoryTokenStore
   let jwtService: jest.Mocked<JwtService>
 
   beforeEach(async () => {
@@ -26,18 +27,12 @@ describe('TokenService', () => {
               .mockResolvedValue({ sub: 'acc-1', memberId: 'mem-1' }),
           },
         },
-        {
-          provide: RedisTokenStore,
-          useValue: {
-            save: jest.fn().mockResolvedValue(undefined),
-            delete: jest.fn().mockResolvedValue(undefined),
-          },
-        },
+        { provide: TOKEN_STORE, useClass: InMemoryTokenStore },
       ],
     }).compile()
 
     tokenService = module.get(TokenService)
-    redisStore = module.get(RedisTokenStore)
+    tokenStore = module.get(TOKEN_STORE)
     jwtService = module.get(JwtService)
   })
 
@@ -58,13 +53,10 @@ describe('TokenService', () => {
       })
     })
 
-    it('saves refresh token to Redis with 30-day TTL', async () => {
-      await tokenService.issueTokens('acc-1', 'mem-1')
-      expect(redisStore.save).toHaveBeenCalledWith(
-        'acc-1',
-        expect.any(String),
-        30
-      )
+    it('saves refresh token to store', async () => {
+      const result = await tokenService.issueTokens('acc-1', 'mem-1')
+      const tokenId = result.refreshToken.slice('acc-1:'.length)
+      expect(await tokenStore.exists('acc-1', tokenId)).toBe(true)
     })
 
     it('returns accessToken, refreshToken with accountId prefix, and expiresIn 900', async () => {
@@ -78,10 +70,13 @@ describe('TokenService', () => {
   })
 
   describe('rotateTokens', () => {
-    it('deletes old token before issuing new ones', async () => {
-      await tokenService.rotateTokens('acc-1', 'old-tok', 'mem-1')
-      expect(redisStore.delete).toHaveBeenCalledWith('acc-1', 'old-tok')
-      expect(redisStore.save).toHaveBeenCalled()
+    it('revokes old token and issues new one', async () => {
+      const first = await tokenService.issueTokens('acc-1', 'mem-1')
+      const oldTokenId = first.refreshToken.slice('acc-1:'.length)
+
+      await tokenService.rotateTokens('acc-1', oldTokenId, 'mem-1')
+
+      expect(await tokenStore.exists('acc-1', oldTokenId)).toBe(false)
     })
   })
 

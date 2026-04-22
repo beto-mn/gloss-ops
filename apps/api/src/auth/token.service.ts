@@ -1,17 +1,21 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Inject } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { randomUUID } from 'crypto'
 
-import type { JwtPayload, TokenPair } from '@auth/interfaces'
+import type {
+  JwtPayload,
+  TokenPair,
+  TokenStoreInterface,
+} from '@auth/interfaces'
 import { envs } from '@config'
 
-import { RedisTokenStore } from './redis-token.store'
+import { TOKEN_STORE } from './auth.tokens'
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly redisTokenStore: RedisTokenStore
+    @Inject(TOKEN_STORE) private readonly tokenStore: TokenStoreInterface
   ) {}
 
   async issueTokens(
@@ -21,7 +25,7 @@ export class TokenService {
     const payload: JwtPayload = { sub: accountId, memberId }
     const accessToken = await this.jwtService.signAsync(payload)
     const tokenId = randomUUID()
-    await this.redisTokenStore.save(
+    await this.tokenStore.save(
       accountId,
       tokenId,
       envs.jwt.refreshExpiresInDays
@@ -38,7 +42,7 @@ export class TokenService {
     tokenId: string,
     memberId: string | null
   ): Promise<TokenPair> {
-    await this.redisTokenStore.delete(accountId, tokenId)
+    await this.tokenStore.delete(accountId, tokenId)
     return this.issueTokens(accountId, memberId)
   }
 
