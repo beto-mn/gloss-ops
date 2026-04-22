@@ -104,6 +104,32 @@ export { AuthModule } from './auth.module'              // 42 chars — last
 - No blank lines between exports within the same barrel
 - Order by line length, longest → shortest
 
+## Repository Pattern (all domain modules)
+
+Every domain module MUST follow this structure:
+
+```
+<module>/
+  interfaces/
+    <entity>.repository.interface.ts   ← contract
+    index.ts                           ← barrel (types only)
+  infrastructure/
+    prisma-<entity>.repository.ts      ← Prisma implementation
+    in-memory-<entity>.repository.ts   ← in-memory implementation for tests
+  <module>.tokens.ts                   ← DI injection token symbols
+  <module>.module.ts                   ← binds tokens to implementations
+  <module>.service.ts                  ← depends on interfaces only
+```
+
+**Rules:**
+- `PrismaService` may only be injected inside `infrastructure/` classes — never in services, guards, or controllers
+- Injection tokens are named `SCREAMING_SNAKE_CASE` and defined in `<module>.tokens.ts`
+- Interface names end with `Interface` (e.g., `AccountRepositoryInterface`)
+- In tests, bind `{ provide: TOKEN, useClass: InMemoryXxx }` — no Prisma/Redis mocks
+- `InMemoryX` implementations live in `infrastructure/`, not in test files
+
+See `apps/api/src/auth/` for the reference implementation.
+
 ## Tech Stack
 
 | Layer    | Technology                                                              |
