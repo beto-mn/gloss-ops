@@ -1,16 +1,15 @@
-import { UnauthorizedException } from '@nestjs/common'
-import { ExecutionContext } from '@nestjs/common'
+import { UnauthorizedException, ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Test } from '@nestjs/testing'
 
-import type { AuthContext } from '@auth/interfaces'
-import { PrismaService } from '@prisma'
+import type { AuthContext, AccountWithMemberships } from '@auth/interfaces'
 
+import { ACCOUNT_REPOSITORY } from '../auth.tokens'
+import { InMemoryAccountRepository } from '../infrastructure/in-memory-account.repository'
 import { TokenService } from '../token.service'
 import { AuthGuard } from './auth.guard'
 
 jest.mock('@glossops/database', () => ({
-  PrismaClient: class {},
   Role: {
     OWNER: 'OWNER',
     MANAGER: 'MANAGER',
@@ -40,41 +39,57 @@ const makeCtx = (authHeader?: string): TestCtx => {
   } as unknown as TestCtx
 }
 
-const mockAccount = {
+const mockAccount: AccountWithMemberships = {
   id: 'acc-uuid',
   email: 'test@example.com',
+  passwordHash: 'hash',
+  firstName: 'Test',
+  lastName: 'User',
+  avatarUrl: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   memberships: [
     {
       id: 'mem-uuid',
       branchId: 'branch-uuid',
-      role: 'OWNER',
-      branch: { organizationId: 'org-uuid' },
+      accountId: 'acc-uuid',
+      role: 'OWNER' as never,
+      joinedAt: new Date(),
+      branch: {
+        id: 'branch-uuid',
+        organizationId: 'org-uuid',
+        name: 'Main',
+        address: null,
+        phone: null,
+        email: null,
+        isMain: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     },
   ],
 }
 
 describe('AuthGuard', () => {
   let guard: AuthGuard
+  let accounts: InMemoryAccountRepository
   let tokenService: jest.Mocked<TokenService>
-  let prisma: { account: { findUnique: jest.Mock } }
   let reflector: jest.Mocked<Reflector>
 
   beforeEach(async () => {
+    accounts = new InMemoryAccountRepository()
+    accounts.seed([mockAccount])
+
     const module = await Test.createTestingModule({
       providers: [
         AuthGuard,
+        { provide: ACCOUNT_REPOSITORY, useValue: accounts },
         {
           provide: TokenService,
           useValue: {
             verifyAccessToken: jest
               .fn()
               .mockResolvedValue({ sub: 'acc-uuid', memberId: 'mem-uuid' }),
-          },
-        },
-        {
-          provide: PrismaService,
-          useValue: {
-            account: { findUnique: jest.fn().mockResolvedValue(mockAccount) },
           },
         },
         {
@@ -86,7 +101,6 @@ describe('AuthGuard', () => {
 
     guard = module.get(AuthGuard)
     tokenService = module.get(TokenService)
-    prisma = module.get(PrismaService)
     reflector = module.get(Reflector)
   })
 
@@ -108,8 +122,11 @@ describe('AuthGuard', () => {
     ).rejects.toThrow(UnauthorizedException)
   })
 
-  it('throws UnauthorizedException when account not found in DB', async () => {
-    prisma.account.findUnique.mockResolvedValueOnce(null)
+  it('throws UnauthorizedException when account not found', async () => {
+    tokenService.verifyAccessToken.mockResolvedValueOnce({
+      sub: 'nonexistent-id',
+      memberId: null,
+    })
     await expect(
       guard.canActivate(makeCtx('Bearer valid.token'))
     ).rejects.toThrow(UnauthorizedException)
@@ -129,9 +146,10 @@ describe('AuthGuard', () => {
   })
 
   it('sets membership fields to null when account has no membership', async () => {
-    prisma.account.findUnique.mockResolvedValueOnce({
-      ...mockAccount,
-      memberships: [],
+    accounts.seed([{ ...mockAccount, id: 'no-member-id', memberships: [] }])
+    tokenService.verifyAccessToken.mockResolvedValueOnce({
+      sub: 'no-member-id',
+      memberId: null,
     })
     const ctx = makeCtx('Bearer valid.token')
     await guard.canActivate(ctx)
