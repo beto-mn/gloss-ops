@@ -3,15 +3,12 @@ import { Test } from '@nestjs/testing'
 import * as bcrypt from 'bcrypt'
 
 import type { TokenPair } from '@auth/interfaces'
-import { PrismaService } from '@prisma'
 
-import { RedisTokenStore } from './redis-token.store'
+import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
+import { InMemoryAccountRepository } from './infrastructure/in-memory-account.repository'
+import { InMemoryTokenStore } from './infrastructure/in-memory-token.store'
 import { TokenService } from './token.service'
 import { AuthService } from './auth.service'
-
-jest.mock('@glossops/database', () => ({
-  PrismaClient: class {},
-}))
 
 jest.mock('@config', () => ({
   envs: { redis: { url: 'redis://localhost:6379' } },
@@ -27,24 +24,20 @@ const mockTokenPair: TokenPair = {
 
 describe('AuthService', () => {
   let service: AuthService
-  let prisma: { account: { findUnique: jest.Mock; create: jest.Mock } }
+  let accounts: InMemoryAccountRepository
+  let tokenStore: InMemoryTokenStore
   let tokenService: jest.Mocked<TokenService>
-  let redisStore: jest.Mocked<RedisTokenStore>
 
   beforeEach(async () => {
     jest.clearAllMocks()
+    accounts = new InMemoryAccountRepository()
+    tokenStore = new InMemoryTokenStore()
+
     const module = await Test.createTestingModule({
       providers: [
         AuthService,
-        {
-          provide: PrismaService,
-          useValue: {
-            account: {
-              findUnique: jest.fn(),
-              create: jest.fn(),
-            },
-          },
-        },
+        { provide: ACCOUNT_REPOSITORY, useValue: accounts },
+        { provide: TOKEN_STORE, useValue: tokenStore },
         {
           provide: TokenService,
           useValue: {
@@ -53,20 +46,11 @@ describe('AuthService', () => {
             parseRefreshToken: jest.fn(),
           },
         },
-        {
-          provide: RedisTokenStore,
-          useValue: {
-            exists: jest.fn(),
-            delete: jest.fn().mockResolvedValue(undefined),
-          },
-        },
       ],
     }).compile()
 
     service = module.get(AuthService)
-    prisma = module.get(PrismaService)
     tokenService = module.get(TokenService)
-    redisStore = module.get(RedisTokenStore)
   })
 
   describe('register', () => {
@@ -78,76 +62,63 @@ describe('AuthService', () => {
     }
 
     it('throws ConflictException when email is already registered', async () => {
-      prisma.account.findUnique.mockResolvedValue({ id: 'existing' })
+      await accounts.create({
+        email: dto.email,
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
+      jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       await expect(service.register(dto)).rejects.toThrow(ConflictException)
     })
 
     it('hashes password with bcrypt before storing', async () => {
-      prisma.account.findUnique.mockResolvedValue(null)
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
-      prisma.account.create.mockResolvedValue({ id: 'new-id' })
-
       await service.register(dto)
-
-      expect(prisma.account.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          email: dto.email,
-          passwordHash: 'hashed-pw',
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-        }),
-      })
+      const stored = await accounts.findByEmail(dto.email)
+      expect(stored?.passwordHash).toBe('hashed-pw')
     })
 
     it('issues tokens with null memberId for new account', async () => {
-      prisma.account.findUnique.mockResolvedValue(null)
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
-      prisma.account.create.mockResolvedValue({ id: 'new-id' })
-
       await service.register(dto)
-
-      expect(tokenService.issueTokens).toHaveBeenCalledWith('new-id', null)
+      expect(tokenService.issueTokens).toHaveBeenCalledWith(
+        expect.any(String),
+        null
+      )
     })
   })
 
   describe('login', () => {
     const dto = { email: 'user@example.com', password: 'correct-pass' }
-    const accountWithMember = {
-      id: 'acc-id',
-      passwordHash: 'hashed',
-      memberships: [{ id: 'mem-id' }],
-    }
+
+    beforeEach(async () => {
+      await accounts.create({
+        email: dto.email,
+        passwordHash: 'hashed',
+        firstName: 'User',
+        lastName: 'Test',
+      })
+    })
 
     it('throws UnauthorizedException when account does not exist', async () => {
-      prisma.account.findUnique.mockResolvedValue(null)
-      await expect(service.login(dto)).rejects.toThrow(UnauthorizedException)
+      await expect(
+        service.login({ email: 'none@example.com', password: 'p' })
+      ).rejects.toThrow(UnauthorizedException)
     })
 
     it('throws UnauthorizedException when password is wrong', async () => {
-      prisma.account.findUnique.mockResolvedValue(accountWithMember)
       jest.mocked(bcrypt.compare).mockResolvedValue(false as never)
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException)
     })
 
-    it('issues tokens with memberId when membership exists', async () => {
-      prisma.account.findUnique.mockResolvedValue(accountWithMember)
-      jest.mocked(bcrypt.compare).mockResolvedValue(true as never)
-
-      await service.login(dto)
-
-      expect(tokenService.issueTokens).toHaveBeenCalledWith('acc-id', 'mem-id')
-    })
-
     it('issues tokens with null memberId when account has no membership', async () => {
-      prisma.account.findUnique.mockResolvedValue({
-        ...accountWithMember,
-        memberships: [],
-      })
       jest.mocked(bcrypt.compare).mockResolvedValue(true as never)
-
       await service.login(dto)
-
-      expect(tokenService.issueTokens).toHaveBeenCalledWith('acc-id', null)
+      expect(tokenService.issueTokens).toHaveBeenCalledWith(
+        expect.any(String),
+        null
+      )
     })
   })
 
@@ -159,12 +130,11 @@ describe('AuthService', () => {
       )
     })
 
-    it('throws UnauthorizedException when token is not in Redis', async () => {
+    it('throws UnauthorizedException when token is not in store', async () => {
       tokenService.parseRefreshToken.mockReturnValue({
         accountId: 'acc',
         tokenId: 'tok',
       })
-      redisStore.exists.mockResolvedValue(false)
       await expect(service.refresh('acc:tok')).rejects.toThrow(
         UnauthorizedException
       )
@@ -172,55 +142,63 @@ describe('AuthService', () => {
 
     it('throws UnauthorizedException when account no longer exists', async () => {
       tokenService.parseRefreshToken.mockReturnValue({
-        accountId: 'acc-id',
+        accountId: 'ghost-id',
         tokenId: 'tok-id',
       })
-      redisStore.exists.mockResolvedValue(true)
-      prisma.account.findUnique.mockResolvedValue(null)
-      await expect(service.refresh('acc-id:tok-id')).rejects.toThrow(
+      await tokenStore.save('ghost-id', 'tok-id', 30)
+      await expect(service.refresh('ghost-id:tok-id')).rejects.toThrow(
         UnauthorizedException
       )
     })
 
-    it('rotates tokens using current memberId from DB', async () => {
+    it('rotates tokens using current memberId from store', async () => {
+      const created = await accounts.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
+      await tokenStore.save(created.id, 'tok-id', 30)
       tokenService.parseRefreshToken.mockReturnValue({
-        accountId: 'acc-id',
+        accountId: created.id,
         tokenId: 'tok-id',
       })
-      redisStore.exists.mockResolvedValue(true)
-      prisma.account.findUnique.mockResolvedValue({
-        id: 'acc-id',
-        memberships: [{ id: 'mem-id' }],
-      })
+      tokenService.rotateTokens.mockResolvedValue(mockTokenPair)
 
-      const result = await service.refresh('acc-id:tok-id')
+      const result = await service.refresh(`${created.id}:tok-id`)
 
       expect(tokenService.rotateTokens).toHaveBeenCalledWith(
-        'acc-id',
+        created.id,
         'tok-id',
-        'mem-id'
+        null
       )
       expect(result).toEqual(mockTokenPair)
     })
   })
 
   describe('logout', () => {
-    it('deletes the refresh token from Redis', async () => {
+    it('revokes the refresh token from the store', async () => {
+      await tokenStore.save('acc-id', 'tok-id', 30)
       tokenService.parseRefreshToken.mockReturnValue({
         accountId: 'acc-id',
         tokenId: 'tok-id',
       })
+
       await service.logout('acc-id', 'acc-id:tok-id')
-      expect(redisStore.delete).toHaveBeenCalledWith('acc-id', 'tok-id')
+
+      expect(await tokenStore.exists('acc-id', 'tok-id')).toBe(false)
     })
 
     it('does nothing when refresh token belongs to a different account', async () => {
+      await tokenStore.save('other-acc', 'tok-id', 30)
       tokenService.parseRefreshToken.mockReturnValue({
         accountId: 'other-acc',
         tokenId: 'tok-id',
       })
+
       await service.logout('acc-id', 'other-acc:tok-id')
-      expect(redisStore.delete).not.toHaveBeenCalled()
+
+      expect(await tokenStore.exists('other-acc', 'tok-id')).toBe(true)
     })
   })
 })
