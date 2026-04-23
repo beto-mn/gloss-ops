@@ -9,7 +9,7 @@
 | Monorepo scaffold | ✅ Complete | pnpm workspaces, Husky, docker-compose |
 | `packages/database` | ✅ Complete | Full Prisma schema, migrations, seed, tsconfig |
 | `apps/api` — Config | ✅ Complete | Zod-validated env schema, barrel export |
-| `apps/api` — Auth module | ✅ Complete | JWT + Redis refresh tokens, RBAC guards, 36 tests |
+| `apps/api` — Auth module | ✅ Complete | JWT + Redis refresh tokens, RBAC guards, repository pattern, 45 tests |
 | `apps/api` — TS path aliases | ✅ Complete | `tsconfig.paths.json`, barrel exports, Jest mapper |
 | `packages/shared` | ⏳ Pending | No source yet |
 | `apps/api` — Domain modules | ⏳ Pending | organizations, customers, work-orders, etc. |
@@ -51,14 +51,24 @@ Endpoints:
 
 Infrastructure:
 
-- `AuthGuard` — verifies JWT, loads account + membership from DB, attaches `AuthContext` to request
+- `AuthGuard` — verifies JWT, loads account + membership via `AccountRepositoryInterface`, attaches `AuthContext` to request
 - `RolesGuard` — RBAC check against `OrganizationMember.role` (`OWNER`, `MANAGER`, `TECHNICIAN`, `FRONT_DESK`)
-- `RedisTokenStore` — refresh token lifecycle in Redis (save, exists, delete)
 - `@Public()` decorator — opts a route out of the auth guard
 - `@Roles(...roles)` decorator — restricts a route to specific roles
 - `@CurrentAccount()` param decorator — extracts typed `AuthContext` from request
 - `AuthContext` interface — `{ sub, memberId, email, branchId, organizationId, role }`
-- **36 unit tests** — all passing
+- **45 unit tests** — all passing
+
+Repository pattern:
+
+- `AccountRepositoryInterface` + `TokenStoreInterface` — contracts in `interfaces/`
+- `auth.tokens.ts` — DI injection symbols (`ACCOUNT_REPOSITORY`, `TOKEN_STORE`)
+- `infrastructure/prisma-account.repository.ts` — Prisma implementation (production)
+- `infrastructure/redis-token.store.ts` — Redis implementation (production)
+- `infrastructure/in-memory-account.repository.ts` — sync in-memory implementation (tests)
+- `infrastructure/in-memory-token.store.ts` — sync in-memory implementation (tests)
+- `AuthModule` binds tokens to implementations — services and guards depend only on interfaces
+- Tests use `{ provide: TOKEN, useClass: InMemoryX }` — no Prisma or Redis mocks
 
 TypeScript infrastructure:
 
@@ -100,6 +110,8 @@ Each module follows the pattern: `module / controller / service`, all scoped by 
 - `organizationId` must always come from `request.user.organizationId` — never from the request body
 - All Prisma queries must include tenant scope (`organizationId` or `branchId`) before executing
 - The `register` endpoint should create an `Organization` + first `Branch` + `OrganizationMember` (role: `OWNER`) in a single transaction
+- Each module must follow the repository pattern established in `auth/` — see `CLAUDE.md` for the required structure
+- `PrismaService` may only be injected inside `infrastructure/` classes — never in services, guards, or controllers
 
 ---
 
