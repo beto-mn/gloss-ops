@@ -1,4 +1,3 @@
-export { RedisTokenStore } from './redis-token.store'
 export { AuthController } from './auth.controller'
 export { TokenService } from './token.service'
 export { AuthService } from './auth.service'

@@ -1,3 +1,7 @@
+export type { AccountRepositoryInterface } from './account.repository.interface'
+export type { AccountWithMemberships } from './account.repository.interface'
+export type { CreateAccountData } from './account.repository.interface'
+export type { TokenStoreInterface } from './token.store.interface'
 export type { AuthContext } from './auth-context.interface'
 export type { JwtPayload } from './jwt-payload.interface'
 export type { TokenPair } from './token-pair.interface'
