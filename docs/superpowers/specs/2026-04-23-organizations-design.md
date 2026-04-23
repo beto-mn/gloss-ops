@@ -40,9 +40,16 @@ The `AuthGuard` reads this header, looks up the `OrganizationMember` record for 
 
 An `Account` can belong to up to **5 organizations**. Role is stored in `OrganizationMember.role`, not on the account — a user can have different roles in different organizations.
 
-### Invitations — simple token-based, no table
+### Invitations — Redis-backed token, single-use
 
-Invitations are signed JWTs (7-day expiry) containing `{ orgId, email, role }`. No `Invitation` table. The signing secret is a dedicated env var (`JWT_INVITATION_SECRET`).
+Invitations use a random UUID token stored in Redis with a TTL. No `Invitation` table, no JWT signing for invitations.
+
+- On create: generate `crypto.randomUUID()` → store `invitation:<uuid>` → `{ orgId, email, role }` in Redis with configurable TTL (default 7 days)
+- On accept: look up token in Redis → process → **delete immediately** (single-use guarantee)
+- On expiry: Redis evicts the key automatically — link becomes invalid with no cleanup needed
+- Revocable: a future endpoint can delete the Redis key to cancel a pending invitation
+
+TTL is driven by env var `INVITATION_EXPIRES_IN_DAYS` (default: 7).
 
 ---
 
@@ -101,10 +108,13 @@ Slug is validated with a regex (`/^[a-z0-9-]+$/`). If the user does not provide 
 organizations/
   interfaces/
     organization.repository.interface.ts
+    invitation.store.interface.ts
     index.ts
   infrastructure/
     prisma-organization.repository.ts
     in-memory-organization.repository.ts
+    redis-invitation.store.ts
+    in-memory-invitation.store.ts
   organizations.tokens.ts
   organizations.module.ts
   organizations.service.ts
@@ -156,29 +166,50 @@ addMember(organizationId: string, accountId: string, role: Role): Promise<Organi
 > - `findMember` → `WHERE branch.organization_id = ? AND account_id = ?`
 > - `addMember` → uses the org's main branch (`isMain: true`) as the target `branchId`
 
-### Injection token
+### Injection tokens
 
 ```ts
 // organizations.tokens.ts
 export const ORGANIZATION_REPOSITORY = Symbol('ORGANIZATION_REPOSITORY')
+export const INVITATION_STORE       = Symbol('INVITATION_STORE')
 ```
+
+### `InvitationStoreInterface`
+
+```ts
+export interface InvitationPayload {
+  orgId: string
+  email: string
+  role:  Role
+}
+
+export interface InvitationStoreInterface {
+  save(token: string, payload: InvitationPayload, ttlDays: number): Promise<void>
+  get(token: string): Promise<InvitationPayload | null>
+  delete(token: string): Promise<void>
+}
+```
+
+Redis key pattern: `invitation:<uuid>`
 
 ### Invitation flow
 
 **`POST /organizations/invitations`** — body: `{ email: string, role: Role }`
 
 - Requires `X-Organization-Id` header + OWNER or MANAGER role
-- Signs a JWT: `{ orgId, email, role }`, expires in 7 days, secret: `JWT_INVITATION_SECRET`
+- Generates `crypto.randomUUID()` as token
+- Calls `InvitationStore.save(token, { orgId, email, role }, INVITATION_EXPIRES_IN_DAYS)`
 - Returns `{ invitationUrl: string }` — frontend is responsible for sending the email (for now)
 - Future: trigger email send via a queue
 
 **`POST /organizations/invitations/accept`** — body: `{ token: string, firstName?: string, lastName?: string, password?: string }`
 
 - `@Public()` — no auth required
-- Validates invitation JWT → extracts `{ orgId, email, role }`
+- `InvitationStore.get(token)` → if null → `400 invalid_invitation`
 - Checks account with that email exists:
-  - **Exists:** check org membership cap (≤5) → `addMember()` → issue tokens
-  - **Does not exist:** requires `firstName`, `lastName`, `password` in body → `AccountRepository.create()` → `addMember()` → issue tokens
+  - **Exists:** check org membership cap (≤5) → `addMember()` → `InvitationStore.delete(token)` → issue tokens
+  - **Does not exist:** requires `firstName`, `lastName`, `password` → `AccountRepository.create()` → `addMember()` → `InvitationStore.delete(token)` → issue tokens
+- Token is deleted **after** successful processing — a failed accept leaves the token valid for retry
 - Returns standard `TokenPair`
 
 ---
@@ -216,16 +247,19 @@ All tests use `InMemoryOrganizationRepository` — no Prisma or Redis mocks.
 
 ### `organizations.service.spec.ts`
 
+Tests use `InMemoryOrganizationRepository` + `InMemoryInvitationStore` — no Prisma, no Redis.
+
 - `getMyOrganization` — found / not a member
 - `updateOrganization` — success / unauthorized role
 - `listMembers` — returns members scoped to active org
-- `createInvitation` — returns signed token with correct fields
+- `createInvitation` — token saved in store / returns invitationUrl
 - `acceptInvitation`:
-  - existing account → membership added → tokens issued
-  - new account → account + membership created → tokens issued
-  - expired/invalid token → 400
+  - existing account → membership added → token deleted → tokens issued
+  - new account → account + membership created → token deleted → tokens issued
+  - token not in store (expired or invalid) → 400
   - already a member → 409
   - cap reached → 422
+  - failed accept → token still present in store (retry safe)
 
 ### `auth.service.spec.ts` (updates)
 
@@ -244,4 +278,6 @@ All tests use `InMemoryOrganizationRepository` — no Prisma or Redis mocks.
 - Branch management endpoints (future module)
 - Email delivery (invitation URL returned to frontend, email sending deferred)
 - DB transaction wrapping register flow (see `docs/decisions/deferred-transactions.md`)
-- Revoking or listing pending invitations (no invitation table in this iteration)
+- Email delivery for invitations (URL returned to frontend, sending deferred to a queue)
+- Revoking pending invitations via API (Redis key can be deleted manually; endpoint deferred)
+- Listing pending invitations (no invitation table — only Redis keys with TTL)
