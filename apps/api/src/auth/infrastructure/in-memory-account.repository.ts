@@ -15,17 +15,15 @@ export class InMemoryAccountRepository implements AccountRepositoryInterface {
     this.accounts.push(...accounts)
   }
 
-  async findByEmail(email: string): Promise<AccountWithMemberships | null> {
-    return this.accounts.find((a) => a.email === email) ?? null
+  findByEmail(email: string): Promise<AccountWithMemberships | null> {
+    return Promise.resolve(this.accounts.find((a) => a.email === email) ?? null)
   }
 
-  async findByIdWithMemberships(
-    id: string
-  ): Promise<AccountWithMemberships | null> {
-    return this.accounts.find((a) => a.id === id) ?? null
+  findByIdWithMemberships(id: string): Promise<AccountWithMemberships | null> {
+    return Promise.resolve(this.accounts.find((a) => a.id === id) ?? null)
   }
 
-  async create(data: CreateAccountData): Promise<Prisma.AccountModel> {
+  create(data: CreateAccountData): Promise<Prisma.AccountModel> {
     const account: AccountWithMemberships = {
       id: randomUUID(),
       avatarUrl: null,
@@ -35,6 +33,6 @@ export class InMemoryAccountRepository implements AccountRepositoryInterface {
       ...data,
     }
     this.accounts.push(account)
-    return account
+    return Promise.resolve(account)
   }
 }
