@@ -5,19 +5,21 @@ import {
   ExecutionContext,
   CanActivate,
   Injectable,
+  Inject,
 } from '@nestjs/common'
 
-import type { AuthContext } from '@auth/interfaces'
+import type { AuthContext, AccountRepositoryInterface } from '@auth/interfaces'
 import { IS_PUBLIC_KEY } from '@auth/decorators'
-import { PrismaService } from '@prisma'
 
+import { ACCOUNT_REPOSITORY } from '../auth.tokens'
 import { TokenService } from '../token.service'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accounts: AccountRepositoryInterface,
     private readonly tokenService: TokenService,
-    private readonly prisma: PrismaService,
     private readonly reflector: Reflector
   ) {}
 
@@ -42,10 +44,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException()
     }
 
-    const account = await this.prisma.account.findUnique({
-      where: { id: payload.sub },
-      include: { memberships: { include: { branch: true } } },
-    })
+    const account = await this.accounts.findByIdWithMemberships(payload.sub)
     if (!account) throw new UnauthorizedException()
 
     const membership = account.memberships[0] ?? null

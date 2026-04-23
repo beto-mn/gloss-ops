@@ -1,10 +1,11 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common'
 import Redis from 'ioredis'
 
+import type { TokenStoreInterface } from '@auth/interfaces'
 import { envs } from '@config'
 
 @Injectable()
-export class RedisTokenStore implements OnModuleDestroy {
+export class RedisTokenStore implements TokenStoreInterface, OnModuleDestroy {
   private readonly client: Redis
 
   constructor() {
