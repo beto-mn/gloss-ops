@@ -1,4 +1,10 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
+import {
+  MinLength,
+  MaxLength,
+  IsString,
+  Matches,
+  IsEmail,
+} from 'class-validator'
 
 export class RegisterDto {
   @IsEmail()
@@ -18,4 +24,17 @@ export class RegisterDto {
   @MinLength(1)
   @MaxLength(100)
   lastName: string
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  organizationName: string
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(63)
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'slug must be lowercase alphanumeric with hyphens',
+  })
+  organizationSlug: string
 }

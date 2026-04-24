@@ -6,13 +6,15 @@ import {
   Inject,
 } from '@nestjs/common'
 
+import type { OrganizationRepositoryInterface } from '@organizations/interfaces'
 import { RegisterDto, LoginDto } from '@auth/dto'
 import type {
-  TokenPair,
   AccountRepositoryInterface,
   TokenStoreInterface,
+  TokenPair,
 } from '@auth/interfaces'
 
+import { ORGANIZATION_REPOSITORY } from '../organizations/organizations.tokens'
 import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
 import { TokenService } from './token.service'
 
@@ -21,8 +23,10 @@ export class AuthService {
   constructor(
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accounts: AccountRepositoryInterface,
-    private readonly tokenService: TokenService,
-    @Inject(TOKEN_STORE) private readonly tokenStore: TokenStoreInterface
+    @Inject(ORGANIZATION_REPOSITORY)
+    private readonly organizations: OrganizationRepositoryInterface,
+    @Inject(TOKEN_STORE) private readonly tokenStore: TokenStoreInterface,
+    private readonly tokenService: TokenService
   ) {}
 
   async register(dto: RegisterDto): Promise<TokenPair> {
@@ -38,7 +42,12 @@ export class AuthService {
       lastName: dto.lastName,
     })
 
-    return this.tokenService.issueTokens(account.id, null)
+    await this.organizations.createWithBranch(
+      { name: dto.organizationName, slug: dto.organizationSlug },
+      account.id
+    )
+
+    return this.tokenService.issueTokens(account.id, account.email)
   }
 
   async login(dto: LoginDto): Promise<TokenPair> {
@@ -50,8 +59,7 @@ export class AuthService {
     if (!valid)
       throw new UnauthorizedException({ error: 'invalid_credentials' })
 
-    const memberId = account.memberships[0]?.id ?? null
-    return this.tokenService.issueTokens(account.id, memberId)
+    return this.tokenService.issueTokens(account.id, account.email)
   }
 
   async refresh(refreshToken: string): Promise<TokenPair> {
@@ -64,12 +72,11 @@ export class AuthService {
     if (!exists)
       throw new UnauthorizedException({ error: 'invalid_refresh_token' })
 
-    const account = await this.accounts.findByIdWithMemberships(accountId)
+    const account = await this.accounts.findById(accountId)
     if (!account)
       throw new UnauthorizedException({ error: 'invalid_refresh_token' })
 
-    const memberId = account.memberships[0]?.id ?? null
-    return this.tokenService.rotateTokens(accountId, tokenId, memberId)
+    return this.tokenService.rotateTokens(accountId, tokenId, account.email)
   }
 
   async logout(accountId: string, refreshToken: string): Promise<void> {

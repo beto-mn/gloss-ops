@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 
 import { AuthGuard, RolesGuard } from '@auth/guards'
@@ -6,6 +6,7 @@ import { PrismaModule } from '@prisma'
 import { envs } from '@config'
 
 import { PrismaAccountRepository } from './infrastructure/prisma-account.repository'
+import { OrganizationsModule } from '../organizations/organizations.module'
 import { RedisTokenStore } from './infrastructure/redis-token.store'
 import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
 import { AuthController } from './auth.controller'
@@ -19,6 +20,7 @@ import { AuthService } from './auth.service'
       secret: envs.jwt.accessSecret,
       signOptions: { expiresIn: envs.jwt.accessExpiresInSeconds },
     }),
+    forwardRef(() => OrganizationsModule),
   ],
   controllers: [AuthController],
   providers: [
@@ -29,6 +31,6 @@ import { AuthService } from './auth.service'
     RolesGuard,
     AuthGuard,
   ],
-  exports: [AuthGuard, RolesGuard, TokenService, JwtModule],
+  exports: [AuthGuard, RolesGuard, TokenService, JwtModule, ACCOUNT_REPOSITORY],
 })
 export class AuthModule {}

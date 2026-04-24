@@ -1,5 +1,4 @@
 export type { AccountRepositoryInterface } from './account.repository.interface'
-export type { AccountWithMemberships } from './account.repository.interface'
 export type { CreateAccountData } from './account.repository.interface'
 export type { TokenStoreInterface } from './token.store.interface'
 export type { AuthContext } from './auth-context.interface'

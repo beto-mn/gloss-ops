@@ -11,6 +11,8 @@ const schema = z.object({
     .int()
     .positive()
     .default(900),
+  INVITATION_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(7),
+  APP_FRONTEND_URL: z.string().url().default('http://localhost:3001'),
 })
 
 const parsed = schema.safeParse(process.env)
@@ -36,4 +38,6 @@ export const envs = {
     accessExpiresInSeconds: env.JWT_ACCESS_EXPIRES_IN_SECONDS,
     refreshExpiresInDays: env.JWT_REFRESH_EXPIRES_IN_DAYS,
   },
+  invitation: { expiresInDays: env.INVITATION_EXPIRES_IN_DAYS },
+  app: { frontendUrl: env.APP_FRONTEND_URL },
 }

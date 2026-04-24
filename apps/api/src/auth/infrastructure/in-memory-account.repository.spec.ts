@@ -31,7 +31,6 @@ describe('InMemoryAccountRepository', () => {
       })
       const result = await repo.findByEmail('a@b.com')
       expect(result?.email).toBe('a@b.com')
-      expect(result?.memberships).toEqual([])
     })
 
     it('returns null when no account matches', async () => {
@@ -39,21 +38,20 @@ describe('InMemoryAccountRepository', () => {
     })
   })
 
-  describe('findByIdWithMemberships', () => {
-    it('returns account with empty memberships after create', async () => {
+  describe('findById', () => {
+    it('returns account when id matches', async () => {
       const created = await repo.create({
         email: 'a@b.com',
         passwordHash: 'h',
         firstName: 'A',
         lastName: 'B',
       })
-      const result = await repo.findByIdWithMemberships(created.id)
+      const result = await repo.findById(created.id)
       expect(result?.id).toBe(created.id)
-      expect(result?.memberships).toEqual([])
     })
 
     it('returns null when id does not exist', async () => {
-      expect(await repo.findByIdWithMemberships('nonexistent')).toBeNull()
+      expect(await repo.findById('nonexistent')).toBeNull()
     })
   })
 
@@ -69,7 +67,6 @@ describe('InMemoryAccountRepository', () => {
           avatarUrl: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          memberships: [],
         },
       ])
       const result = await repo.findByEmail('seeded@b.com')

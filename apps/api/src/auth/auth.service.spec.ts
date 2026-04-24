@@ -4,9 +4,11 @@ import * as bcrypt from 'bcrypt'
 
 import type { TokenPair } from '@auth/interfaces'
 
-import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
+import { InMemoryOrganizationRepository } from '../organizations/infrastructure/in-memory-organization.repository'
+import { ORGANIZATION_REPOSITORY } from '../organizations/organizations.tokens'
 import { InMemoryAccountRepository } from './infrastructure/in-memory-account.repository'
 import { InMemoryTokenStore } from './infrastructure/in-memory-token.store'
+import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
 import { TokenService } from './token.service'
 import { AuthService } from './auth.service'
 
@@ -25,18 +27,21 @@ const mockTokenPair: TokenPair = {
 describe('AuthService', () => {
   let service: AuthService
   let accounts: InMemoryAccountRepository
+  let organizations: InMemoryOrganizationRepository
   let tokenStore: InMemoryTokenStore
   let tokenService: jest.Mocked<TokenService>
 
   beforeEach(async () => {
     jest.clearAllMocks()
     accounts = new InMemoryAccountRepository()
+    organizations = new InMemoryOrganizationRepository()
     tokenStore = new InMemoryTokenStore()
 
     const module = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: ACCOUNT_REPOSITORY, useValue: accounts },
+        { provide: ORGANIZATION_REPOSITORY, useValue: organizations },
         { provide: TOKEN_STORE, useValue: tokenStore },
         {
           provide: TokenService,
@@ -59,6 +64,8 @@ describe('AuthService', () => {
       password: 'password123',
       firstName: 'Ana',
       lastName: 'García',
+      organizationName: 'Taller Test',
+      organizationSlug: 'taller-test',
     }
 
     it('throws ConflictException when email is already registered', async () => {
@@ -79,12 +86,22 @@ describe('AuthService', () => {
       expect(stored?.passwordHash).toBe('hashed-pw')
     })
 
-    it('issues tokens with null memberId for new account', async () => {
+    it('creates organization with the given name and slug', async () => {
+      jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
+      await service.register(dto)
+      const stored = await accounts.findByEmail(dto.email)
+      const orgs = await organizations.findAllByAccountId(stored!.id)
+      expect(orgs).toHaveLength(1)
+      expect(orgs[0].name).toBe('Taller Test')
+      expect(orgs[0].slug).toBe('taller-test')
+    })
+
+    it('issues tokens with account id and email', async () => {
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       await service.register(dto)
       expect(tokenService.issueTokens).toHaveBeenCalledWith(
         expect.any(String),
-        null
+        dto.email
       )
     })
   })
@@ -112,12 +129,12 @@ describe('AuthService', () => {
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException)
     })
 
-    it('issues tokens with null memberId when account has no membership', async () => {
+    it('issues tokens with account id and email', async () => {
       jest.mocked(bcrypt.compare).mockResolvedValue(true as never)
       await service.login(dto)
       expect(tokenService.issueTokens).toHaveBeenCalledWith(
         expect.any(String),
-        null
+        dto.email
       )
     })
   })
@@ -151,7 +168,7 @@ describe('AuthService', () => {
       )
     })
 
-    it('rotates tokens using current memberId from store', async () => {
+    it('rotates tokens using account email', async () => {
       const created = await accounts.create({
         email: 'a@b.com',
         passwordHash: 'h',
@@ -170,7 +187,7 @@ describe('AuthService', () => {
       expect(tokenService.rotateTokens).toHaveBeenCalledWith(
         created.id,
         'tok-id',
-        null
+        'a@b.com'
       )
       expect(result).toEqual(mockTokenPair)
     })
@@ -183,9 +200,7 @@ describe('AuthService', () => {
         accountId: 'acc-id',
         tokenId: 'tok-id',
       })
-
       await service.logout('acc-id', 'acc-id:tok-id')
-
       expect(await tokenStore.exists('acc-id', 'tok-id')).toBe(false)
     })
 
@@ -195,9 +210,7 @@ describe('AuthService', () => {
         accountId: 'other-acc',
         tokenId: 'tok-id',
       })
-
       await service.logout('acc-id', 'other-acc:tok-id')
-
       expect(await tokenStore.exists('other-acc', 'tok-id')).toBe(true)
     })
   })
