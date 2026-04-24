@@ -4,7 +4,6 @@ import type { Prisma } from '@glossops/database'
 
 import type {
   AccountRepositoryInterface,
-  AccountWithMemberships,
   CreateAccountData,
 } from '@auth/interfaces'
 import { PrismaService } from '@prisma'
@@ -13,23 +12,15 @@ import { PrismaService } from '@prisma'
 export class PrismaAccountRepository implements AccountRepositoryInterface {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<AccountWithMemberships | null> {
-    return this.prisma.account.findUnique({
-      where: { email },
-      include: { memberships: { include: { branch: true } } },
-    })
+  findByEmail(email: string): Promise<Prisma.AccountModel | null> {
+    return this.prisma.account.findUnique({ where: { email } })
   }
 
-  async findByIdWithMemberships(
-    id: string
-  ): Promise<AccountWithMemberships | null> {
-    return this.prisma.account.findUnique({
-      where: { id },
-      include: { memberships: { include: { branch: true } } },
-    })
+  findById(id: string): Promise<Prisma.AccountModel | null> {
+    return this.prisma.account.findUnique({ where: { id } })
   }
 
-  async create(data: CreateAccountData): Promise<Prisma.AccountModel> {
+  create(data: CreateAccountData): Promise<Prisma.AccountModel> {
     return this.prisma.account.create({ data })
   }
 }

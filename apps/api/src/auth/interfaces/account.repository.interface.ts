@@ -1,9 +1,5 @@
 import type { Prisma } from '@glossops/database'
 
-export type AccountWithMemberships = Prisma.AccountGetPayload<{
-  include: { memberships: { include: { branch: true } } }
-}>
-
 export interface CreateAccountData {
   email: string
   passwordHash: string
@@ -12,7 +8,7 @@ export interface CreateAccountData {
 }
 
 export interface AccountRepositoryInterface {
-  findByEmail(email: string): Promise<AccountWithMemberships | null>
-  findByIdWithMemberships(id: string): Promise<AccountWithMemberships | null>
+  findByEmail(email: string): Promise<Prisma.AccountModel | null>
+  findById(id: string): Promise<Prisma.AccountModel | null>
   create(data: CreateAccountData): Promise<Prisma.AccountModel>
 }

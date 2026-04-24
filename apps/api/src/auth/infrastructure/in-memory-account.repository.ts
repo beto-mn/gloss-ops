@@ -4,32 +4,30 @@ import type { Prisma } from '@glossops/database'
 
 import type {
   AccountRepositoryInterface,
-  AccountWithMemberships,
   CreateAccountData,
 } from '@auth/interfaces'
 
 export class InMemoryAccountRepository implements AccountRepositoryInterface {
-  private readonly accounts: AccountWithMemberships[] = []
+  private readonly accounts: Prisma.AccountModel[] = []
 
-  seed(accounts: AccountWithMemberships[]): void {
+  seed(accounts: Prisma.AccountModel[]): void {
     this.accounts.push(...accounts)
   }
 
-  findByEmail(email: string): Promise<AccountWithMemberships | null> {
+  findByEmail(email: string): Promise<Prisma.AccountModel | null> {
     return Promise.resolve(this.accounts.find((a) => a.email === email) ?? null)
   }
 
-  findByIdWithMemberships(id: string): Promise<AccountWithMemberships | null> {
+  findById(id: string): Promise<Prisma.AccountModel | null> {
     return Promise.resolve(this.accounts.find((a) => a.id === id) ?? null)
   }
 
   create(data: CreateAccountData): Promise<Prisma.AccountModel> {
-    const account: AccountWithMemberships = {
+    const account: Prisma.AccountModel = {
       id: randomUUID(),
       avatarUrl: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      memberships: [],
       ...data,
     }
     this.accounts.push(account)
