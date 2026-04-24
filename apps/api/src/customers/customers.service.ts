@@ -98,6 +98,6 @@ export class CustomersService {
 
   async remove(id: string, organizationId: string): Promise<void> {
     await this.findOne(id, organizationId)
-    return this.customers.delete(id, organizationId)
+    await this.customers.delete(id, organizationId)
   }
 }

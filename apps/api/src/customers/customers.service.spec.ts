@@ -1,5 +1,5 @@
-import { Test } from '@nestjs/testing'
 import { ConflictException, NotFoundException } from '@nestjs/common'
+import { Test } from '@nestjs/testing'
 
 import { InMemoryCustomerRepository } from './infrastructure/in-memory-customer.repository'
 import { CustomersService } from './customers.service'
