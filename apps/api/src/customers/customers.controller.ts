@@ -13,9 +13,9 @@ import {
 import type { Prisma } from '@glossops/database'
 import { Role } from '@glossops/database'
 
-import type { AuthContext } from '@auth/interfaces'
-import { CurrentAccount, Roles } from '@auth/decorators'
 import type { CustomerPage } from '@customers/interfaces'
+import { CurrentAccount, Roles } from '@auth/decorators'
+import type { AuthContext } from '@auth/interfaces'
 
 import { CreateCustomerDto, UpdateCustomerDto, ListCustomersDto } from './dto'
 import { CustomersService } from './customers.service'
