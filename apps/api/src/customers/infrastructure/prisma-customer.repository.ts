@@ -84,15 +84,22 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     return this.prisma.customer.findFirst({ where: { phone, organizationId } })
   }
 
-  update(
+  async update(
     id: string,
     organizationId: string,
     data: UpdateCustomerData
   ): Promise<Prisma.CustomerModel> {
-    return this.prisma.customer.update({ where: { id }, data })
+    await this.prisma.customer.updateMany({
+      where: { id, organizationId },
+      data,
+    })
+    const record = await this.prisma.customer.findFirst({
+      where: { id, organizationId },
+    })
+    return record!
   }
 
-  async delete(id: string, _organizationId: string): Promise<void> {
-    await this.prisma.customer.delete({ where: { id } })
+  async delete(id: string, organizationId: string): Promise<void> {
+    await this.prisma.customer.deleteMany({ where: { id, organizationId } })
   }
 }
