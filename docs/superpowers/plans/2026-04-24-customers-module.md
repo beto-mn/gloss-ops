@@ -2,38 +2,41 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the `customers` module — full CRUD for tenant-scoped customers, following the repository pattern established by `organizations`.
+**Goal:** Implement the `customers` module — full CRUD with text search, pagination, and per-org uniqueness on email/phone, following the repository pattern established by `organizations`.
 
-**Architecture:** Follows the exact same structure as `organizations`: repository interface → in-memory implementation → Prisma implementation → service → controller → module wiring. All queries filter by `organizationId` to enforce tenant isolation. No cross-module dependencies beyond `AuthModule` (for guards/decorators) and `PrismaModule`.
+**Architecture:** Repository interface → in-memory implementation (tests) → Prisma implementation → service (business logic + uniqueness) → controller (HTTP). All queries filter by `organizationId`. `CustomerPage` wraps `data + meta` for paginated responses. Uniqueness is enforced at the service layer via `findByEmail` / `findByPhone` before create/update.
 
-**Tech Stack:** NestJS, TypeScript, Prisma (`@glossops/database`), class-validator, Jest (in-memory implementations for tests — no Prisma mocks).
+**Tech Stack:** NestJS, TypeScript, Prisma (`@glossops/database`), class-validator, class-transformer, Jest.
+
+**Spec:** `docs/superpowers/specs/2026-04-24-customers-module-design.md`
 
 ---
 
 ## File Map
 
-| Action | Path                                                                          | Responsibility                                                      |
-| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Create | `apps/api/src/customers/interfaces/customer.repository.interface.ts`          | Contract + data types                                               |
-| Create | `apps/api/src/customers/interfaces/index.ts`                                  | Barrel — types only                                                 |
-| Create | `apps/api/src/customers/infrastructure/in-memory-customer.repository.ts`      | In-memory impl for tests                                            |
-| Create | `apps/api/src/customers/infrastructure/in-memory-customer.repository.spec.ts` | Unit tests for in-memory                                            |
-| Create | `apps/api/src/customers/infrastructure/prisma-customer.repository.ts`         | Prisma impl                                                         |
-| Create | `apps/api/src/customers/dto/create-customer.dto.ts`                           | Validated input DTO                                                 |
-| Create | `apps/api/src/customers/dto/update-customer.dto.ts`                           | Partial update DTO                                                  |
-| Create | `apps/api/src/customers/dto/index.ts`                                         | Barrel                                                              |
-| Create | `apps/api/src/customers/customers.tokens.ts`                                  | DI injection token                                                  |
-| Create | `apps/api/src/customers/customers.service.ts`                                 | Business logic                                                      |
-| Create | `apps/api/src/customers/customers.service.spec.ts`                            | Service unit tests                                                  |
-| Create | `apps/api/src/customers/customers.controller.ts`                              | HTTP endpoints                                                      |
-| Create | `apps/api/src/customers/customers.module.ts`                                  | NestJS module wiring                                                |
-| Create | `apps/api/src/customers/index.ts`                                             | Module barrel                                                       |
-| Modify | `apps/api/tsconfig.paths.json`                                                | Add `@customers`, `@customers/dto`, `@customers/interfaces` aliases |
-| Modify | `apps/api/src/app.module.ts`                                                  | Import `CustomersModule`                                            |
+| Action | Path                                                                          | Responsibility                                              |
+| ------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Create | `apps/api/src/customers/interfaces/customer.repository.interface.ts`          | All domain types + repository contract                      |
+| Create | `apps/api/src/customers/interfaces/index.ts`                                  | Barrel — types only                                         |
+| Create | `apps/api/src/customers/dto/create-customer.dto.ts`                           | Validated create input                                      |
+| Create | `apps/api/src/customers/dto/update-customer.dto.ts`                           | Validated update input                                      |
+| Create | `apps/api/src/customers/dto/list-customers.dto.ts`                            | Query params: search, page, limit                           |
+| Create | `apps/api/src/customers/dto/index.ts`                                         | DTO barrel                                                  |
+| Create | `apps/api/src/customers/customers.tokens.ts`                                  | DI Symbol                                                   |
+| Create | `apps/api/src/customers/infrastructure/in-memory-customer.repository.ts`      | In-memory impl for tests                                    |
+| Create | `apps/api/src/customers/infrastructure/in-memory-customer.repository.spec.ts` | Unit tests for in-memory                                    |
+| Create | `apps/api/src/customers/infrastructure/prisma-customer.repository.ts`         | Prisma implementation                                       |
+| Create | `apps/api/src/customers/customers.service.ts`                                 | Business logic + uniqueness                                 |
+| Create | `apps/api/src/customers/customers.service.spec.ts`                            | Service unit tests                                          |
+| Create | `apps/api/src/customers/customers.controller.ts`                              | HTTP endpoints                                              |
+| Create | `apps/api/src/customers/customers.module.ts`                                  | NestJS module wiring                                        |
+| Create | `apps/api/src/customers/index.ts`                                             | Module barrel                                               |
+| Modify | `apps/api/tsconfig.paths.json`                                                | Add `@customers`, `@customers/dto`, `@customers/interfaces` |
+| Modify | `apps/api/src/app.module.ts`                                                  | Register `CustomersModule`                                  |
 
 ---
 
-## Task 1: Repository Interface & DTOs
+## Task 1: Repository Interface, Types, DTOs & Token
 
 **Files:**
 
@@ -41,10 +44,12 @@
 - Create: `apps/api/src/customers/interfaces/index.ts`
 - Create: `apps/api/src/customers/dto/create-customer.dto.ts`
 - Create: `apps/api/src/customers/dto/update-customer.dto.ts`
+- Create: `apps/api/src/customers/dto/list-customers.dto.ts`
 - Create: `apps/api/src/customers/dto/index.ts`
 - Create: `apps/api/src/customers/customers.tokens.ts`
+- Modify: `apps/api/tsconfig.paths.json`
 
-- [ ] **Step 1: Create the repository interface**
+- [ ] **Step 1: Create the repository interface and all domain types**
 
 `apps/api/src/customers/interfaces/customer.repository.interface.ts`:
 
@@ -77,6 +82,26 @@ export interface UpdateCustomerData {
   note?: string | null
 }
 
+export interface CustomerQuery {
+  search?: string
+  page: number
+  limit: number
+}
+
+export interface CustomerPageMeta {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasNext: boolean
+  hasPrev: boolean
+}
+
+export interface CustomerPage {
+  data: Prisma.CustomerModel[]
+  meta: CustomerPageMeta
+}
+
 export interface CustomerRepositoryInterface {
   create(
     organizationId: string,
@@ -86,7 +111,15 @@ export interface CustomerRepositoryInterface {
     id: string,
     organizationId: string
   ): Promise<Prisma.CustomerModel | null>
-  findAll(organizationId: string): Promise<Prisma.CustomerModel[]>
+  findAll(organizationId: string, query: CustomerQuery): Promise<CustomerPage>
+  findByEmail(
+    email: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel | null>
+  findByPhone(
+    phone: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel | null>
   update(
     id: string,
     organizationId: string,
@@ -102,8 +135,11 @@ export interface CustomerRepositoryInterface {
 
 ```ts
 export type { CustomerRepositoryInterface } from './customer.repository.interface'
+export type { CustomerPageMeta } from './customer.repository.interface'
 export type { CreateCustomerData } from './customer.repository.interface'
 export type { UpdateCustomerData } from './customer.repository.interface'
+export type { CustomerQuery } from './customer.repository.interface'
+export type { CustomerPage } from './customer.repository.interface'
 ```
 
 - [ ] **Step 3: Create the create DTO**
@@ -228,16 +264,45 @@ export class UpdateCustomerDto {
 }
 ```
 
-- [ ] **Step 5: Create the DTO barrel**
+- [ ] **Step 5: Create the list query DTO**
+
+`apps/api/src/customers/dto/list-customers.dto.ts`:
+
+```ts
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
+import { Type } from 'class-transformer'
+
+export class ListCustomersDto {
+  @IsOptional()
+  @IsString()
+  search?: string
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number
+}
+```
+
+- [ ] **Step 6: Create the DTO barrel**
 
 `apps/api/src/customers/dto/index.ts`:
 
 ```ts
 export { CreateCustomerDto } from './create-customer.dto'
 export { UpdateCustomerDto } from './update-customer.dto'
+export { ListCustomersDto } from './list-customers.dto'
 ```
 
-- [ ] **Step 6: Create the DI token**
+- [ ] **Step 7: Create the DI token**
 
 `apps/api/src/customers/customers.tokens.ts`:
 
@@ -245,33 +310,60 @@ export { UpdateCustomerDto } from './update-customer.dto'
 export const CUSTOMER_REPOSITORY = Symbol('CustomerRepositoryInterface')
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Add tsconfig path aliases**
+
+Modify `apps/api/tsconfig.paths.json` — add three entries under `"paths"` (keep alphabetical order):
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@auth": ["./src/auth/index.ts"],
+      "@auth/decorators": ["./src/auth/decorators/index.ts"],
+      "@auth/dto": ["./src/auth/dto/index.ts"],
+      "@auth/guards": ["./src/auth/guards/index.ts"],
+      "@auth/interfaces": ["./src/auth/interfaces/index.ts"],
+      "@config": ["./src/config/index.ts"],
+      "@customers": ["./src/customers/index.ts"],
+      "@customers/dto": ["./src/customers/dto/index.ts"],
+      "@customers/interfaces": ["./src/customers/interfaces/index.ts"],
+      "@organizations": ["./src/organizations/index.ts"],
+      "@organizations/dto": ["./src/organizations/dto/index.ts"],
+      "@organizations/interfaces": ["./src/organizations/interfaces/index.ts"],
+      "@prisma": ["./src/prisma/index.ts"]
+    }
+  }
+}
+```
+
+- [ ] **Step 9: Commit**
 
 ```bash
-git add apps/api/src/customers/
+git add apps/api/src/customers/ apps/api/tsconfig.paths.json
 git commit -m "feat(customers): add repository interface, DTOs, and DI token"
 ```
 
 ---
 
-## Task 2: In-Memory Implementation + Tests (TDD)
+## Task 2: In-Memory Repository + Tests (TDD)
 
 **Files:**
 
-- Create: `apps/api/src/customers/infrastructure/in-memory-customer.repository.ts`
 - Create: `apps/api/src/customers/infrastructure/in-memory-customer.repository.spec.ts`
+- Create: `apps/api/src/customers/infrastructure/in-memory-customer.repository.ts`
 
-- [ ] **Step 1: Write the failing tests first**
+- [ ] **Step 1: Write the failing tests**
 
 `apps/api/src/customers/infrastructure/in-memory-customer.repository.spec.ts`:
 
 ```ts
 import { InMemoryCustomerRepository } from './in-memory-customer.repository'
 
-const makeData = (overrides = {}) => ({
+const makeData = (overrides: Record<string, unknown> = {}) => ({
   firstName: 'Ana',
   lastName: 'Pérez',
   email: 'ana@test.com',
+  phone: '5551234567',
   ...overrides,
 })
 
@@ -283,7 +375,7 @@ describe('InMemoryCustomerRepository', () => {
   })
 
   describe('create', () => {
-    it('creates a customer scoped to an organization', async () => {
+    it('stores customer with correct organizationId and returns it', async () => {
       const customer = await repo.create('org-1', makeData())
       expect(customer.organizationId).toBe('org-1')
       expect(customer.firstName).toBe('Ana')
@@ -294,8 +386,9 @@ describe('InMemoryCustomerRepository', () => {
   describe('findById', () => {
     it('returns customer when id and organizationId match', async () => {
       const created = await repo.create('org-1', makeData())
-      const found = await repo.findById(created.id, 'org-1')
-      expect(found?.id).toBe(created.id)
+      expect(await repo.findById(created.id, 'org-1')).toMatchObject({
+        id: created.id,
+      })
     })
 
     it('returns null when id belongs to a different organization', async () => {
@@ -309,17 +402,142 @@ describe('InMemoryCustomerRepository', () => {
   })
 
   describe('findAll', () => {
-    it('returns only customers belonging to the organization', async () => {
-      await repo.create('org-1', makeData({ firstName: 'A' }))
-      await repo.create('org-1', makeData({ firstName: 'B' }))
-      await repo.create('org-2', makeData({ firstName: 'C' }))
-      const result = await repo.findAll('org-1')
-      expect(result).toHaveLength(2)
-      expect(result.every((c) => c.organizationId === 'org-1')).toBe(true)
+    it('returns only customers of the organization', async () => {
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'A', email: 'a@t.com', phone: '111' })
+      )
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'B', email: 'b@t.com', phone: '222' })
+      )
+      await repo.create(
+        'org-2',
+        makeData({ firstName: 'C', email: 'c@t.com', phone: '333' })
+      )
+      const result = await repo.findAll('org-1', { page: 1, limit: 20 })
+      expect(result.data).toHaveLength(2)
+      expect(result.data.every((c) => c.organizationId === 'org-1')).toBe(true)
     })
 
-    it('returns empty array when org has no customers', async () => {
-      expect(await repo.findAll('org-empty')).toEqual([])
+    it('returns empty data and correct meta when org has no customers', async () => {
+      const result = await repo.findAll('org-empty', { page: 1, limit: 20 })
+      expect(result.data).toHaveLength(0)
+      expect(result.meta).toMatchObject({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      })
+    })
+
+    it('filters by search term across fullName, email and phone', async () => {
+      await repo.create(
+        'org-1',
+        makeData({
+          firstName: 'Ana',
+          lastName: 'López',
+          email: 'ana@test.com',
+          phone: '111',
+        })
+      )
+      await repo.create(
+        'org-1',
+        makeData({
+          firstName: 'Juan',
+          lastName: 'García',
+          email: 'juan@test.com',
+          phone: '222',
+        })
+      )
+
+      const byName = await repo.findAll('org-1', {
+        search: 'ana',
+        page: 1,
+        limit: 20,
+      })
+      expect(byName.data).toHaveLength(1)
+      expect(byName.data[0].firstName).toBe('Ana')
+
+      const byEmail = await repo.findAll('org-1', {
+        search: 'juan@test',
+        page: 1,
+        limit: 20,
+      })
+      expect(byEmail.data).toHaveLength(1)
+      expect(byEmail.data[0].firstName).toBe('Juan')
+
+      const byPhone = await repo.findAll('org-1', {
+        search: '222',
+        page: 1,
+        limit: 20,
+      })
+      expect(byPhone.data).toHaveLength(1)
+      expect(byPhone.data[0].firstName).toBe('Juan')
+    })
+
+    it('paginates correctly and computes meta', async () => {
+      for (let i = 0; i < 5; i++) {
+        await repo.create(
+          'org-1',
+          makeData({ firstName: `C${i}`, email: `c${i}@t.com`, phone: `${i}` })
+        )
+      }
+      const page1 = await repo.findAll('org-1', { page: 1, limit: 2 })
+      expect(page1.data).toHaveLength(2)
+      expect(page1.meta).toMatchObject({
+        page: 1,
+        limit: 2,
+        total: 5,
+        totalPages: 3,
+        hasNext: true,
+        hasPrev: false,
+      })
+
+      const page3 = await repo.findAll('org-1', { page: 3, limit: 2 })
+      expect(page3.data).toHaveLength(1)
+      expect(page3.meta).toMatchObject({
+        page: 3,
+        limit: 2,
+        total: 5,
+        totalPages: 3,
+        hasNext: false,
+        hasPrev: true,
+      })
+    })
+  })
+
+  describe('findByEmail', () => {
+    it('returns customer when email matches in org', async () => {
+      const created = await repo.create('org-1', makeData())
+      expect(await repo.findByEmail('ana@test.com', 'org-1')).toMatchObject({
+        id: created.id,
+      })
+    })
+
+    it('returns null when email belongs to a different org', async () => {
+      await repo.create('org-1', makeData())
+      expect(await repo.findByEmail('ana@test.com', 'org-2')).toBeNull()
+    })
+
+    it('returns null when email does not exist', async () => {
+      expect(await repo.findByEmail('nobody@test.com', 'org-1')).toBeNull()
+    })
+  })
+
+  describe('findByPhone', () => {
+    it('returns customer when phone matches in org', async () => {
+      const created = await repo.create('org-1', makeData())
+      expect(await repo.findByPhone('5551234567', 'org-1')).toMatchObject({
+        id: created.id,
+      })
+    })
+
+    it('returns null when phone belongs to a different org', async () => {
+      await repo.create('org-1', makeData())
+      expect(await repo.findByPhone('5551234567', 'org-2')).toBeNull()
     })
   })
 
@@ -333,7 +551,7 @@ describe('InMemoryCustomerRepository', () => {
       expect(updated.lastName).toBe('Pérez')
     })
 
-    it('throws when customer does not exist in the organization', async () => {
+    it('rejects when customer does not belong to the organization', async () => {
       await expect(
         repo.update('unknown', 'org-1', { firstName: 'X' })
       ).rejects.toThrow('customer not found')
@@ -347,7 +565,7 @@ describe('InMemoryCustomerRepository', () => {
       expect(await repo.findById(created.id, 'org-1')).toBeNull()
     })
 
-    it('throws when customer does not exist in the organization', async () => {
+    it('rejects when customer does not belong to the organization', async () => {
       await expect(repo.delete('unknown', 'org-1')).rejects.toThrow(
         'customer not found'
       )
@@ -377,6 +595,8 @@ import type {
   CustomerRepositoryInterface,
   CreateCustomerData,
   UpdateCustomerData,
+  CustomerQuery,
+  CustomerPage,
 } from '@customers/interfaces'
 
 export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
@@ -417,11 +637,69 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     return Promise.resolve(customer)
   }
 
-  findAll(organizationId: string): Promise<Prisma.CustomerModel[]> {
-    const result = [...this.customers.values()].filter(
+  findAll(organizationId: string, query: CustomerQuery): Promise<CustomerPage> {
+    let list = [...this.customers.values()].filter(
       (c) => c.organizationId === organizationId
     )
-    return Promise.resolve(result)
+
+    if (query.search) {
+      const term = query.search.toLowerCase()
+      list = list.filter((c) => {
+        const fullName = `${c.firstName} ${c.lastName}`.toLowerCase()
+        return (
+          fullName.includes(term) ||
+          c.email?.toLowerCase().includes(term) ||
+          c.phone?.toLowerCase().includes(term)
+        )
+      })
+    }
+
+    const total = list.length
+    const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit)
+    const offset = (query.page - 1) * query.limit
+    const data = list.slice(offset, offset + query.limit)
+
+    return Promise.resolve({
+      data,
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages,
+        hasNext: query.page < totalPages,
+        hasPrev: query.page > 1,
+      },
+    })
+  }
+
+  findByEmail(
+    email: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel | null> {
+    for (const customer of this.customers.values()) {
+      if (
+        customer.organizationId === organizationId &&
+        customer.email === email
+      ) {
+        return Promise.resolve(customer)
+      }
+    }
+    return Promise.resolve(null)
+  }
+
+  findByPhone(
+    phone: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel | null> {
+    for (const customer of this.customers.values()) {
+      if (
+        customer.organizationId === organizationId &&
+        customer.phone === phone
+      ) {
+        return Promise.resolve(customer)
+      }
+    }
+    return Promise.resolve(null)
   }
 
   update(
@@ -433,7 +711,11 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     if (!customer || customer.organizationId !== organizationId) {
       return Promise.reject(new Error('customer not found'))
     }
-    const updated = { ...customer, ...data, updatedAt: new Date() }
+    const updated: Prisma.CustomerModel = {
+      ...customer,
+      ...data,
+      updatedAt: new Date(),
+    }
     this.customers.set(id, updated)
     return Promise.resolve(updated)
   }
@@ -449,52 +731,18 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
 }
 ```
 
-- [ ] **Step 4: Add the tsconfig path alias** (needed so the in-memory impl can import `@customers/interfaces`)
-
-In `apps/api/tsconfig.paths.json`, add under `"paths"`:
-
-```json
-"@customers": ["./src/customers/index.ts"],
-"@customers/dto": ["./src/customers/dto/index.ts"],
-"@customers/interfaces": ["./src/customers/interfaces/index.ts"]
-```
-
-Full updated file:
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@auth": ["./src/auth/index.ts"],
-      "@auth/decorators": ["./src/auth/decorators/index.ts"],
-      "@auth/dto": ["./src/auth/dto/index.ts"],
-      "@auth/guards": ["./src/auth/guards/index.ts"],
-      "@auth/interfaces": ["./src/auth/interfaces/index.ts"],
-      "@config": ["./src/config/index.ts"],
-      "@customers": ["./src/customers/index.ts"],
-      "@customers/dto": ["./src/customers/dto/index.ts"],
-      "@customers/interfaces": ["./src/customers/interfaces/index.ts"],
-      "@organizations": ["./src/organizations/index.ts"],
-      "@organizations/dto": ["./src/organizations/dto/index.ts"],
-      "@organizations/interfaces": ["./src/organizations/interfaces/index.ts"],
-      "@prisma": ["./src/prisma/index.ts"]
-    }
-  }
-}
-```
-
-- [ ] **Step 5: Run tests — verify they pass**
+- [ ] **Step 4: Run tests — verify they pass**
 
 ```bash
-cd /path/to/gloss-ops && npx nx test api --testFile=apps/api/src/customers/infrastructure/in-memory-customer.repository.spec.ts
+npx nx test api --testFile=apps/api/src/customers/infrastructure/in-memory-customer.repository.spec.ts
 ```
 
-Expected: All 8 tests PASS.
+Expected: All tests PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add apps/api/src/customers/infrastructure/ apps/api/tsconfig.paths.json
+git add apps/api/src/customers/infrastructure/
 git commit -m "feat(customers): add InMemoryCustomerRepository with full test coverage"
 ```
 
@@ -504,8 +752,8 @@ git commit -m "feat(customers): add InMemoryCustomerRepository with full test co
 
 **Files:**
 
-- Create: `apps/api/src/customers/customers.service.ts`
 - Create: `apps/api/src/customers/customers.service.spec.ts`
+- Create: `apps/api/src/customers/customers.service.ts`
 
 - [ ] **Step 1: Write the failing service tests**
 
@@ -513,13 +761,13 @@ git commit -m "feat(customers): add InMemoryCustomerRepository with full test co
 
 ```ts
 import { Test } from '@nestjs/testing'
-import { NotFoundException } from '@nestjs/common'
+import { ConflictException, NotFoundException } from '@nestjs/common'
 
 import { InMemoryCustomerRepository } from './infrastructure/in-memory-customer.repository'
 import { CustomersService } from './customers.service'
 import { CUSTOMER_REPOSITORY } from './customers.tokens'
 
-const makeData = (overrides = {}) => ({
+const makeData = (overrides: Record<string, unknown> = {}) => ({
   firstName: 'Ana',
   lastName: 'Pérez',
   ...overrides,
@@ -537,7 +785,6 @@ describe('CustomersService', () => {
         { provide: CUSTOMER_REPOSITORY, useValue: repo },
       ],
     }).compile()
-
     service = module.get(CustomersService)
   })
 
@@ -547,14 +794,45 @@ describe('CustomersService', () => {
       expect(customer.firstName).toBe('Ana')
       expect(customer.organizationId).toBe('org-1')
     })
+
+    it('throws ConflictException when email already exists in org', async () => {
+      await repo.create('org-1', makeData({ email: 'taken@test.com' }))
+      await expect(
+        service.create('org-1', makeData({ email: 'taken@test.com' }))
+      ).rejects.toThrow(ConflictException)
+    })
+
+    it('throws ConflictException when phone already exists in org', async () => {
+      await repo.create('org-1', makeData({ phone: '5559999' }))
+      await expect(
+        service.create(
+          'org-1',
+          makeData({ email: 'other@test.com', phone: '5559999' })
+        )
+      ).rejects.toThrow(ConflictException)
+    })
+
+    it('does not enforce uniqueness across different orgs', async () => {
+      await repo.create('org-1', makeData({ email: 'shared@test.com' }))
+      await expect(
+        service.create('org-2', makeData({ email: 'shared@test.com' }))
+      ).resolves.toBeDefined()
+    })
   })
 
   describe('findAll', () => {
-    it('returns all customers of the organization', async () => {
+    it('returns paginated customers for the organization', async () => {
       await repo.create('org-1', makeData({ firstName: 'A' }))
       await repo.create('org-1', makeData({ firstName: 'B' }))
-      const result = await service.findAll('org-1')
-      expect(result).toHaveLength(2)
+      const result = await service.findAll('org-1', {})
+      expect(result.data).toHaveLength(2)
+      expect(result.meta.total).toBe(2)
+    })
+
+    it('applies defaults: page=1, limit=20', async () => {
+      const result = await service.findAll('org-1', {})
+      expect(result.meta.page).toBe(1)
+      expect(result.meta.limit).toBe(20)
     })
   })
 
@@ -586,6 +864,44 @@ describe('CustomersService', () => {
         service.update('unknown', 'org-1', { firstName: 'X' })
       ).rejects.toThrow(NotFoundException)
     })
+
+    it('throws ConflictException when email conflicts with a DIFFERENT customer', async () => {
+      const other = await repo.create(
+        'org-1',
+        makeData({ email: 'other@test.com', phone: '111' })
+      )
+      const target = await repo.create(
+        'org-1',
+        makeData({ email: 'target@test.com', phone: '222' })
+      )
+      await expect(
+        service.update(target.id, 'org-1', { email: other.email! })
+      ).rejects.toThrow(ConflictException)
+    })
+
+    it('does NOT throw ConflictException when email belongs to the SAME customer', async () => {
+      const created = await repo.create(
+        'org-1',
+        makeData({ email: 'same@test.com' })
+      )
+      await expect(
+        service.update(created.id, 'org-1', { email: 'same@test.com' })
+      ).resolves.toBeDefined()
+    })
+
+    it('throws ConflictException when phone conflicts with a DIFFERENT customer', async () => {
+      const other = await repo.create(
+        'org-1',
+        makeData({ phone: '9999', email: 'a@t.com' })
+      )
+      const target = await repo.create(
+        'org-1',
+        makeData({ phone: '8888', email: 'b@t.com' })
+      )
+      await expect(
+        service.update(target.id, 'org-1', { phone: other.phone! })
+      ).rejects.toThrow(ConflictException)
+    })
   })
 
   describe('remove', () => {
@@ -609,7 +925,7 @@ describe('CustomersService', () => {
 - [ ] **Step 2: Run tests — verify they fail**
 
 ```bash
-cd /path/to/gloss-ops && npx nx test api --testFile=apps/api/src/customers/customers.service.spec.ts
+npx nx test api --testFile=apps/api/src/customers/customers.service.spec.ts
 ```
 
 Expected: FAIL — `Cannot find module './customers.service'`
@@ -619,7 +935,12 @@ Expected: FAIL — `Cannot find module './customers.service'`
 `apps/api/src/customers/customers.service.ts`:
 
 ```ts
-import { NotFoundException, Injectable, Inject } from '@nestjs/common'
+import {
+  ConflictException,
+  NotFoundException,
+  Injectable,
+  Inject,
+} from '@nestjs/common'
 
 import type { Prisma } from '@glossops/database'
 
@@ -627,8 +948,10 @@ import type {
   CustomerRepositoryInterface,
   CreateCustomerData,
   UpdateCustomerData,
+  CustomerPage,
 } from '@customers/interfaces'
 
+import { ListCustomersDto } from './dto'
 import { CUSTOMER_REPOSITORY } from './customers.tokens'
 
 @Injectable()
@@ -638,15 +961,38 @@ export class CustomersService {
     private readonly customers: CustomerRepositoryInterface
   ) {}
 
-  create(
+  async create(
     organizationId: string,
     data: CreateCustomerData
   ): Promise<Prisma.CustomerModel> {
+    if (data.email) {
+      const existing = await this.customers.findByEmail(
+        data.email,
+        organizationId
+      )
+      if (existing)
+        throw new ConflictException({ error: 'email_already_exists' })
+    }
+    if (data.phone) {
+      const existing = await this.customers.findByPhone(
+        data.phone,
+        organizationId
+      )
+      if (existing)
+        throw new ConflictException({ error: 'phone_already_exists' })
+    }
     return this.customers.create(organizationId, data)
   }
 
-  findAll(organizationId: string): Promise<Prisma.CustomerModel[]> {
-    return this.customers.findAll(organizationId)
+  findAll(
+    organizationId: string,
+    dto: ListCustomersDto
+  ): Promise<CustomerPage> {
+    return this.customers.findAll(organizationId, {
+      search: dto.search,
+      page: dto.page ?? 1,
+      limit: dto.limit ?? 20,
+    })
   }
 
   async findOne(
@@ -664,6 +1010,26 @@ export class CustomersService {
     data: UpdateCustomerData
   ): Promise<Prisma.CustomerModel> {
     await this.findOne(id, organizationId)
+
+    if (data.email) {
+      const existing = await this.customers.findByEmail(
+        data.email,
+        organizationId
+      )
+      if (existing && existing.id !== id) {
+        throw new ConflictException({ error: 'email_already_exists' })
+      }
+    }
+    if (data.phone) {
+      const existing = await this.customers.findByPhone(
+        data.phone,
+        organizationId
+      )
+      if (existing && existing.id !== id) {
+        throw new ConflictException({ error: 'phone_already_exists' })
+      }
+    }
+
     return this.customers.update(id, organizationId, data)
   }
 
@@ -677,16 +1043,16 @@ export class CustomersService {
 - [ ] **Step 4: Run tests — verify they pass**
 
 ```bash
-cd /path/to/gloss-ops && npx nx test api --testFile=apps/api/src/customers/customers.service.spec.ts
+npx nx test api --testFile=apps/api/src/customers/customers.service.spec.ts
 ```
 
-Expected: All 8 tests PASS.
+Expected: All tests PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/customers/customers.service.ts apps/api/src/customers/customers.service.spec.ts
-git commit -m "feat(customers): add CustomersService with full test coverage"
+git commit -m "feat(customers): add CustomersService with uniqueness enforcement and full test coverage"
 ```
 
 ---
@@ -711,6 +1077,8 @@ import type {
   CustomerRepositoryInterface,
   CreateCustomerData,
   UpdateCustomerData,
+  CustomerQuery,
+  CustomerPage,
 } from '@customers/interfaces'
 
 @Injectable()
@@ -731,8 +1099,59 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     return this.prisma.customer.findFirst({ where: { id, organizationId } })
   }
 
-  findAll(organizationId: string): Promise<Prisma.CustomerModel[]> {
-    return this.prisma.customer.findMany({ where: { organizationId } })
+  async findAll(
+    organizationId: string,
+    query: CustomerQuery
+  ): Promise<CustomerPage> {
+    const where: Prisma.CustomerWhereInput = { organizationId }
+
+    if (query.search) {
+      const term = query.search
+      where.OR = [
+        { firstName: { contains: term, mode: 'insensitive' } },
+        { lastName: { contains: term, mode: 'insensitive' } },
+        { email: { contains: term, mode: 'insensitive' } },
+        { phone: { contains: term, mode: 'insensitive' } },
+      ]
+    }
+
+    const [total, data] = await Promise.all([
+      this.prisma.customer.count({ where }),
+      this.prisma.customer.findMany({
+        where,
+        skip: (query.page - 1) * query.limit,
+        take: query.limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ])
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit)
+
+    return {
+      data,
+      meta: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages,
+        hasNext: query.page < totalPages,
+        hasPrev: query.page > 1,
+      },
+    }
+  }
+
+  findByEmail(
+    email: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel | null> {
+    return this.prisma.customer.findFirst({ where: { email, organizationId } })
+  }
+
+  findByPhone(
+    phone: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel | null> {
+    return this.prisma.customer.findFirst({ where: { phone, organizationId } })
   }
 
   update(
@@ -743,7 +1162,7 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     return this.prisma.customer.update({ where: { id }, data })
   }
 
-  async delete(id: string, organizationId: string): Promise<void> {
+  async delete(id: string, _organizationId: string): Promise<void> {
     await this.prisma.customer.delete({ where: { id } })
   }
 }
@@ -758,7 +1177,7 @@ git commit -m "feat(customers): add PrismaCustomerRepository"
 
 ---
 
-## Task 5: Controller, Module, Barrel, and App Wiring
+## Task 5: Controller, Module, Barrel & App Wiring
 
 **Files:**
 
@@ -781,6 +1200,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common'
 
 import type { Prisma } from '@glossops/database'
@@ -788,8 +1208,9 @@ import { Role } from '@glossops/database'
 
 import type { AuthContext } from '@auth/interfaces'
 import { CurrentAccount, Roles } from '@auth/decorators'
+import type { CustomerPage } from '@customers/interfaces'
 
-import { CreateCustomerDto, UpdateCustomerDto } from './dto'
+import { CreateCustomerDto, UpdateCustomerDto, ListCustomersDto } from './dto'
 import { CustomersService } from './customers.service'
 
 @Controller('customers')
@@ -807,9 +1228,10 @@ export class CustomersController {
 
   @Get()
   findAll(
-    @CurrentAccount() account: AuthContext
-  ): Promise<Prisma.CustomerModel[]> {
-    return this.customersService.findAll(account.organizationId!)
+    @CurrentAccount() account: AuthContext,
+    @Query() dto: ListCustomersDto
+  ): Promise<CustomerPage> {
+    return this.customersService.findAll(account.organizationId!, dto)
   }
 
   @Get(':id')
@@ -878,7 +1300,7 @@ export { CustomersService } from './customers.service'
 
 - [ ] **Step 4: Register CustomersModule in AppModule**
 
-Modify `apps/api/src/app.module.ts` — add the import:
+`apps/api/src/app.module.ts`:
 
 ```ts
 import { ConfigModule } from '@nestjs/config'
@@ -915,7 +1337,7 @@ export class AppModule {}
 - [ ] **Step 5: Run the full test suite to confirm no regressions**
 
 ```bash
-cd /path/to/gloss-ops && npx nx test api
+npx nx test api
 ```
 
 Expected: All tests PASS.
@@ -929,13 +1351,28 @@ git commit -m "feat(customers): wire controller, module, and register in AppModu
 
 ---
 
-## Self-Review Checklist
+## Self-Review
 
-- [x] **Tenant isolation**: All repository methods accept `organizationId` and filter by it — `findById`, `findAll`, `update`, `delete` all scope to org.
-- [x] **PrismaService not used outside infrastructure**: Service depends on `CustomerRepositoryInterface` via DI token; Prisma only in `PrismaCustomerRepository`.
-- [x] **RBAC**: Create/Update scoped to Owner/Manager/Front Desk; Delete scoped to Owner/Manager; Read open to all org members.
-- [x] **Repository pattern**: Matches `organizations` — interface → in-memory → Prisma → tokens → module.
-- [x] **Import tiers**: All files follow 6-tier import ordering.
-- [x] **Barrel exports**: `index.ts` files sorted by line length, longest first.
-- [x] **No placeholders**: Every step has complete code.
-- [x] **Type consistency**: `CreateCustomerData`/`UpdateCustomerData` used consistently across interface, in-memory, Prisma, and service.
+**Spec coverage:**
+
+- ✅ CRUD endpoints with correct roles (Task 5)
+- ✅ Text search across name/email/phone (Task 2 + 4)
+- ✅ Pagination with `meta` object (Task 1 + 2 + 4)
+- ✅ `page` default 1, `limit` default 20, max 100 (Task 3 service)
+- ✅ `findByEmail` + `findByPhone` for uniqueness (Task 1 + 2)
+- ✅ Uniqueness on create for email + phone (Task 3)
+- ✅ Uniqueness on update excludes current customer (Task 3)
+- ✅ `NotFoundException` on missing customer (Task 3)
+- ✅ `ConflictException` with correct error keys (Task 3)
+- ✅ Tenant isolation in all repo methods (Task 2 + 4)
+- ✅ tsconfig paths (Task 1)
+- ✅ AppModule wiring (Task 5)
+
+**Placeholder scan:** None found.
+
+**Type consistency:**
+
+- `CustomerQuery` defined in Task 1, used in Task 2 (in-memory), Task 3 (service), Task 4 (Prisma) ✅
+- `CustomerPage` defined in Task 1, returned by `findAll` in all three layers ✅
+- `ListCustomersDto` defined in Task 1, imported by service in Task 3 and controller in Task 5 ✅
+- `CUSTOMER_REPOSITORY` token defined in Task 1, used in Task 3 (service spec + service) and Task 5 (module) ✅
