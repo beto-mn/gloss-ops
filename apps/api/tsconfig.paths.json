@@ -7,6 +7,9 @@
       "@auth/guards": ["./src/auth/guards/index.ts"],
       "@auth/interfaces": ["./src/auth/interfaces/index.ts"],
       "@config": ["./src/config/index.ts"],
+      "@organizations": ["./src/organizations/index.ts"],
+      "@organizations/dto": ["./src/organizations/dto/index.ts"],
+      "@organizations/interfaces": ["./src/organizations/interfaces/index.ts"],
       "@prisma": ["./src/prisma/index.ts"]
     }
   }

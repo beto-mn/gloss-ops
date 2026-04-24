@@ -79,6 +79,9 @@
       "^@auth/guards$": "<rootDir>/auth/guards/index.ts",
       "^@auth/interfaces$": "<rootDir>/auth/interfaces/index.ts",
       "^@config$": "<rootDir>/config/index.ts",
+      "^@organizations$": "<rootDir>/organizations/index.ts",
+      "^@organizations/dto$": "<rootDir>/organizations/dto/index.ts",
+      "^@organizations/interfaces$": "<rootDir>/organizations/interfaces/index.ts",
       "^@prisma$": "<rootDir>/prisma/index.ts"
     }
   }
