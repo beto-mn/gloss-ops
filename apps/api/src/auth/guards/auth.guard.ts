@@ -1,6 +1,7 @@
 import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
 import {
+  ForbiddenException,
   UnauthorizedException,
   ExecutionContext,
   CanActivate,
@@ -10,7 +11,9 @@ import {
 
 import type { AuthContext, AccountRepositoryInterface } from '@auth/interfaces'
 import { IS_PUBLIC_KEY } from '@auth/decorators'
+import type { OrganizationRepositoryInterface } from '@organizations/interfaces'
 
+import { ORGANIZATION_REPOSITORY } from '../../organizations/organizations.tokens'
 import { ACCOUNT_REPOSITORY } from '../auth.tokens'
 import { TokenService } from '../token.service'
 
@@ -19,6 +22,8 @@ export class AuthGuard implements CanActivate {
   constructor(
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accounts: AccountRepositoryInterface,
+    @Inject(ORGANIZATION_REPOSITORY)
+    private readonly organizations: OrganizationRepositoryInterface,
     private readonly tokenService: TokenService,
     private readonly reflector: Reflector
   ) {}
@@ -34,7 +39,7 @@ export class AuthGuard implements CanActivate {
     const token = this.extractToken(request)
     if (!token) throw new UnauthorizedException()
 
-    let payload: { sub: string; memberId: string | null }
+    let payload: { sub: string; email: string }
     try {
       payload = await this.tokenService.verifyAccessToken(token)
     } catch (e: unknown) {
@@ -44,18 +49,27 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException()
     }
 
-    const account = await this.accounts.findByIdWithMemberships(payload.sub)
+    const account = await this.accounts.findById(payload.sub)
     if (!account) throw new UnauthorizedException()
 
-    const membership = account.memberships[0] ?? null
+    const orgId = request.headers['x-organization-id'] as string | undefined
 
     const user: AuthContext = {
       sub: account.id,
-      memberId: membership?.id ?? null,
       email: account.email,
-      branchId: membership?.branchId ?? null,
-      organizationId: membership?.branch?.organizationId ?? null,
-      role: membership?.role ?? null,
+      memberId: null,
+      branchId: null,
+      organizationId: null,
+      role: null,
+    }
+
+    if (orgId) {
+      const member = await this.organizations.findMember(account.id, orgId)
+      if (!member) throw new ForbiddenException({ error: 'not_a_member' })
+      user.memberId = member.id
+      user.branchId = member.branchId
+      user.organizationId = orgId
+      user.role = member.role
     }
 
     request['user'] = user
