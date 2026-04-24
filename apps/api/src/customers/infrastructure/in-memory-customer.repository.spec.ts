@@ -180,6 +180,10 @@ describe('InMemoryCustomerRepository', () => {
       await repo.create('org-1', makeData())
       expect(await repo.findByPhone('5551234567', 'org-2')).toBeNull()
     })
+
+    it('returns null when phone does not exist', async () => {
+      expect(await repo.findByPhone('9999999999', 'org-1')).toBeNull()
+    })
   })
 
   describe('update', () => {
