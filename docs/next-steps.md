@@ -4,17 +4,17 @@
 
 ## Current State
 
-| Layer | Status | Notes |
-| ----- | ------ | ----- |
-| Monorepo scaffold | ✅ Complete | pnpm workspaces, Husky, docker-compose |
-| `packages/database` | ✅ Complete | Full Prisma schema, migrations, seed, tsconfig |
-| `apps/api` — Config | ✅ Complete | Zod-validated env schema, barrel export |
-| `apps/api` — Auth module | ✅ Complete | JWT + Redis refresh tokens, RBAC guards, repository pattern, 45 tests |
-| `apps/api` — TS path aliases | ✅ Complete | `tsconfig.paths.json`, barrel exports, Jest mapper |
-| `packages/shared` | ⏳ Pending | No source yet |
-| `apps/api` — Domain modules | ⏳ Pending | organizations, customers, work-orders, etc. |
-| `apps/web` | ⏳ Pending | Next.js default page only |
-| Infrastructure | ⏳ Pending | Dockerfiles, GitHub Actions CI |
+| Layer                        | Status      | Notes                                                                 |
+| ---------------------------- | ----------- | --------------------------------------------------------------------- |
+| Monorepo scaffold            | ✅ Complete | pnpm workspaces, Husky, docker-compose                                |
+| `packages/database`          | ✅ Complete | Full Prisma schema, migrations, seed, tsconfig                        |
+| `apps/api` — Config          | ✅ Complete | Zod-validated env schema, barrel export                               |
+| `apps/api` — Auth module     | ✅ Complete | JWT + Redis refresh tokens, RBAC guards, repository pattern, 45 tests |
+| `apps/api` — TS path aliases | ✅ Complete | `tsconfig.paths.json`, barrel exports, Jest mapper                    |
+| `packages/shared`            | ⏳ Pending  | No source yet                                                         |
+| `apps/api` — Domain modules  | ⏳ Pending  | organizations, customers, work-orders, etc.                           |
+| `apps/web`                   | ⏳ Pending  | Next.js default page only                                             |
+| Infrastructure               | ⏳ Pending  | Dockerfiles, GitHub Actions CI                                        |
 
 ---
 
@@ -42,12 +42,12 @@ Key design decisions documented in [`docs/database-design.md`](database-design.m
 
 Endpoints:
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
+| Method | Path             | Description                                        |
+| ------ | ---------------- | -------------------------------------------------- |
 | `POST` | `/auth/register` | Create account, return access + refresh token pair |
-| `POST` | `/auth/login` | Validate credentials, return token pair |
-| `POST` | `/auth/refresh` | Rotate refresh token, return new token pair |
-| `POST` | `/auth/logout` | Revoke refresh token from Redis |
+| `POST` | `/auth/login`    | Validate credentials, return token pair            |
+| `POST` | `/auth/refresh`  | Rotate refresh token, return new token pair        |
+| `POST` | `/auth/logout`   | Revoke refresh token from Redis                    |
 
 Infrastructure:
 
@@ -95,15 +95,15 @@ Each module follows the pattern: `module / controller / service`, all scoped by 
 
 **Priority order:**
 
-| # | Module | Endpoints |
-| - | ------ | --------- |
-| 1 | `organizations` | `GET /organizations/me`, `PATCH /organizations/me`, `POST /organizations/members` |
-| 2 | `customers` | CRUD `/customers` |
-| 3 | `vehicles` | CRUD `/vehicles`, nested under customer |
-| 4 | `work-orders` | CRUD `/work-orders`, status transitions |
-| 5 | `services` | CRUD `/services` |
-| 6 | `inventory` | CRUD `/inventory/items`, CRUD `/inventory/wraps` |
-| 7 | `activity-log` | `GET /activity-log` (read-only) |
+| #   | Module          | Endpoints                                                                         |
+| --- | --------------- | --------------------------------------------------------------------------------- |
+| 1   | `organizations` | `GET /organizations/me`, `PATCH /organizations/me`, `POST /organizations/members` |
+| 2   | `customers`     | CRUD `/customers`                                                                 |
+| 3   | `vehicles`      | CRUD `/vehicles`, nested under customer                                           |
+| 4   | `work-orders`   | CRUD `/work-orders`, status transitions                                           |
+| 5   | `services`      | CRUD `/services`                                                                  |
+| 6   | `inventory`     | CRUD `/inventory/items`, CRUD `/inventory/wraps`                                  |
+| 7   | `activity-log`  | `GET /activity-log` (read-only)                                                   |
 
 **Notes for implementation:**
 
@@ -126,15 +126,15 @@ Each module follows the pattern: `module / controller / service`, all scoped by 
 
 ## ⏳ Step 6 — Web: Core Pages
 
-| Page | Route |
-| ---- | ----- |
-| Customers list + detail | `/customers`, `/customers/[id]` |
-| Vehicles (nested in customer) | `/customers/[id]/vehicles/[vid]` |
-| Work Orders list + detail | `/work-orders`, `/work-orders/[id]` |
-| New Work Order wizard | `/work-orders/new` |
-| Inventory | `/inventory` |
-| Services catalog | `/services` |
-| Activity Log | `/activity-log` |
+| Page                          | Route                               |
+| ----------------------------- | ----------------------------------- |
+| Customers list + detail       | `/customers`, `/customers/[id]`     |
+| Vehicles (nested in customer) | `/customers/[id]/vehicles/[vid]`    |
+| Work Orders list + detail     | `/work-orders`, `/work-orders/[id]` |
+| New Work Order wizard         | `/work-orders/new`                  |
+| Inventory                     | `/inventory`                        |
+| Services catalog              | `/services`                         |
+| Activity Log                  | `/activity-log`                     |
 
 ---
 

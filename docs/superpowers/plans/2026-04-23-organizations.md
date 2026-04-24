@@ -15,55 +15,58 @@
 ## File Map
 
 ### Modified
-| File | Change |
-|------|--------|
-| `apps/api/package.json` | Add `@organizations/*` to `jest.moduleNameMapper` |
-| `apps/api/tsconfig.paths.json` | Add `@organizations/*` path aliases |
-| `apps/api/src/config/envs.ts` | Add `INVITATION_EXPIRES_IN_DAYS`, `APP_FRONTEND_URL` |
-| `apps/api/src/auth/interfaces/jwt-payload.interface.ts` | Replace `memberId` with `email` |
-| `apps/api/src/auth/interfaces/account.repository.interface.ts` | Remove `AccountWithMemberships`, replace `findByIdWithMemberships` with `findById` |
-| `apps/api/src/auth/interfaces/index.ts` | Remove `AccountWithMemberships` export |
-| `apps/api/src/auth/token.service.ts` | `issueTokens(accountId, email)`, `rotateTokens(accountId, tokenId, email)` |
-| `apps/api/src/auth/token.service.spec.ts` | Update for new signature |
-| `apps/api/src/auth/auth.service.ts` | `register` calls `OrganizationRepository`; `login`/`refresh` simplified |
-| `apps/api/src/auth/auth.service.spec.ts` | Update for new behavior |
-| `apps/api/src/auth/dto/register.dto.ts` | Add `organizationName`, `organizationSlug` |
-| `apps/api/src/auth/guards/auth.guard.ts` | Add `X-Organization-Id` header + `OrganizationRepository.findMember` |
-| `apps/api/src/auth/guards/auth.guard.spec.ts` | Full rewrite |
-| `apps/api/src/auth/auth.module.ts` | `forwardRef(OrganizationsModule)`, export `ACCOUNT_REPOSITORY` |
-| `apps/api/src/auth/infrastructure/in-memory-account.repository.ts` | Remove memberships, replace `findByIdWithMemberships` with `findById` |
-| `apps/api/src/auth/infrastructure/in-memory-account.repository.spec.ts` | Update for simplified interface |
-| `apps/api/src/auth/infrastructure/prisma-account.repository.ts` | Replace `findByIdWithMemberships` with `findById`, simplify `findByEmail` |
-| `apps/api/src/app.module.ts` | Import `OrganizationsModule` |
+
+| File                                                                    | Change                                                                             |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `apps/api/package.json`                                                 | Add `@organizations/*` to `jest.moduleNameMapper`                                  |
+| `apps/api/tsconfig.paths.json`                                          | Add `@organizations/*` path aliases                                                |
+| `apps/api/src/config/envs.ts`                                           | Add `INVITATION_EXPIRES_IN_DAYS`, `APP_FRONTEND_URL`                               |
+| `apps/api/src/auth/interfaces/jwt-payload.interface.ts`                 | Replace `memberId` with `email`                                                    |
+| `apps/api/src/auth/interfaces/account.repository.interface.ts`          | Remove `AccountWithMemberships`, replace `findByIdWithMemberships` with `findById` |
+| `apps/api/src/auth/interfaces/index.ts`                                 | Remove `AccountWithMemberships` export                                             |
+| `apps/api/src/auth/token.service.ts`                                    | `issueTokens(accountId, email)`, `rotateTokens(accountId, tokenId, email)`         |
+| `apps/api/src/auth/token.service.spec.ts`                               | Update for new signature                                                           |
+| `apps/api/src/auth/auth.service.ts`                                     | `register` calls `OrganizationRepository`; `login`/`refresh` simplified            |
+| `apps/api/src/auth/auth.service.spec.ts`                                | Update for new behavior                                                            |
+| `apps/api/src/auth/dto/register.dto.ts`                                 | Add `organizationName`, `organizationSlug`                                         |
+| `apps/api/src/auth/guards/auth.guard.ts`                                | Add `X-Organization-Id` header + `OrganizationRepository.findMember`               |
+| `apps/api/src/auth/guards/auth.guard.spec.ts`                           | Full rewrite                                                                       |
+| `apps/api/src/auth/auth.module.ts`                                      | `forwardRef(OrganizationsModule)`, export `ACCOUNT_REPOSITORY`                     |
+| `apps/api/src/auth/infrastructure/in-memory-account.repository.ts`      | Remove memberships, replace `findByIdWithMemberships` with `findById`              |
+| `apps/api/src/auth/infrastructure/in-memory-account.repository.spec.ts` | Update for simplified interface                                                    |
+| `apps/api/src/auth/infrastructure/prisma-account.repository.ts`         | Replace `findByIdWithMemberships` with `findById`, simplify `findByEmail`          |
+| `apps/api/src/app.module.ts`                                            | Import `OrganizationsModule`                                                       |
 
 ### Created
-| File | Purpose |
-|------|---------|
-| `apps/api/src/organizations/interfaces/organization.repository.interface.ts` | Repository contract + supporting types |
-| `apps/api/src/organizations/interfaces/invitation.store.interface.ts` | Redis invitation store contract |
-| `apps/api/src/organizations/interfaces/index.ts` | Barrel |
-| `apps/api/src/organizations/infrastructure/in-memory-organization.repository.ts` | In-memory impl for tests |
-| `apps/api/src/organizations/infrastructure/in-memory-organization.repository.spec.ts` | Tests |
-| `apps/api/src/organizations/infrastructure/in-memory-invitation.store.ts` | In-memory impl for tests |
-| `apps/api/src/organizations/infrastructure/in-memory-invitation.store.spec.ts` | Tests |
-| `apps/api/src/organizations/infrastructure/prisma-organization.repository.ts` | Prisma production impl |
-| `apps/api/src/organizations/infrastructure/redis-invitation.store.ts` | Redis production impl |
-| `apps/api/src/organizations/dto/update-org.dto.ts` | PATCH /organizations/me body |
-| `apps/api/src/organizations/dto/create-invitation.dto.ts` | POST /organizations/invitations body |
-| `apps/api/src/organizations/dto/accept-invitation.dto.ts` | POST /organizations/invitations/accept body |
-| `apps/api/src/organizations/dto/index.ts` | Barrel |
-| `apps/api/src/organizations/organizations.tokens.ts` | DI symbols |
-| `apps/api/src/organizations/organizations.module.ts` | NestJS module wiring |
-| `apps/api/src/organizations/organizations.service.ts` | Business logic |
-| `apps/api/src/organizations/organizations.service.spec.ts` | Unit tests |
-| `apps/api/src/organizations/organizations.controller.ts` | HTTP endpoints |
-| `apps/api/src/organizations/index.ts` | Barrel |
+
+| File                                                                                  | Purpose                                     |
+| ------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `apps/api/src/organizations/interfaces/organization.repository.interface.ts`          | Repository contract + supporting types      |
+| `apps/api/src/organizations/interfaces/invitation.store.interface.ts`                 | Redis invitation store contract             |
+| `apps/api/src/organizations/interfaces/index.ts`                                      | Barrel                                      |
+| `apps/api/src/organizations/infrastructure/in-memory-organization.repository.ts`      | In-memory impl for tests                    |
+| `apps/api/src/organizations/infrastructure/in-memory-organization.repository.spec.ts` | Tests                                       |
+| `apps/api/src/organizations/infrastructure/in-memory-invitation.store.ts`             | In-memory impl for tests                    |
+| `apps/api/src/organizations/infrastructure/in-memory-invitation.store.spec.ts`        | Tests                                       |
+| `apps/api/src/organizations/infrastructure/prisma-organization.repository.ts`         | Prisma production impl                      |
+| `apps/api/src/organizations/infrastructure/redis-invitation.store.ts`                 | Redis production impl                       |
+| `apps/api/src/organizations/dto/update-org.dto.ts`                                    | PATCH /organizations/me body                |
+| `apps/api/src/organizations/dto/create-invitation.dto.ts`                             | POST /organizations/invitations body        |
+| `apps/api/src/organizations/dto/accept-invitation.dto.ts`                             | POST /organizations/invitations/accept body |
+| `apps/api/src/organizations/dto/index.ts`                                             | Barrel                                      |
+| `apps/api/src/organizations/organizations.tokens.ts`                                  | DI symbols                                  |
+| `apps/api/src/organizations/organizations.module.ts`                                  | NestJS module wiring                        |
+| `apps/api/src/organizations/organizations.service.ts`                                 | Business logic                              |
+| `apps/api/src/organizations/organizations.service.spec.ts`                            | Unit tests                                  |
+| `apps/api/src/organizations/organizations.controller.ts`                              | HTTP endpoints                              |
+| `apps/api/src/organizations/index.ts`                                                 | Barrel                                      |
 
 ---
 
 ## Task 1: Config — env vars and path aliases
 
 **Files:**
+
 - Modify: `apps/api/src/config/envs.ts`
 - Modify: `apps/api/tsconfig.paths.json`
 - Modify: `apps/api/package.json`
@@ -80,7 +83,11 @@ const schema = z.object({
   REDIS_URL: z.string().url(),
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(30),
-  JWT_ACCESS_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(900),
+  JWT_ACCESS_EXPIRES_IN_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(900),
   INVITATION_EXPIRES_IN_DAYS: z.coerce.number().int().positive().default(7),
   APP_FRONTEND_URL: z.string().url().default('http://localhost:3001'),
 })
@@ -152,6 +159,7 @@ git commit -m "feat(config): add invitation env vars and organizations path alia
 ## Task 2: Simplify JWT payload and TokenService
 
 **Files:**
+
 - Modify: `apps/api/src/auth/interfaces/jwt-payload.interface.ts`
 - Modify: `apps/api/src/auth/token.service.ts`
 - Modify: `apps/api/src/auth/token.service.spec.ts`
@@ -186,7 +194,9 @@ describe('TokenService', () => {
           provide: JwtService,
           useValue: {
             signAsync: jest.fn().mockResolvedValue('signed.jwt.token'),
-            verifyAsync: jest.fn().mockResolvedValue({ sub: 'acc-1', email: 'a@b.com' }),
+            verifyAsync: jest
+              .fn()
+              .mockResolvedValue({ sub: 'acc-1', email: 'a@b.com' }),
           },
         },
         { provide: TOKEN_STORE, useClass: InMemoryTokenStore },
@@ -201,7 +211,10 @@ describe('TokenService', () => {
   describe('issueTokens', () => {
     it('signs access token with sub and email', async () => {
       await tokenService.issueTokens('acc-1', 'a@b.com')
-      expect(jwtService.signAsync).toHaveBeenCalledWith({ sub: 'acc-1', email: 'a@b.com' })
+      expect(jwtService.signAsync).toHaveBeenCalledWith({
+        sub: 'acc-1',
+        email: 'a@b.com',
+      })
     })
 
     it('saves refresh token to store', async () => {
@@ -234,7 +247,10 @@ describe('TokenService', () => {
   describe('parseRefreshToken', () => {
     it('parses valid token into accountId and tokenId', () => {
       const result = tokenService.parseRefreshToken('some-uuid:another-uuid')
-      expect(result).toEqual({ accountId: 'some-uuid', tokenId: 'another-uuid' })
+      expect(result).toEqual({
+        accountId: 'some-uuid',
+        tokenId: 'another-uuid',
+      })
     })
 
     it('returns null for string without colon separator', () => {
@@ -277,7 +293,11 @@ import { Injectable, Inject } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { randomUUID } from 'crypto'
 
-import type { JwtPayload, TokenPair, TokenStoreInterface } from '@auth/interfaces'
+import type {
+  JwtPayload,
+  TokenPair,
+  TokenStoreInterface,
+} from '@auth/interfaces'
 import { envs } from '@config'
 
 import { TOKEN_STORE } from './auth.tokens'
@@ -293,7 +313,11 @@ export class TokenService {
     const payload: JwtPayload = { sub: accountId, email }
     const accessToken = await this.jwtService.signAsync(payload)
     const tokenId = randomUUID()
-    await this.tokenStore.save(accountId, tokenId, envs.jwt.refreshExpiresInDays)
+    await this.tokenStore.save(
+      accountId,
+      tokenId,
+      envs.jwt.refreshExpiresInDays
+    )
     return {
       accessToken,
       refreshToken: `${accountId}:${tokenId}`,
@@ -301,7 +325,11 @@ export class TokenService {
     }
   }
 
-  async rotateTokens(accountId: string, tokenId: string, email: string): Promise<TokenPair> {
+  async rotateTokens(
+    accountId: string,
+    tokenId: string,
+    email: string
+  ): Promise<TokenPair> {
     await this.tokenStore.delete(accountId, tokenId)
     return this.issueTokens(accountId, email)
   }
@@ -312,7 +340,9 @@ export class TokenService {
     })
   }
 
-  parseRefreshToken(refreshToken: string): { accountId: string; tokenId: string } | null {
+  parseRefreshToken(
+    refreshToken: string
+  ): { accountId: string; tokenId: string } | null {
     const colonIndex = refreshToken.indexOf(':')
     if (colonIndex === -1) return null
     return {
@@ -345,6 +375,7 @@ git commit -m "refactor(auth): simplify JWT payload to sub+email, remove memberI
 ## Task 3: Simplify AccountRepositoryInterface and InMemoryAccountRepository
 
 **Files:**
+
 - Modify: `apps/api/src/auth/interfaces/account.repository.interface.ts`
 - Modify: `apps/api/src/auth/interfaces/index.ts`
 - Modify: `apps/api/src/auth/infrastructure/in-memory-account.repository.ts`
@@ -380,7 +411,12 @@ describe('InMemoryAccountRepository', () => {
 
   describe('findByEmail', () => {
     it('returns account when email matches', async () => {
-      await repo.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      await repo.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       const result = await repo.findByEmail('a@b.com')
       expect(result?.email).toBe('a@b.com')
     })
@@ -409,16 +445,18 @@ describe('InMemoryAccountRepository', () => {
 
   describe('seed', () => {
     it('pre-populates accounts accessible via findByEmail', async () => {
-      repo.seed([{
-        id: 'seeded-id',
-        email: 'seeded@b.com',
-        passwordHash: 'h',
-        firstName: 'S',
-        lastName: 'T',
-        avatarUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }])
+      repo.seed([
+        {
+          id: 'seeded-id',
+          email: 'seeded@b.com',
+          passwordHash: 'h',
+          firstName: 'S',
+          lastName: 'T',
+          avatarUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ])
       const result = await repo.findByEmail('seeded@b.com')
       expect(result?.id).toBe('seeded-id')
     })
@@ -474,7 +512,10 @@ import { randomUUID } from 'crypto'
 
 import type { Prisma } from '@glossops/database'
 
-import type { AccountRepositoryInterface, CreateAccountData } from '@auth/interfaces'
+import type {
+  AccountRepositoryInterface,
+  CreateAccountData,
+} from '@auth/interfaces'
 
 export class InMemoryAccountRepository implements AccountRepositoryInterface {
   private readonly accounts: Prisma.AccountModel[] = []
@@ -513,7 +554,10 @@ import { Injectable } from '@nestjs/common'
 
 import type { Prisma } from '@glossops/database'
 
-import type { AccountRepositoryInterface, CreateAccountData } from '@auth/interfaces'
+import type {
+  AccountRepositoryInterface,
+  CreateAccountData,
+} from '@auth/interfaces'
 import { PrismaService } from '@prisma'
 
 @Injectable()
@@ -558,6 +602,7 @@ git commit -m "refactor(auth): simplify AccountRepository — remove memberships
 ## Task 4: Organization and Invitation interfaces
 
 **Files:**
+
 - Create: `apps/api/src/organizations/interfaces/organization.repository.interface.ts`
 - Create: `apps/api/src/organizations/interfaces/invitation.store.interface.ts`
 - Create: `apps/api/src/organizations/interfaces/index.ts`
@@ -575,7 +620,10 @@ import type { Prisma } from '@glossops/database'
 export type OrganizationWithRole = Prisma.OrganizationModel & { role: Role }
 
 export type MemberWithAccount = Prisma.OrganizationMemberModel & {
-  account: Pick<Prisma.AccountModel, 'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'>
+  account: Pick<
+    Prisma.AccountModel,
+    'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'
+  >
 }
 
 export interface CreateOrgData {
@@ -595,11 +643,21 @@ export interface OrganizationRepositoryInterface {
   createWithBranch(
     data: CreateOrgData,
     accountId: string
-  ): Promise<{ organization: Prisma.OrganizationModel; member: Prisma.OrganizationMemberModel }>
+  ): Promise<{
+    organization: Prisma.OrganizationModel
+    member: Prisma.OrganizationMemberModel
+  }>
   listMembers(organizationId: string): Promise<MemberWithAccount[]>
-  findMember(accountId: string, organizationId: string): Promise<Prisma.OrganizationMemberModel | null>
+  findMember(
+    accountId: string,
+    organizationId: string
+  ): Promise<Prisma.OrganizationMemberModel | null>
   countMembershipsByAccount(accountId: string): Promise<number>
-  addMember(organizationId: string, accountId: string, role: Role): Promise<Prisma.OrganizationMemberModel>
+  addMember(
+    organizationId: string,
+    accountId: string,
+    role: Role
+  ): Promise<Prisma.OrganizationMemberModel>
 }
 ```
 
@@ -618,7 +676,11 @@ export interface InvitationPayload {
 }
 
 export interface InvitationStoreInterface {
-  save(token: string, payload: InvitationPayload, ttlDays: number): Promise<void>
+  save(
+    token: string,
+    payload: InvitationPayload,
+    ttlDays: number
+  ): Promise<void>
   get(token: string): Promise<InvitationPayload | null>
   delete(token: string): Promise<void>
 }
@@ -657,6 +719,7 @@ git commit -m "feat(organizations): add repository and invitation store interfac
 ## Task 5: InMemoryOrganizationRepository
 
 **Files:**
+
 - Create: `apps/api/src/organizations/infrastructure/in-memory-organization.repository.ts`
 - Create: `apps/api/src/organizations/infrastructure/in-memory-organization.repository.spec.ts`
 
@@ -698,8 +761,13 @@ describe('InMemoryOrganizationRepository', () => {
 
   describe('findById', () => {
     it('returns org when id matches', async () => {
-      const { organization } = await repo.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
-      expect(await repo.findById(organization.id)).toMatchObject({ id: organization.id })
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      expect(await repo.findById(organization.id)).toMatchObject({
+        id: organization.id,
+      })
     })
 
     it('returns null when not found', async () => {
@@ -723,20 +791,29 @@ describe('InMemoryOrganizationRepository', () => {
 
   describe('findMember', () => {
     it('returns member when account belongs to org', async () => {
-      const { organization } = await repo.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
       const member = await repo.findMember('acc-1', organization.id)
       expect(member?.accountId).toBe('acc-1')
     })
 
     it('returns null when account is not a member', async () => {
-      const { organization } = await repo.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
       expect(await repo.findMember('other-acc', organization.id)).toBeNull()
     })
   })
 
   describe('update', () => {
     it('updates org name', async () => {
-      const { organization } = await repo.createWithBranch({ name: 'Old', slug: 's' }, 'acc-1')
+      const { organization } = await repo.createWithBranch(
+        { name: 'Old', slug: 's' },
+        'acc-1'
+      )
       const updated = await repo.update(organization.id, { name: 'New' })
       expect(updated.name).toBe('New')
     })
@@ -756,8 +833,15 @@ describe('InMemoryOrganizationRepository', () => {
 
   describe('addMember', () => {
     it('adds a new member to the main branch of the org', async () => {
-      const { organization } = await repo.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
-      const member = await repo.addMember(organization.id, 'acc-2', Role.TECHNICIAN)
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      const member = await repo.addMember(
+        organization.id,
+        'acc-2',
+        Role.TECHNICIAN
+      )
       expect(member.accountId).toBe('acc-2')
       expect(member.role).toBe(Role.TECHNICIAN)
     })
@@ -765,7 +849,10 @@ describe('InMemoryOrganizationRepository', () => {
 
   describe('listMembers', () => {
     it('returns members with account info for the given org', async () => {
-      const { organization } = await repo.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
       repo.seedAccounts([makeAccount('acc-1')])
       const members = await repo.listMembers(organization.id)
       expect(members).toHaveLength(1)
@@ -806,11 +893,17 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
   private members = new Map<string, Prisma.OrganizationMemberModel>()
   private accounts = new Map<
     string,
-    Pick<Prisma.AccountModel, 'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'>
+    Pick<
+      Prisma.AccountModel,
+      'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'
+    >
   >()
 
   seedAccounts(
-    accounts: Pick<Prisma.AccountModel, 'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'>[]
+    accounts: Pick<
+      Prisma.AccountModel,
+      'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'
+    >[]
   ): void {
     accounts.forEach((a) => this.accounts.set(a.id, a))
   }
@@ -843,7 +936,10 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
   createWithBranch(
     data: CreateOrgData,
     accountId: string
-  ): Promise<{ organization: Prisma.OrganizationModel; member: Prisma.OrganizationMemberModel }> {
+  ): Promise<{
+    organization: Prisma.OrganizationModel
+    member: Prisma.OrganizationMemberModel
+  }> {
     const now = new Date()
     const orgId = randomUUID()
     const branchId = randomUUID()
@@ -901,7 +997,10 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
     return Promise.resolve(result)
   }
 
-  findMember(accountId: string, organizationId: string): Promise<Prisma.OrganizationMemberModel | null> {
+  findMember(
+    accountId: string,
+    organizationId: string
+  ): Promise<Prisma.OrganizationMemberModel | null> {
     const orgBranchIds = new Set(
       [...this.branches.values()]
         .filter((b) => b.organizationId === organizationId)
@@ -970,6 +1069,7 @@ git commit -m "feat(organizations): add InMemoryOrganizationRepository"
 ## Task 6: InMemoryInvitationStore
 
 **Files:**
+
 - Create: `apps/api/src/organizations/infrastructure/in-memory-invitation.store.ts`
 - Create: `apps/api/src/organizations/infrastructure/in-memory-invitation.store.spec.ts`
 
@@ -1024,12 +1124,22 @@ Expected: FAIL — module not found.
 
 ```ts
 // apps/api/src/organizations/infrastructure/in-memory-invitation.store.ts
-import type { InvitationPayload, InvitationStoreInterface } from '@organizations/interfaces'
+import type {
+  InvitationPayload,
+  InvitationStoreInterface,
+} from '@organizations/interfaces'
 
 export class InMemoryInvitationStore implements InvitationStoreInterface {
-  private readonly store = new Map<string, { payload: InvitationPayload; expiresAt: Date }>()
+  private readonly store = new Map<
+    string,
+    { payload: InvitationPayload; expiresAt: Date }
+  >()
 
-  save(token: string, payload: InvitationPayload, ttlDays: number): Promise<void> {
+  save(
+    token: string,
+    payload: InvitationPayload,
+    ttlDays: number
+  ): Promise<void> {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + ttlDays)
     this.store.set(token, { payload, expiresAt })
@@ -1074,6 +1184,7 @@ git commit -m "feat(organizations): add InMemoryInvitationStore"
 ## Task 7: Update RegisterDto and AuthService
 
 **Files:**
+
 - Modify: `apps/api/src/auth/dto/register.dto.ts`
 - Modify: `apps/api/src/auth/auth.service.ts`
 - Modify: `apps/api/src/auth/auth.service.spec.ts`
@@ -1155,7 +1266,12 @@ describe('AuthService', () => {
     }
 
     it('throws ConflictException when email is already registered', async () => {
-      await accounts.create({ email: dto.email, passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      await accounts.create({
+        email: dto.email,
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       await expect(service.register(dto)).rejects.toThrow(ConflictException)
     })
@@ -1191,11 +1307,18 @@ describe('AuthService', () => {
     const dto = { email: 'user@example.com', password: 'correct-pass' }
 
     beforeEach(async () => {
-      await accounts.create({ email: dto.email, passwordHash: 'hashed', firstName: 'User', lastName: 'Test' })
+      await accounts.create({
+        email: dto.email,
+        passwordHash: 'hashed',
+        firstName: 'User',
+        lastName: 'Test',
+      })
     })
 
     it('throws UnauthorizedException when account does not exist', async () => {
-      await expect(service.login({ email: 'none@example.com', password: 'p' })).rejects.toThrow(UnauthorizedException)
+      await expect(
+        service.login({ email: 'none@example.com', password: 'p' })
+      ).rejects.toThrow(UnauthorizedException)
     })
 
     it('throws UnauthorizedException when password is wrong', async () => {
@@ -1206,36 +1329,63 @@ describe('AuthService', () => {
     it('issues tokens with account id and email', async () => {
       jest.mocked(bcrypt.compare).mockResolvedValue(true as never)
       await service.login(dto)
-      expect(tokenService.issueTokens).toHaveBeenCalledWith(expect.any(String), dto.email)
+      expect(tokenService.issueTokens).toHaveBeenCalledWith(
+        expect.any(String),
+        dto.email
+      )
     })
   })
 
   describe('refresh', () => {
     it('throws UnauthorizedException for malformed refresh token', async () => {
       tokenService.parseRefreshToken.mockReturnValue(null)
-      await expect(service.refresh('bad-token')).rejects.toThrow(UnauthorizedException)
+      await expect(service.refresh('bad-token')).rejects.toThrow(
+        UnauthorizedException
+      )
     })
 
     it('throws UnauthorizedException when token is not in store', async () => {
-      tokenService.parseRefreshToken.mockReturnValue({ accountId: 'acc', tokenId: 'tok' })
-      await expect(service.refresh('acc:tok')).rejects.toThrow(UnauthorizedException)
+      tokenService.parseRefreshToken.mockReturnValue({
+        accountId: 'acc',
+        tokenId: 'tok',
+      })
+      await expect(service.refresh('acc:tok')).rejects.toThrow(
+        UnauthorizedException
+      )
     })
 
     it('throws UnauthorizedException when account no longer exists', async () => {
-      tokenService.parseRefreshToken.mockReturnValue({ accountId: 'ghost-id', tokenId: 'tok-id' })
+      tokenService.parseRefreshToken.mockReturnValue({
+        accountId: 'ghost-id',
+        tokenId: 'tok-id',
+      })
       await tokenStore.save('ghost-id', 'tok-id', 30)
-      await expect(service.refresh('ghost-id:tok-id')).rejects.toThrow(UnauthorizedException)
+      await expect(service.refresh('ghost-id:tok-id')).rejects.toThrow(
+        UnauthorizedException
+      )
     })
 
     it('rotates tokens using account email', async () => {
-      const created = await accounts.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      const created = await accounts.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       await tokenStore.save(created.id, 'tok-id', 30)
-      tokenService.parseRefreshToken.mockReturnValue({ accountId: created.id, tokenId: 'tok-id' })
+      tokenService.parseRefreshToken.mockReturnValue({
+        accountId: created.id,
+        tokenId: 'tok-id',
+      })
       tokenService.rotateTokens.mockResolvedValue(mockTokenPair)
 
       const result = await service.refresh(`${created.id}:tok-id`)
 
-      expect(tokenService.rotateTokens).toHaveBeenCalledWith(created.id, 'tok-id', 'a@b.com')
+      expect(tokenService.rotateTokens).toHaveBeenCalledWith(
+        created.id,
+        'tok-id',
+        'a@b.com'
+      )
       expect(result).toEqual(mockTokenPair)
     })
   })
@@ -1243,14 +1393,20 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('revokes the refresh token from the store', async () => {
       await tokenStore.save('acc-id', 'tok-id', 30)
-      tokenService.parseRefreshToken.mockReturnValue({ accountId: 'acc-id', tokenId: 'tok-id' })
+      tokenService.parseRefreshToken.mockReturnValue({
+        accountId: 'acc-id',
+        tokenId: 'tok-id',
+      })
       await service.logout('acc-id', 'acc-id:tok-id')
       expect(await tokenStore.exists('acc-id', 'tok-id')).toBe(false)
     })
 
     it('does nothing when refresh token belongs to a different account', async () => {
       await tokenStore.save('other-acc', 'tok-id', 30)
-      tokenService.parseRefreshToken.mockReturnValue({ accountId: 'other-acc', tokenId: 'tok-id' })
+      tokenService.parseRefreshToken.mockReturnValue({
+        accountId: 'other-acc',
+        tokenId: 'tok-id',
+      })
       await service.logout('acc-id', 'other-acc:tok-id')
       expect(await tokenStore.exists('other-acc', 'tok-id')).toBe(true)
     })
@@ -1270,7 +1426,13 @@ Expected: FAIL — `ORGANIZATION_REPOSITORY` not injected, `issueTokens` called 
 
 ```ts
 // apps/api/src/auth/dto/register.dto.ts
-import { IsEmail, IsString, Matches, MaxLength, MinLength } from 'class-validator'
+import {
+  IsEmail,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator'
 
 export class RegisterDto {
   @IsEmail()
@@ -1299,7 +1461,9 @@ export class RegisterDto {
   @IsString()
   @MinLength(1)
   @MaxLength(63)
-  @Matches(/^[a-z0-9-]+$/, { message: 'slug must be lowercase alphanumeric with hyphens' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'slug must be lowercase alphanumeric with hyphens',
+  })
   organizationSlug: string
 }
 ```
@@ -1317,7 +1481,11 @@ import {
 } from '@nestjs/common'
 
 import { RegisterDto, LoginDto } from '@auth/dto'
-import type { TokenPair, AccountRepositoryInterface, TokenStoreInterface } from '@auth/interfaces'
+import type {
+  TokenPair,
+  AccountRepositoryInterface,
+  TokenStoreInterface,
+} from '@auth/interfaces'
 import type { OrganizationRepositoryInterface } from '@organizations/interfaces'
 
 import { ORGANIZATION_REPOSITORY } from '../organizations/organizations.tokens'
@@ -1327,15 +1495,18 @@ import { TokenService } from './token.service'
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepositoryInterface,
-    @Inject(ORGANIZATION_REPOSITORY) private readonly organizations: OrganizationRepositoryInterface,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accounts: AccountRepositoryInterface,
+    @Inject(ORGANIZATION_REPOSITORY)
+    private readonly organizations: OrganizationRepositoryInterface,
     @Inject(TOKEN_STORE) private readonly tokenStore: TokenStoreInterface,
     private readonly tokenService: TokenService
   ) {}
 
   async register(dto: RegisterDto): Promise<TokenPair> {
     const existing = await this.accounts.findByEmail(dto.email)
-    if (existing) throw new ConflictException({ error: 'email_already_registered' })
+    if (existing)
+      throw new ConflictException({ error: 'email_already_registered' })
 
     const passwordHash = await bcrypt.hash(dto.password, 12)
     const account = await this.accounts.create({
@@ -1355,24 +1526,29 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<TokenPair> {
     const account = await this.accounts.findByEmail(dto.email)
-    if (!account) throw new UnauthorizedException({ error: 'invalid_credentials' })
+    if (!account)
+      throw new UnauthorizedException({ error: 'invalid_credentials' })
 
     const valid = await bcrypt.compare(dto.password, account.passwordHash)
-    if (!valid) throw new UnauthorizedException({ error: 'invalid_credentials' })
+    if (!valid)
+      throw new UnauthorizedException({ error: 'invalid_credentials' })
 
     return this.tokenService.issueTokens(account.id, account.email)
   }
 
   async refresh(refreshToken: string): Promise<TokenPair> {
     const parsed = this.tokenService.parseRefreshToken(refreshToken)
-    if (!parsed) throw new UnauthorizedException({ error: 'invalid_refresh_token' })
+    if (!parsed)
+      throw new UnauthorizedException({ error: 'invalid_refresh_token' })
 
     const { accountId, tokenId } = parsed
     const exists = await this.tokenStore.exists(accountId, tokenId)
-    if (!exists) throw new UnauthorizedException({ error: 'invalid_refresh_token' })
+    if (!exists)
+      throw new UnauthorizedException({ error: 'invalid_refresh_token' })
 
     const account = await this.accounts.findById(accountId)
-    if (!account) throw new UnauthorizedException({ error: 'invalid_refresh_token' })
+    if (!account)
+      throw new UnauthorizedException({ error: 'invalid_refresh_token' })
 
     return this.tokenService.rotateTokens(accountId, tokenId, account.email)
   }
@@ -1407,6 +1583,7 @@ git commit -m "feat(auth): register creates org, simplify login/refresh token is
 ## Task 8: Update AuthGuard
 
 **Files:**
+
 - Modify: `apps/api/src/auth/guards/auth.guard.ts`
 - Modify: `apps/api/src/auth/guards/auth.guard.spec.ts`
 
@@ -1414,7 +1591,11 @@ git commit -m "feat(auth): register creates org, simplify login/refresh token is
 
 ```ts
 // apps/api/src/auth/guards/auth.guard.spec.ts
-import { ForbiddenException, UnauthorizedException, ExecutionContext } from '@nestjs/common'
+import {
+  ForbiddenException,
+  UnauthorizedException,
+  ExecutionContext,
+} from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Test } from '@nestjs/testing'
 
@@ -1428,7 +1609,12 @@ import { TokenService } from '../token.service'
 import { AuthGuard } from './auth.guard'
 
 jest.mock('@glossops/database', () => ({
-  Role: { OWNER: 'OWNER', MANAGER: 'MANAGER', TECHNICIAN: 'TECHNICIAN', FRONT_DESK: 'FRONT_DESK' },
+  Role: {
+    OWNER: 'OWNER',
+    MANAGER: 'MANAGER',
+    TECHNICIAN: 'TECHNICIAN',
+    FRONT_DESK: 'FRONT_DESK',
+  },
 }))
 
 jest.mock('@config', () => ({
@@ -1486,7 +1672,10 @@ describe('AuthGuard', () => {
         {
           provide: TokenService,
           useValue: {
-            verifyAccessToken: jest.fn().mockResolvedValue({ sub: 'acc-uuid', email: 'test@example.com' }),
+            verifyAccessToken: jest.fn().mockResolvedValue({
+              sub: 'acc-uuid',
+              email: 'test@example.com',
+            }),
           },
         },
         {
@@ -1507,17 +1696,26 @@ describe('AuthGuard', () => {
   })
 
   it('throws UnauthorizedException when Authorization header is missing', async () => {
-    await expect(guard.canActivate(makeCtx())).rejects.toThrow(UnauthorizedException)
+    await expect(guard.canActivate(makeCtx())).rejects.toThrow(
+      UnauthorizedException
+    )
   })
 
   it('throws UnauthorizedException when token verification fails', async () => {
     tokenService.verifyAccessToken.mockRejectedValueOnce(new Error('expired'))
-    await expect(guard.canActivate(makeCtx('Bearer bad.token'))).rejects.toThrow(UnauthorizedException)
+    await expect(
+      guard.canActivate(makeCtx('Bearer bad.token'))
+    ).rejects.toThrow(UnauthorizedException)
   })
 
   it('throws UnauthorizedException when account not found', async () => {
-    tokenService.verifyAccessToken.mockResolvedValueOnce({ sub: 'nonexistent-id', email: 'x@x.com' })
-    await expect(guard.canActivate(makeCtx('Bearer valid.token'))).rejects.toThrow(UnauthorizedException)
+    tokenService.verifyAccessToken.mockResolvedValueOnce({
+      sub: 'nonexistent-id',
+      email: 'x@x.com',
+    })
+    await expect(
+      guard.canActivate(makeCtx('Bearer valid.token'))
+    ).rejects.toThrow(UnauthorizedException)
   })
 
   it('attaches AuthContext with null org fields when no X-Organization-Id header', async () => {
@@ -1592,8 +1790,10 @@ import { TokenService } from '../token.service'
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepositoryInterface,
-    @Inject(ORGANIZATION_REPOSITORY) private readonly organizations: OrganizationRepositoryInterface,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accounts: AccountRepositoryInterface,
+    @Inject(ORGANIZATION_REPOSITORY)
+    private readonly organizations: OrganizationRepositoryInterface,
     private readonly tokenService: TokenService,
     private readonly reflector: Reflector
   ) {}
@@ -1674,6 +1874,7 @@ git commit -m "feat(auth): resolve org context from X-Organization-Id header in 
 ## Task 9: OrganizationService
 
 **Files:**
+
 - Create: `apps/api/src/organizations/organizations.service.ts`
 - Create: `apps/api/src/organizations/organizations.service.spec.ts`
 
@@ -1695,7 +1896,10 @@ import { ACCOUNT_REPOSITORY } from '../auth/auth.tokens'
 import { InMemoryAccountRepository } from '../auth/infrastructure/in-memory-account.repository'
 import { InMemoryOrganizationRepository } from './infrastructure/in-memory-organization.repository'
 import { InMemoryInvitationStore } from './infrastructure/in-memory-invitation.store'
-import { ORGANIZATION_REPOSITORY, INVITATION_STORE } from './organizations.tokens'
+import {
+  ORGANIZATION_REPOSITORY,
+  INVITATION_STORE,
+} from './organizations.tokens'
 import { OrganizationService } from './organizations.service'
 
 jest.mock('@config', () => ({
@@ -1733,13 +1937,18 @@ describe('OrganizationService', () => {
 
   describe('getMyOrganization', () => {
     it('returns the org when found', async () => {
-      const { organization } = await organizations.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
       const result = await service.getMyOrganization(organization.id)
       expect(result.id).toBe(organization.id)
     })
 
     it('throws NotFoundException when org does not exist', async () => {
-      await expect(service.getMyOrganization('unknown')).rejects.toThrow(NotFoundException)
+      await expect(service.getMyOrganization('unknown')).rejects.toThrow(
+        NotFoundException
+      )
     })
   })
 
@@ -1754,16 +1963,32 @@ describe('OrganizationService', () => {
 
   describe('updateOrganization', () => {
     it('updates and returns the org', async () => {
-      const { organization } = await organizations.createWithBranch({ name: 'Old', slug: 's' }, 'acc-1')
-      const result = await service.updateOrganization(organization.id, { name: 'New' })
+      const { organization } = await organizations.createWithBranch(
+        { name: 'Old', slug: 's' },
+        'acc-1'
+      )
+      const result = await service.updateOrganization(organization.id, {
+        name: 'New',
+      })
       expect(result.name).toBe('New')
     })
   })
 
   describe('listMembers', () => {
     it('returns members for the org', async () => {
-      const { organization } = await organizations.createWithBranch({ name: 'T', slug: 't' }, 'acc-1')
-      organizations.seedAccounts([{ id: 'acc-1', email: 'a@b.com', firstName: 'A', lastName: 'B', avatarUrl: null }])
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      organizations.seedAccounts([
+        {
+          id: 'acc-1',
+          email: 'a@b.com',
+          firstName: 'A',
+          lastName: 'B',
+          avatarUrl: null,
+        },
+      ])
       const result = await service.listMembers(organization.id)
       expect(result).toHaveLength(1)
     })
@@ -1771,16 +1996,28 @@ describe('OrganizationService', () => {
 
   describe('createInvitation', () => {
     it('returns an invitationUrl containing the token', async () => {
-      const { invitationUrl } = await service.createInvitation('org-1', 'a@b.com', Role.TECHNICIAN)
+      const { invitationUrl } = await service.createInvitation(
+        'org-1',
+        'a@b.com',
+        Role.TECHNICIAN
+      )
       expect(invitationUrl).toContain('http://localhost:3001')
       expect(invitationUrl).toContain('token=')
     })
 
     it('saves the token in the invitation store', async () => {
-      const { invitationUrl } = await service.createInvitation('org-1', 'a@b.com', Role.TECHNICIAN)
+      const { invitationUrl } = await service.createInvitation(
+        'org-1',
+        'a@b.com',
+        Role.TECHNICIAN
+      )
       const token = new URL(invitationUrl).searchParams.get('token')!
       const payload = await invitationStore.get(token)
-      expect(payload).toEqual({ orgId: 'org-1', email: 'a@b.com', role: Role.TECHNICIAN })
+      expect(payload).toEqual({
+        orgId: 'org-1',
+        email: 'a@b.com',
+        role: Role.TECHNICIAN,
+      })
     })
   })
 
@@ -1788,7 +2025,10 @@ describe('OrganizationService', () => {
     let orgId: string
 
     beforeEach(async () => {
-      const { organization } = await organizations.createWithBranch({ name: 'T', slug: 't' }, 'owner-acc')
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'owner-acc'
+      )
       orgId = organization.id
     })
 
@@ -1799,8 +2039,17 @@ describe('OrganizationService', () => {
     })
 
     it('adds existing account as member and deletes the token', async () => {
-      const existing = await accounts.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
-      await invitationStore.save('tok-1', { orgId, email: 'a@b.com', role: Role.TECHNICIAN }, 7)
+      const existing = await accounts.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
+      await invitationStore.save(
+        'tok-1',
+        { orgId, email: 'a@b.com', role: Role.TECHNICIAN },
+        7
+      )
 
       const result = await service.acceptInvitation({ token: 'tok-1' })
 
@@ -1812,7 +2061,11 @@ describe('OrganizationService', () => {
 
     it('creates new account + membership when email has no account and deletes token', async () => {
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed' as never)
-      await invitationStore.save('tok-2', { orgId, email: 'new@b.com', role: Role.FRONT_DESK }, 7)
+      await invitationStore.save(
+        'tok-2',
+        { orgId, email: 'new@b.com', role: Role.FRONT_DESK },
+        7
+      )
 
       const result = await service.acceptInvitation({
         token: 'tok-2',
@@ -1826,35 +2079,77 @@ describe('OrganizationService', () => {
     })
 
     it('throws BadRequestException when new account fields missing', async () => {
-      await invitationStore.save('tok-3', { orgId, email: 'new@b.com', role: Role.FRONT_DESK }, 7)
-      await expect(service.acceptInvitation({ token: 'tok-3' })).rejects.toThrow(BadRequestException)
+      await invitationStore.save(
+        'tok-3',
+        { orgId, email: 'new@b.com', role: Role.FRONT_DESK },
+        7
+      )
+      await expect(
+        service.acceptInvitation({ token: 'tok-3' })
+      ).rejects.toThrow(BadRequestException)
     })
 
     it('throws ConflictException when account is already a member', async () => {
-      const existing = await accounts.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      const existing = await accounts.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       await organizations.addMember(orgId, existing.id, Role.TECHNICIAN)
-      await invitationStore.save('tok-4', { orgId, email: 'a@b.com', role: Role.TECHNICIAN }, 7)
+      await invitationStore.save(
+        'tok-4',
+        { orgId, email: 'a@b.com', role: Role.TECHNICIAN },
+        7
+      )
 
-      await expect(service.acceptInvitation({ token: 'tok-4' })).rejects.toThrow(ConflictException)
+      await expect(
+        service.acceptInvitation({ token: 'tok-4' })
+      ).rejects.toThrow(ConflictException)
     })
 
     it('throws UnprocessableEntityException when org cap of 5 is reached', async () => {
-      const existing = await accounts.create({ email: 'capped@b.com', passwordHash: 'h', firstName: 'C', lastName: 'D' })
+      const existing = await accounts.create({
+        email: 'capped@b.com',
+        passwordHash: 'h',
+        firstName: 'C',
+        lastName: 'D',
+      })
       for (let i = 0; i < 5; i++) {
-        const { organization } = await organizations.createWithBranch({ name: `O${i}`, slug: `o${i}` }, existing.id)
+        const { organization } = await organizations.createWithBranch(
+          { name: `O${i}`, slug: `o${i}` },
+          existing.id
+        )
         void organization
       }
-      await invitationStore.save('tok-5', { orgId, email: 'capped@b.com', role: Role.FRONT_DESK }, 7)
+      await invitationStore.save(
+        'tok-5',
+        { orgId, email: 'capped@b.com', role: Role.FRONT_DESK },
+        7
+      )
 
-      await expect(service.acceptInvitation({ token: 'tok-5' })).rejects.toThrow(UnprocessableEntityException)
+      await expect(
+        service.acceptInvitation({ token: 'tok-5' })
+      ).rejects.toThrow(UnprocessableEntityException)
     })
 
     it('does not delete token when accept fails (retry safe)', async () => {
-      const existing = await accounts.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      const existing = await accounts.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       await organizations.addMember(orgId, existing.id, Role.TECHNICIAN)
-      await invitationStore.save('tok-6', { orgId, email: 'a@b.com', role: Role.TECHNICIAN }, 7)
+      await invitationStore.save(
+        'tok-6',
+        { orgId, email: 'a@b.com', role: Role.TECHNICIAN },
+        7
+      )
 
-      await expect(service.acceptInvitation({ token: 'tok-6' })).rejects.toThrow(ConflictException)
+      await expect(
+        service.acceptInvitation({ token: 'tok-6' })
+      ).rejects.toThrow(ConflictException)
       expect(await invitationStore.get('tok-6')).not.toBeNull()
     })
   })
@@ -1900,7 +2195,10 @@ import type {
   UpdateOrgData,
 } from '@organizations/interfaces'
 
-import { INVITATION_STORE, ORGANIZATION_REPOSITORY } from './organizations.tokens'
+import {
+  INVITATION_STORE,
+  ORGANIZATION_REPOSITORY,
+} from './organizations.tokens'
 
 const ORG_MEMBERSHIP_CAP = 5
 
@@ -1914,12 +2212,17 @@ export interface AcceptInvitationDto {
 @Injectable()
 export class OrganizationService {
   constructor(
-    @Inject(ORGANIZATION_REPOSITORY) private readonly organizations: OrganizationRepositoryInterface,
-    @Inject(INVITATION_STORE) private readonly invitationStore: InvitationStoreInterface,
-    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepositoryInterface
+    @Inject(ORGANIZATION_REPOSITORY)
+    private readonly organizations: OrganizationRepositoryInterface,
+    @Inject(INVITATION_STORE)
+    private readonly invitationStore: InvitationStoreInterface,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accounts: AccountRepositoryInterface
   ) {}
 
-  async getMyOrganization(organizationId: string): Promise<Prisma.OrganizationModel> {
+  async getMyOrganization(
+    organizationId: string
+  ): Promise<Prisma.OrganizationModel> {
     const org = await this.organizations.findById(organizationId)
     if (!org) throw new NotFoundException({ error: 'organization_not_found' })
     return org
@@ -1929,7 +2232,10 @@ export class OrganizationService {
     return this.organizations.findAllByAccountId(accountId)
   }
 
-  updateOrganization(organizationId: string, data: UpdateOrgData): Promise<Prisma.OrganizationModel> {
+  updateOrganization(
+    organizationId: string,
+    data: UpdateOrgData
+  ): Promise<Prisma.OrganizationModel> {
     return this.organizations.update(organizationId, data)
   }
 
@@ -1952,7 +2258,9 @@ export class OrganizationService {
     return { invitationUrl }
   }
 
-  async acceptInvitation(dto: AcceptInvitationDto): Promise<Prisma.AccountModel> {
+  async acceptInvitation(
+    dto: AcceptInvitationDto
+  ): Promise<Prisma.AccountModel> {
     const payload = await this.invitationStore.get(dto.token)
     if (!payload) throw new BadRequestException({ error: 'invalid_invitation' })
 
@@ -1973,13 +2281,21 @@ export class OrganizationService {
       })
     }
 
-    const orgCount = await this.organizations.countMembershipsByAccount(account.id)
+    const orgCount = await this.organizations.countMembershipsByAccount(
+      account.id
+    )
     if (orgCount >= ORG_MEMBERSHIP_CAP) {
-      throw new UnprocessableEntityException({ error: 'organization_limit_reached' })
+      throw new UnprocessableEntityException({
+        error: 'organization_limit_reached',
+      })
     }
 
-    const existingMember = await this.organizations.findMember(account.id, orgId)
-    if (existingMember) throw new ConflictException({ error: 'already_a_member' })
+    const existingMember = await this.organizations.findMember(
+      account.id,
+      orgId
+    )
+    if (existingMember)
+      throw new ConflictException({ error: 'already_a_member' })
 
     await this.organizations.addMember(orgId, account.id, role)
     await this.invitationStore.delete(dto.token)
@@ -2010,6 +2326,7 @@ git commit -m "feat(organizations): add OrganizationService with invitation flow
 ## Task 10: OrganizationController and DTOs
 
 **Files:**
+
 - Create: `apps/api/src/organizations/dto/update-org.dto.ts`
 - Create: `apps/api/src/organizations/dto/create-invitation.dto.ts`
 - Create: `apps/api/src/organizations/dto/accept-invitation.dto.ts`
@@ -2098,7 +2415,10 @@ import { Role } from '@glossops/database'
 import { CurrentAccount, Roles } from '@auth/decorators'
 import type { AuthContext, TokenPair } from '@auth/interfaces'
 
-import type { MemberWithAccount, OrganizationWithRole } from '@organizations/interfaces'
+import type {
+  MemberWithAccount,
+  OrganizationWithRole,
+} from '@organizations/interfaces'
 
 import { TokenService } from '../auth/token.service'
 import { Public } from '../auth/decorators/public.decorator'
@@ -2113,12 +2433,16 @@ export class OrganizationController {
   ) {}
 
   @Get()
-  listMyOrganizations(@CurrentAccount() account: AuthContext): Promise<OrganizationWithRole[]> {
+  listMyOrganizations(
+    @CurrentAccount() account: AuthContext
+  ): Promise<OrganizationWithRole[]> {
     return this.orgService.listMyOrganizations(account.sub)
   }
 
   @Get('me')
-  getMyOrganization(@CurrentAccount() account: AuthContext): Promise<Prisma.OrganizationModel> {
+  getMyOrganization(
+    @CurrentAccount() account: AuthContext
+  ): Promise<Prisma.OrganizationModel> {
     return this.orgService.getMyOrganization(account.organizationId!)
   }
 
@@ -2132,7 +2456,9 @@ export class OrganizationController {
   }
 
   @Get('me/members')
-  listMembers(@CurrentAccount() account: AuthContext): Promise<MemberWithAccount[]> {
+  listMembers(
+    @CurrentAccount() account: AuthContext
+  ): Promise<MemberWithAccount[]> {
     return this.orgService.listMembers(account.organizationId!)
   }
 
@@ -2142,7 +2468,11 @@ export class OrganizationController {
     @CurrentAccount() account: AuthContext,
     @Body() dto: CreateInvitationDto
   ): Promise<{ invitationUrl: string }> {
-    return this.orgService.createInvitation(account.organizationId!, dto.email, dto.role)
+    return this.orgService.createInvitation(
+      account.organizationId!,
+      dto.email,
+      dto.role
+    )
   }
 
   @Public()
@@ -2168,6 +2498,7 @@ git commit -m "feat(organizations): add controller and DTOs"
 ## Task 11: Prisma and Redis infrastructure implementations
 
 **Files:**
+
 - Create: `apps/api/src/organizations/infrastructure/prisma-organization.repository.ts`
 - Create: `apps/api/src/organizations/infrastructure/redis-invitation.store.ts`
 
@@ -2215,7 +2546,10 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
   async createWithBranch(
     data: CreateOrgData,
     accountId: string
-  ): Promise<{ organization: Prisma.OrganizationModel; member: Prisma.OrganizationMemberModel }> {
+  ): Promise<{
+    organization: Prisma.OrganizationModel
+    member: Prisma.OrganizationMemberModel
+  }> {
     const organization = await this.prisma.organization.create({
       data: { name: data.name, slug: data.slug },
     })
@@ -2235,7 +2569,15 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     return this.prisma.organizationMember.findMany({
       where: { branch: { organizationId } },
       include: {
-        account: { select: { id: true, email: true, firstName: true, lastName: true, avatarUrl: true } },
+        account: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
       },
     }) as Promise<MemberWithAccount[]>
   }
@@ -2267,7 +2609,9 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
       data: {
         accountId,
         role,
-        branch: { connect: { organizationId_isMain: { organizationId, isMain: true } } },
+        branch: {
+          connect: { organizationId_isMain: { organizationId, isMain: true } },
+        },
       },
     })
   }
@@ -2275,6 +2619,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
 ```
 
 > **Note on `addMember`:** Uses a compound unique index `organizationId_isMain` to find the main branch. If Prisma does not generate this compound index helper, replace with a `findFirst` + `create`:
+>
 > ```ts
 > async addMember(organizationId: string, accountId: string, role: Role) {
 >   const branch = await this.prisma.branch.findFirst({ where: { organizationId, isMain: true } })
@@ -2291,19 +2636,33 @@ import Redis from 'ioredis'
 
 import { envs } from '@config'
 
-import type { InvitationPayload, InvitationStoreInterface } from '@organizations/interfaces'
+import type {
+  InvitationPayload,
+  InvitationStoreInterface,
+} from '@organizations/interfaces'
 
 @Injectable()
-export class RedisInvitationStore implements InvitationStoreInterface, OnModuleDestroy {
+export class RedisInvitationStore
+  implements InvitationStoreInterface, OnModuleDestroy
+{
   private readonly client: Redis
 
   constructor() {
     this.client = new Redis(envs.redis.url)
   }
 
-  async save(token: string, payload: InvitationPayload, ttlDays: number): Promise<void> {
+  async save(
+    token: string,
+    payload: InvitationPayload,
+    ttlDays: number
+  ): Promise<void> {
     const key = `invitation:${token}`
-    await this.client.set(key, JSON.stringify(payload), 'EX', ttlDays * 24 * 60 * 60)
+    await this.client.set(
+      key,
+      JSON.stringify(payload),
+      'EX',
+      ttlDays * 24 * 60 * 60
+    )
   }
 
   async get(token: string): Promise<InvitationPayload | null> {
@@ -2336,6 +2695,7 @@ git commit -m "feat(organizations): add Prisma and Redis infrastructure implemen
 ## Task 12: Wire up modules and barrel exports
 
 **Files:**
+
 - Create: `apps/api/src/organizations/organizations.module.ts`
 - Create: `apps/api/src/organizations/index.ts`
 - Modify: `apps/api/src/auth/auth.module.ts`
@@ -2352,7 +2712,10 @@ import { AuthModule } from '@auth'
 
 import { PrismaOrganizationRepository } from './infrastructure/prisma-organization.repository'
 import { RedisInvitationStore } from './infrastructure/redis-invitation.store'
-import { INVITATION_STORE, ORGANIZATION_REPOSITORY } from './organizations.tokens'
+import {
+  INVITATION_STORE,
+  ORGANIZATION_REPOSITORY,
+} from './organizations.tokens'
 import { OrganizationController } from './organizations.controller'
 import { OrganizationService } from './organizations.service'
 
@@ -2360,7 +2723,10 @@ import { OrganizationService } from './organizations.service'
   imports: [PrismaModule, forwardRef(() => AuthModule)],
   controllers: [OrganizationController],
   providers: [
-    { provide: ORGANIZATION_REPOSITORY, useClass: PrismaOrganizationRepository },
+    {
+      provide: ORGANIZATION_REPOSITORY,
+      useClass: PrismaOrganizationRepository,
+    },
     { provide: INVITATION_STORE, useClass: RedisInvitationStore },
     OrganizationService,
   ],
@@ -2436,7 +2802,12 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, OrganizationsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    AuthModule,
+    OrganizationsModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
