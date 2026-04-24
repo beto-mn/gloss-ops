@@ -24,7 +24,7 @@ describe('TokenService', () => {
             signAsync: jest.fn().mockResolvedValue('signed.jwt.token'),
             verifyAsync: jest
               .fn()
-              .mockResolvedValue({ sub: 'acc-1', memberId: 'mem-1' }),
+              .mockResolvedValue({ sub: 'acc-1', email: 'a@b.com' }),
           },
         },
         { provide: TOKEN_STORE, useClass: InMemoryTokenStore },
@@ -37,30 +37,22 @@ describe('TokenService', () => {
   })
 
   describe('issueTokens', () => {
-    it('signs access token with sub and memberId', async () => {
-      await tokenService.issueTokens('acc-1', 'mem-1')
+    it('signs access token with sub and email', async () => {
+      await tokenService.issueTokens('acc-1', 'a@b.com')
       expect(jwtService.signAsync).toHaveBeenCalledWith({
         sub: 'acc-1',
-        memberId: 'mem-1',
-      })
-    })
-
-    it('signs access token with null memberId when account has no membership', async () => {
-      await tokenService.issueTokens('acc-1', null)
-      expect(jwtService.signAsync).toHaveBeenCalledWith({
-        sub: 'acc-1',
-        memberId: null,
+        email: 'a@b.com',
       })
     })
 
     it('saves refresh token to store', async () => {
-      const result = await tokenService.issueTokens('acc-1', 'mem-1')
+      const result = await tokenService.issueTokens('acc-1', 'a@b.com')
       const tokenId = result.refreshToken.slice('acc-1:'.length)
       expect(await tokenStore.exists('acc-1', tokenId)).toBe(true)
     })
 
     it('returns accessToken, refreshToken with accountId prefix, and expiresIn 900', async () => {
-      const result = await tokenService.issueTokens('acc-1', 'mem-1')
+      const result = await tokenService.issueTokens('acc-1', 'a@b.com')
       expect(result).toMatchObject({
         accessToken: 'signed.jwt.token',
         refreshToken: expect.stringMatching(/^acc-1:/),
@@ -71,10 +63,10 @@ describe('TokenService', () => {
 
   describe('rotateTokens', () => {
     it('revokes old token and issues new one', async () => {
-      const first = await tokenService.issueTokens('acc-1', 'mem-1')
+      const first = await tokenService.issueTokens('acc-1', 'a@b.com')
       const oldTokenId = first.refreshToken.slice('acc-1:'.length)
 
-      await tokenService.rotateTokens('acc-1', oldTokenId, 'mem-1')
+      await tokenService.rotateTokens('acc-1', oldTokenId, 'a@b.com')
 
       expect(await tokenStore.exists('acc-1', oldTokenId)).toBe(false)
     })
@@ -97,7 +89,7 @@ describe('TokenService', () => {
   describe('verifyAccessToken', () => {
     it('delegates to JwtService and returns payload', async () => {
       const result = await tokenService.verifyAccessToken('some.jwt')
-      expect(result).toEqual({ sub: 'acc-1', memberId: 'mem-1' })
+      expect(result).toEqual({ sub: 'acc-1', email: 'a@b.com' })
     })
   })
 })

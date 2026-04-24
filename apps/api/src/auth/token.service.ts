@@ -18,11 +18,8 @@ export class TokenService {
     @Inject(TOKEN_STORE) private readonly tokenStore: TokenStoreInterface
   ) {}
 
-  async issueTokens(
-    accountId: string,
-    memberId: string | null
-  ): Promise<TokenPair> {
-    const payload: JwtPayload = { sub: accountId, memberId }
+  async issueTokens(accountId: string, email: string): Promise<TokenPair> {
+    const payload: JwtPayload = { sub: accountId, email }
     const accessToken = await this.jwtService.signAsync(payload)
     const tokenId = randomUUID()
     await this.tokenStore.save(
@@ -40,10 +37,10 @@ export class TokenService {
   async rotateTokens(
     accountId: string,
     tokenId: string,
-    memberId: string | null
+    email: string
   ): Promise<TokenPair> {
     await this.tokenStore.delete(accountId, tokenId)
-    return this.issueTokens(accountId, memberId)
+    return this.issueTokens(accountId, email)
   }
 
   async verifyAccessToken(token: string): Promise<JwtPayload> {
