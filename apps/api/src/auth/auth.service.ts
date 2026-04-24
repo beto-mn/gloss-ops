@@ -6,13 +6,13 @@ import {
   Inject,
 } from '@nestjs/common'
 
+import type { OrganizationRepositoryInterface } from '@organizations/interfaces'
 import { RegisterDto, LoginDto } from '@auth/dto'
 import type {
-  TokenPair,
   AccountRepositoryInterface,
   TokenStoreInterface,
+  TokenPair,
 } from '@auth/interfaces'
-import type { OrganizationRepositoryInterface } from '@organizations/interfaces'
 
 import { ORGANIZATION_REPOSITORY } from '../organizations/organizations.tokens'
 import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'

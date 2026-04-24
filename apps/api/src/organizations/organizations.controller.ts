@@ -3,18 +3,17 @@ import { Body, Controller, Get, HttpCode, Patch, Post } from '@nestjs/common'
 import type { Prisma } from '@glossops/database'
 import { Role } from '@glossops/database'
 
-import { CurrentAccount, Roles } from '@auth/decorators'
 import type { AuthContext, TokenPair } from '@auth/interfaces'
-
+import { CurrentAccount, Roles } from '@auth/decorators'
 import type {
-  MemberWithAccount,
   OrganizationWithRole,
+  MemberWithAccount,
 } from '@organizations/interfaces'
 
-import { TokenService } from '../auth/token.service'
-import { Public } from '../auth/decorators/public.decorator'
 import { AcceptInvitationDto, CreateInvitationDto, UpdateOrgDto } from './dto'
 import { OrganizationService } from './organizations.service'
+import { Public } from '../auth/decorators/public.decorator'
+import { TokenService } from '../auth/token.service'
 
 @Controller('organizations')
 export class OrganizationController {

@@ -1,9 +1,9 @@
 import {
-  IsEmail,
+  MinLength,
+  MaxLength,
   IsString,
   Matches,
-  MaxLength,
-  MinLength,
+  IsEmail,
 } from 'class-validator'
 
 export class RegisterDto {

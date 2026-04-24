@@ -4,12 +4,11 @@ import type { Prisma } from '@glossops/database'
 import { Role } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
-
 import type {
-  CreateOrgData,
-  MemberWithAccount,
   OrganizationRepositoryInterface,
   OrganizationWithRole,
+  MemberWithAccount,
+  CreateOrgData,
   UpdateOrgData,
 } from '@organizations/interfaces'
 

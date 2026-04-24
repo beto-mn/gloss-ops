@@ -1,17 +1,17 @@
-import {
-  ForbiddenException,
-  UnauthorizedException,
-  ExecutionContext,
-} from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Test } from '@nestjs/testing'
+import {
+  UnauthorizedException,
+  ForbiddenException,
+  ExecutionContext,
+} from '@nestjs/common'
 
 import type { AuthContext } from '@auth/interfaces'
 
-import { ACCOUNT_REPOSITORY } from '../auth.tokens'
+import { InMemoryOrganizationRepository } from '../../organizations/infrastructure/in-memory-organization.repository'
 import { ORGANIZATION_REPOSITORY } from '../../organizations/organizations.tokens'
 import { InMemoryAccountRepository } from '../infrastructure/in-memory-account.repository'
-import { InMemoryOrganizationRepository } from '../../organizations/infrastructure/in-memory-organization.repository'
+import { ACCOUNT_REPOSITORY } from '../auth.tokens'
 import { TokenService } from '../token.service'
 import { AuthGuard } from './auth.guard'
 
