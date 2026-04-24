@@ -4,11 +4,11 @@ import * as bcrypt from 'bcrypt'
 
 import type { TokenPair } from '@auth/interfaces'
 
-import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
+import { InMemoryOrganizationRepository } from '../organizations/infrastructure/in-memory-organization.repository'
 import { ORGANIZATION_REPOSITORY } from '../organizations/organizations.tokens'
 import { InMemoryAccountRepository } from './infrastructure/in-memory-account.repository'
-import { InMemoryOrganizationRepository } from '../organizations/infrastructure/in-memory-organization.repository'
 import { InMemoryTokenStore } from './infrastructure/in-memory-token.store'
+import { ACCOUNT_REPOSITORY, TOKEN_STORE } from './auth.tokens'
 import { TokenService } from './token.service'
 import { AuthService } from './auth.service'
 

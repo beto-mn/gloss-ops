@@ -1,6 +1,6 @@
 import type {
-  InvitationPayload,
   InvitationStoreInterface,
+  InvitationPayload,
 } from '@organizations/interfaces'
 
 interface Entry {

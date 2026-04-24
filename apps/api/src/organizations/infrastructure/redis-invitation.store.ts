@@ -2,10 +2,9 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common'
 import Redis from 'ioredis'
 
 import { envs } from '@config'
-
 import type {
-  InvitationPayload,
   InvitationStoreInterface,
+  InvitationPayload,
 } from '@organizations/interfaces'
 
 @Injectable()

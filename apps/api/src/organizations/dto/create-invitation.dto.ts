@@ -1,4 +1,5 @@
 import { IsEmail, IsEnum } from 'class-validator'
+
 import { Role } from '@glossops/database'
 
 export class CreateInvitationDto {

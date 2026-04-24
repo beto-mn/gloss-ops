@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 
-import { Role } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
+import { Role } from '@glossops/database'
 
 import type {
   CreateOrgData,

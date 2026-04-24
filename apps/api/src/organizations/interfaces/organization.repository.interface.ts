@@ -1,5 +1,5 @@
-import { Role } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
+import { Role } from '@glossops/database'
 
 export type OrganizationWithRole = Prisma.OrganizationModel & { role: Role }
 

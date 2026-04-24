@@ -5,12 +5,12 @@ import { AuthModule } from '@auth'
 
 import { PrismaOrganizationRepository } from './infrastructure/prisma-organization.repository'
 import { RedisInvitationStore } from './infrastructure/redis-invitation.store'
-import {
-  INVITATION_STORE,
-  ORGANIZATION_REPOSITORY,
-} from './organizations.tokens'
 import { OrganizationController } from './organizations.controller'
 import { OrganizationService } from './organizations.service'
+import {
+  ORGANIZATION_REPOSITORY,
+  INVITATION_STORE,
+} from './organizations.tokens'
 
 @Module({
   imports: [PrismaModule, forwardRef(() => AuthModule)],

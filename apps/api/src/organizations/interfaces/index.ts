@@ -1,7 +1,7 @@
 export type { OrganizationRepositoryInterface } from './organization.repository.interface'
 export type { OrganizationWithRole } from './organization.repository.interface'
 export type { MemberWithAccount } from './organization.repository.interface'
+export type { InvitationStoreInterface } from './invitation.store.interface'
 export type { CreateOrgData } from './organization.repository.interface'
 export type { UpdateOrgData } from './organization.repository.interface'
-export type { InvitationStoreInterface } from './invitation.store.interface'
 export type { InvitationPayload } from './invitation.store.interface'
