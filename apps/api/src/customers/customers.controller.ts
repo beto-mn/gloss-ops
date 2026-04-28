@@ -1,13 +1,14 @@
 import {
-  Body,
+  ForbiddenException,
   Controller,
-  Delete,
-  Get,
   HttpCode,
+  Delete,
   Param,
   Patch,
-  Post,
   Query,
+  Body,
+  Post,
+  Get,
 } from '@nestjs/common'
 
 import type { Prisma } from '@glossops/database'
@@ -64,8 +65,17 @@ export class CustomersController {
   @Roles(Role.OWNER, Role.MANAGER)
   remove(
     @CurrentAccount() account: AuthContext,
-    @Param('id') id: string
+    @Param('id') id: string,
+    @Query('permanent') permanent?: string
   ): Promise<void> {
-    return this.customersService.remove(id, account.organizationId!)
+    const isPermanent = permanent === 'true'
+    if (isPermanent && account.role !== Role.OWNER) {
+      throw new ForbiddenException({ error: 'forbidden' })
+    }
+    return this.customersService.remove(
+      id,
+      account.organizationId!,
+      isPermanent
+    )
   }
 }

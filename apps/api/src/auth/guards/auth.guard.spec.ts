@@ -22,6 +22,10 @@ jest.mock('@glossops/database', () => ({
     TECHNICIAN: 'TECHNICIAN',
     FRONT_DESK: 'FRONT_DESK',
   },
+  ResourceStatus: {
+    ACTIVE: 'ACTIVE',
+    DELETED: 'DELETED',
+  },
 }))
 
 jest.mock('@config', () => ({

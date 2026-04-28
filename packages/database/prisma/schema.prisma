@@ -95,6 +95,11 @@ enum PurchaseOrderStatus {
   CANCELLED
 }
 
+enum ResourceStatus {
+  ACTIVE
+  DELETED
+}
+
 // ─────────────────────────────────────────────
 // GLOBAL CATALOGS
 // organizationId = NULL  →  system-seeded, visible to all tenants
@@ -129,6 +134,7 @@ model Organization {
   name      String
   slug      String   @unique
   logoUrl   String?  @map("logo_url")
+  status    ResourceStatus @default(ACTIVE)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -240,6 +246,7 @@ model Customer {
   zipCode        String?  @map("zip_code")
   source         String?
   note           String?
+  status         ResourceStatus @default(ACTIVE)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

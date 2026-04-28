@@ -417,7 +417,7 @@ describe('InMemoryCustomerRepository', () => {
       )
       const result = await repo.findAll('org-1', { page: 1, limit: 20 })
       expect(result.data).toHaveLength(2)
-      expect(result.data.every((c) => c.organizationId === 'org-1')).toBe(true)
+      expect(result.data.every(c => c.organizationId === 'org-1')).toBe(true)
     })
 
     it('returns empty data and correct meta when org has no customers', async () => {
@@ -639,12 +639,12 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
 
   findAll(organizationId: string, query: CustomerQuery): Promise<CustomerPage> {
     let list = [...this.customers.values()].filter(
-      (c) => c.organizationId === organizationId
+      c => c.organizationId === organizationId
     )
 
     if (query.search) {
       const term = query.search.toLowerCase()
-      list = list.filter((c) => {
+      list = list.filter(c => {
         const fullName = `${c.firstName} ${c.lastName}`.toLowerCase()
         return (
           fullName.includes(term) ||

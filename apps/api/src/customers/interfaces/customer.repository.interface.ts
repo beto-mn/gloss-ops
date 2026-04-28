@@ -69,5 +69,6 @@ export interface CustomerRepositoryInterface {
     organizationId: string,
     data: UpdateCustomerData
   ): Promise<Prisma.CustomerModel>
+  softDelete(id: string, organizationId: string): Promise<Prisma.CustomerModel>
   delete(id: string, organizationId: string): Promise<void>
 }

@@ -14,8 +14,8 @@ import type {
   CustomerPage,
 } from '@customers/interfaces'
 
-import { ListCustomersDto } from './dto'
 import { CUSTOMER_REPOSITORY } from './customers.tokens'
+import { ListCustomersDto } from './dto'
 
 @Injectable()
 export class CustomersService {
@@ -96,8 +96,20 @@ export class CustomersService {
     return this.customers.update(id, organizationId, data)
   }
 
-  async remove(id: string, organizationId: string): Promise<void> {
-    await this.findOne(id, organizationId)
-    await this.customers.delete(id, organizationId)
+  async remove(
+    id: string,
+    organizationId: string,
+    permanent = false
+  ): Promise<void> {
+    if (permanent) {
+      try {
+        await this.customers.delete(id, organizationId)
+      } catch {
+        throw new NotFoundException({ error: 'customer_not_found' })
+      }
+    } else {
+      await this.findOne(id, organizationId)
+      await this.customers.softDelete(id, organizationId)
+    }
   }
 }

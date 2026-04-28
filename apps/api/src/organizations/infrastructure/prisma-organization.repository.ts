@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 
+import { ResourceStatus, Role } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
-import { Role } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
@@ -17,19 +17,39 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
   constructor(private readonly prisma: PrismaService) {}
 
   findById(id: string): Promise<Prisma.OrganizationModel | null> {
-    return this.prisma.organization.findUnique({ where: { id } })
+    return this.prisma.organization.findFirst({
+      where: { id, status: ResourceStatus.ACTIVE },
+    })
   }
 
   async findAllByAccountId(accountId: string): Promise<OrganizationWithRole[]> {
     const members = await this.prisma.organizationMember.findMany({
-      where: { accountId },
+      where: {
+        accountId,
+        branch: { organization: { status: ResourceStatus.ACTIVE } },
+      },
       include: { branch: { include: { organization: true } } },
     })
-    return members.map((m) => ({ ...m.branch.organization, role: m.role }))
+    return members.map(m => ({ ...m.branch.organization, role: m.role }))
   }
 
   update(id: string, data: UpdateOrgData): Promise<Prisma.OrganizationModel> {
     return this.prisma.organization.update({ where: { id }, data })
+  }
+
+  async softDelete(id: string): Promise<Prisma.OrganizationModel> {
+    const result = await this.prisma.organization.updateMany({
+      where: { id },
+      data: { status: ResourceStatus.DELETED },
+    })
+    if (result.count === 0) throw new Error('organization not found')
+    const record = await this.prisma.organization.findFirst({ where: { id } })
+    return record!
+  }
+
+  async delete(id: string): Promise<void> {
+    const result = await this.prisma.organization.deleteMany({ where: { id } })
+    if (result.count === 0) throw new Error('organization not found')
   }
 
   async createWithBranch(
@@ -85,7 +105,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
       where: { accountId },
       include: { branch: { select: { organizationId: true } } },
     })
-    const orgIds = new Set(members.map((m) => m.branch.organizationId))
+    const orgIds = new Set(members.map(m => m.branch.organizationId))
     return orgIds.size
   }
 

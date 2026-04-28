@@ -269,4 +269,62 @@ describe('OrganizationService', () => {
       expect(await invitationStore.get('tok-6')).not.toBeNull()
     })
   })
+
+  describe('removeOrganization', () => {
+    it('soft-deletes an ACTIVE organization', async () => {
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await service.removeOrganization(organization.id, false)
+      await expect(service.getMyOrganization(organization.id)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('throws NotFoundException when soft-deleting a DELETED organization', async () => {
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await organizations.softDelete(organization.id)
+      await expect(
+        service.removeOrganization(organization.id, false)
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('throws NotFoundException when soft-deleting a non-existent organization', async () => {
+      await expect(
+        service.removeOrganization('unknown', false)
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('permanently deletes an ACTIVE organization', async () => {
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await service.removeOrganization(organization.id, true)
+      await expect(service.getMyOrganization(organization.id)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('permanently deletes a DELETED organization (Owner cleaning up)', async () => {
+      const { organization } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await organizations.softDelete(organization.id)
+      await expect(
+        service.removeOrganization(organization.id, true)
+      ).resolves.toBeUndefined()
+    })
+
+    it('throws NotFoundException when permanently deleting a non-existent organization', async () => {
+      await expect(service.removeOrganization('unknown', true)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+  })
 })

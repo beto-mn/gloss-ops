@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpCode, Patch, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common'
 
 import type { Prisma } from '@glossops/database'
 import { Role } from '@glossops/database'
@@ -43,6 +52,19 @@ export class OrganizationController {
     @Body() dto: UpdateOrgDto
   ): Promise<Prisma.OrganizationModel> {
     return this.orgService.updateOrganization(account.organizationId!, dto)
+  }
+
+  @Delete('me')
+  @HttpCode(204)
+  @Roles(Role.OWNER)
+  removeOrganization(
+    @CurrentAccount() account: AuthContext,
+    @Query('permanent') permanent?: string
+  ): Promise<void> {
+    return this.orgService.removeOrganization(
+      account.organizationId!,
+      permanent === 'true'
+    )
   }
 
   @Get('me/members')

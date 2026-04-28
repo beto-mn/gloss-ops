@@ -351,13 +351,13 @@ export class InMemoryAccountRepository implements AccountRepositoryInterface {
   }
 
   async findByEmail(email: string): Promise<AccountWithMemberships | null> {
-    return this.accounts.find((a) => a.email === email) ?? null
+    return this.accounts.find(a => a.email === email) ?? null
   }
 
   async findByIdWithMemberships(
     id: string
   ): Promise<AccountWithMemberships | null> {
-    return this.accounts.find((a) => a.id === id) ?? null
+    return this.accounts.find(a => a.id === id) ?? null
   }
 
   async create(data: CreateAccountData): Promise<Account> {
