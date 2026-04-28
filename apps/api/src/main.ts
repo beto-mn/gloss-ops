@@ -1,3 +1,5 @@
+import 'dotenv/config'
+
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
@@ -6,130 +8,88 @@ import { envs } from '@config'
 
 import { AppModule } from './app.module'
 
-import 'dotenv/config'
+const DARK_CSS = `
+  body { background: #1c1c1c !important; }
+  .swagger-ui { background: #1c1c1c; color: #d4d4d4; }
 
-const NEON_DARK_CSS = `
-  body { background: #0d0d12 !important; }
-  .swagger-ui { background: #0d0d12; color: #e0e0f0; }
-
-  /* Topbar */
-  .swagger-ui .topbar { background: #08080e; border-bottom: 1px solid #00f5ff40; }
+  .swagger-ui .topbar { background: #111; box-shadow: 0 1px 0 #333; }
   .swagger-ui .topbar .topbar-wrapper svg { display: none; }
-  .swagger-ui .topbar .topbar-wrapper a span { color: #00f5ff; text-shadow: 0 0 12px #00f5ff; font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; }
+  .swagger-ui .topbar .topbar-wrapper a span { color: #fff; font-size: 1.2rem; font-weight: 600; }
 
-  /* Info */
-  .swagger-ui .information-container { background: #0d0d12; }
-  .swagger-ui .info .title { color: #fff; text-shadow: 0 0 20px #00f5ff80; }
-  .swagger-ui .info .description p, .swagger-ui .info li { color: #8888aa; }
-  .swagger-ui .info .version { background: #00f5ff; color: #000; font-weight: 700; }
+  .swagger-ui .information-container { background: #1c1c1c; }
+  .swagger-ui .info .title { color: #fff; }
+  .swagger-ui .info .description p { color: #999; }
+  .swagger-ui .info .version { background: #444; color: #fff; border-radius: 3px; padding: 2px 8px; }
 
-  /* Tags */
-  .swagger-ui .opblock-tag { color: #00f5ff !important; border-bottom: 1px solid #00f5ff20; text-shadow: 0 0 8px #00f5ff50; }
-  .swagger-ui .opblock-tag:hover { background: #00f5ff08 !important; }
-  .swagger-ui .opblock-tag small { color: #6b6b8a; }
+  .swagger-ui .opblock-tag { color: #d4d4d4 !important; border-bottom: 1px solid #333; }
+  .swagger-ui .opblock-tag:hover { background: #252525 !important; }
+  .swagger-ui .opblock-tag small { color: #777; }
 
-  /* Operation blocks */
-  .swagger-ui .opblock { background: #13131e; border: 1px solid #ffffff10; border-radius: 8px; margin: 4px 0; box-shadow: none; }
-  .swagger-ui .opblock:hover { border-color: #ffffff20; }
+  .swagger-ui .opblock { background: #252525; border: 1px solid #333; border-radius: 6px; margin: 3px 0; box-shadow: none; }
 
-  /* GET */
-  .swagger-ui .opblock.opblock-get { border-left: 3px solid #00f5ff; }
-  .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #00f5ff; color: #000; font-weight: 700; }
-  .swagger-ui .opblock.opblock-get .opblock-summary { background: #00f5ff08; }
-  .swagger-ui .opblock.opblock-get.is-open .opblock-summary { background: #00f5ff12; }
+  .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #1a73e8; }
+  .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #2e7d32; }
+  .swagger-ui .opblock.opblock-patch .opblock-summary-method { background: #6a1fa0; }
+  .swagger-ui .opblock.opblock-put .opblock-summary-method { background: #e65100; }
+  .swagger-ui .opblock.opblock-delete .opblock-summary-method { background: #b71c1c; }
+  .swagger-ui .opblock-summary-method { border-radius: 4px; font-weight: 700; min-width: 70px; }
 
-  /* POST */
-  .swagger-ui .opblock.opblock-post { border-left: 3px solid #ff2af3; }
-  .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #ff2af3; color: #000; font-weight: 700; }
-  .swagger-ui .opblock.opblock-post .opblock-summary { background: #ff2af308; }
-  .swagger-ui .opblock.opblock-post.is-open .opblock-summary { background: #ff2af312; }
+  .swagger-ui .opblock .opblock-body { background: #1c1c1c; border-top: 1px solid #333; }
+  .swagger-ui .opblock-summary-path { color: #d4d4d4 !important; font-family: monospace; }
+  .swagger-ui .opblock-summary-description { color: #777; }
+  .swagger-ui .opblock-section-header { background: #222; border-bottom: 1px solid #333; }
+  .swagger-ui .opblock-section-header h4 { color: #aaa; }
 
-  /* PATCH */
-  .swagger-ui .opblock.opblock-patch { border-left: 3px solid #a855f7; }
-  .swagger-ui .opblock.opblock-patch .opblock-summary-method { background: #a855f7; color: #fff; font-weight: 700; }
-  .swagger-ui .opblock.opblock-patch .opblock-summary { background: #a855f708; }
+  .swagger-ui .parameter__name { color: #d4d4d4; }
+  .swagger-ui .parameter__type { color: #9cdcfe; }
+  .swagger-ui .parameter__in { color: #666; }
+  .swagger-ui table thead tr th, .swagger-ui table thead tr td { color: #888; border-bottom: 1px solid #333; }
+  .swagger-ui table tbody tr td { color: #c0c0c0; border-bottom: 1px solid #2a2a2a; }
 
-  /* PUT */
-  .swagger-ui .opblock.opblock-put { border-left: 3px solid #f59e0b; }
-  .swagger-ui .opblock.opblock-put .opblock-summary-method { background: #f59e0b; color: #000; font-weight: 700; }
-  .swagger-ui .opblock.opblock-put .opblock-summary { background: #f59e0b08; }
+  .swagger-ui input[type=text], .swagger-ui input[type=password], .swagger-ui input[type=email] { background: #2a2a2a; border: 1px solid #444; color: #d4d4d4; border-radius: 4px; }
+  .swagger-ui input:focus { border-color: #666; outline: none; }
+  .swagger-ui select { background: #2a2a2a; border: 1px solid #444; color: #d4d4d4; border-radius: 4px; }
+  .swagger-ui textarea { background: #2a2a2a; border: 1px solid #444; color: #d4d4d4; border-radius: 4px; }
 
-  /* DELETE */
-  .swagger-ui .opblock.opblock-delete { border-left: 3px solid #ff2d6b; }
-  .swagger-ui .opblock.opblock-delete .opblock-summary-method { background: #ff2d6b; color: #fff; font-weight: 700; }
-  .swagger-ui .opblock.opblock-delete .opblock-summary { background: #ff2d6b08; }
+  .swagger-ui .btn { border-radius: 4px; transition: opacity 0.15s; }
+  .swagger-ui .btn.authorize { background: transparent; border: 1px solid #555; color: #d4d4d4; }
+  .swagger-ui .btn.authorize:hover { background: #2a2a2a; }
+  .swagger-ui .btn.execute { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+  .swagger-ui .btn.execute:hover { opacity: 0.85; }
+  .swagger-ui .btn.btn-clear { background: transparent; border: 1px solid #555; color: #aaa; }
+  .swagger-ui .btn.cancel { background: transparent; border: 1px solid #555; color: #aaa; }
 
-  /* Operation body */
-  .swagger-ui .opblock .opblock-body { background: #0d0d12; border-top: 1px solid #ffffff10; }
-  .swagger-ui .opblock-summary-path { color: #e0e0f0 !important; font-family: monospace; }
-  .swagger-ui .opblock-summary-description { color: #6b6b8a; }
-  .swagger-ui .opblock-section-header { background: #0a0a10; border-bottom: 1px solid #ffffff10; }
-  .swagger-ui .opblock-section-header h4 { color: #00f5ff; }
-
-  /* Parameters */
-  .swagger-ui .parameter__name { color: #00f5ff; }
-  .swagger-ui .parameter__type { color: #ff2af3; font-style: italic; }
-  .swagger-ui .parameter__in { color: #6b6b8a; font-style: italic; }
-  .swagger-ui table thead tr th, .swagger-ui table thead tr td { color: #6b6b8a; border-bottom: 1px solid #ffffff10; }
-  .swagger-ui table tbody tr td { color: #c0c0d8; border-bottom: 1px solid #ffffff08; }
-
-  /* Inputs */
-  .swagger-ui input[type=text], .swagger-ui input[type=password], .swagger-ui input[type=email] { background: #1a1a2e; border: 1px solid #00f5ff30; color: #e0e0f0; border-radius: 4px; }
-  .swagger-ui input[type=text]:focus, .swagger-ui input[type=password]:focus { border-color: #00f5ff; box-shadow: 0 0 0 2px #00f5ff20; outline: none; }
-  .swagger-ui select { background: #1a1a2e; border: 1px solid #00f5ff30; color: #e0e0f0; border-radius: 4px; }
-  .swagger-ui textarea { background: #1a1a2e; border: 1px solid #00f5ff30; color: #e0e0f0; border-radius: 4px; }
-  .swagger-ui textarea:focus { border-color: #00f5ff; box-shadow: 0 0 0 2px #00f5ff20; outline: none; }
-
-  /* Buttons */
-  .swagger-ui .btn { border-radius: 4px; font-weight: 600; transition: all 0.2s; }
-  .swagger-ui .btn.authorize { background: transparent; border: 1px solid #00f5ff; color: #00f5ff; box-shadow: 0 0 8px #00f5ff20; }
-  .swagger-ui .btn.authorize:hover { background: #00f5ff12; box-shadow: 0 0 16px #00f5ff40; }
-  .swagger-ui .btn.execute { background: #ff2af3; border: none; color: #fff; box-shadow: 0 0 10px #ff2af340; }
-  .swagger-ui .btn.execute:hover { background: #ff2af3cc; box-shadow: 0 0 18px #ff2af360; }
-  .swagger-ui .btn.btn-clear { background: transparent; border: 1px solid #ff2d6b; color: #ff2d6b; }
-  .swagger-ui .btn.cancel { background: transparent; border: 1px solid #6b6b8a; color: #6b6b8a; }
-
-  /* Responses */
-  .swagger-ui .response-col_status { color: #00f5ff; font-weight: 700; }
+  .swagger-ui .response-col_status { color: #9cdcfe; font-weight: 600; }
   .swagger-ui table.responses-table { background: transparent; }
 
-  /* Code / JSON */
-  .swagger-ui .highlight-code { background: #090910; border: 1px solid #00f5ff15; border-radius: 6px; }
-  .swagger-ui .microlight { color: #a0d0ff; }
-  .swagger-ui .response-body pre { background: #090910 !important; }
+  .swagger-ui .highlight-code { background: #141414; border: 1px solid #333; border-radius: 4px; }
+  .swagger-ui .microlight { color: #ce9178; }
+  .swagger-ui .response-body pre { background: #141414 !important; }
 
-  /* Models */
-  .swagger-ui section.models { background: #13131e; border: 1px solid #ffffff10; border-radius: 8px; margin-top: 20px; }
-  .swagger-ui section.models h4 { color: #00f5ff; text-shadow: 0 0 8px #00f5ff40; }
-  .swagger-ui section.models .model-container { background: transparent; margin: 4px 0; border-radius: 6px; }
-  .swagger-ui .model { color: #c0c0d8; }
-  .swagger-ui span.prop-type { color: #ff2af3; font-weight: 600; }
-  .swagger-ui span.prop-format { color: #6b6b8a; }
-  .swagger-ui .model-box { background: #0d0d12; border-radius: 4px; }
-  .swagger-ui .model-toggle { color: #00f5ff; }
-  .swagger-ui .model-title { color: #e0e0f0; }
+  .swagger-ui section.models { background: #252525; border: 1px solid #333; border-radius: 6px; margin-top: 16px; }
+  .swagger-ui section.models h4 { color: #d4d4d4; }
+  .swagger-ui section.models .model-container { background: transparent; }
+  .swagger-ui .model { color: #c0c0c0; }
+  .swagger-ui span.prop-type { color: #9cdcfe; }
+  .swagger-ui span.prop-format { color: #666; }
+  .swagger-ui .model-box { background: #1c1c1c; border-radius: 4px; }
+  .swagger-ui .model-title { color: #d4d4d4; }
 
-  /* Auth dialog */
-  .swagger-ui .dialog-ux .modal-ux { background: #13131e; border: 1px solid #00f5ff30; border-radius: 10px; box-shadow: 0 0 30px #00f5ff20; }
-  .swagger-ui .dialog-ux .modal-ux-header { background: #0a0a14; border-bottom: 1px solid #00f5ff20; }
-  .swagger-ui .dialog-ux .modal-ux-header h3 { color: #00f5ff; text-shadow: 0 0 10px #00f5ff60; }
-  .swagger-ui .dialog-ux .modal-ux-content { color: #c0c0d8; }
-  .swagger-ui .dialog-ux .modal-ux-content code { color: #00f5ff; background: #0a0a14; padding: 2px 6px; border-radius: 3px; }
+  .swagger-ui .dialog-ux .modal-ux { background: #252525; border: 1px solid #444; border-radius: 8px; }
+  .swagger-ui .dialog-ux .modal-ux-header { background: #1c1c1c; border-bottom: 1px solid #333; }
+  .swagger-ui .dialog-ux .modal-ux-header h3 { color: #d4d4d4; }
+  .swagger-ui .dialog-ux .modal-ux-content { color: #c0c0c0; }
+  .swagger-ui .dialog-ux .modal-ux-content code { background: #1c1c1c; color: #9cdcfe; padding: 2px 6px; border-radius: 3px; }
 
-  /* Scheme container */
-  .swagger-ui .scheme-container { background: #0d0d12; border-bottom: 1px solid #ffffff10; box-shadow: none; }
-  .swagger-ui .servers > label select { background: #13131e; border: 1px solid #00f5ff30; color: #e0e0f0; }
+  .swagger-ui .scheme-container { background: #1c1c1c; border-bottom: 1px solid #333; box-shadow: none; }
+  .swagger-ui .servers > label select { background: #2a2a2a; border: 1px solid #444; color: #d4d4d4; }
 
-  /* Arrow icons */
-  .swagger-ui .arrow { fill: #00f5ff; }
-  .swagger-ui .expand-methods svg, .swagger-ui .expand-operation svg { fill: #6b6b8a; }
-  .swagger-ui .expand-methods svg:hover, .swagger-ui .expand-operation svg:hover { fill: #00f5ff; }
+  .swagger-ui .arrow { fill: #777; }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0d0d12; }
-  ::-webkit-scrollbar-thumb { background: #00f5ff30; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #00f5ff60; }
+  ::-webkit-scrollbar-track { background: #1c1c1c; }
+  ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #555; }
 `
 
 async function bootstrap() {
@@ -145,7 +105,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api-docs', app, document, {
-    customCss: NEON_DARK_CSS,
+    customCss: DARK_CSS,
     customSiteTitle: 'GlossOps API',
   })
 
