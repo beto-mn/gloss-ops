@@ -253,8 +253,11 @@ describe('InMemoryCustomerRepository', () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       await repo.delete(created.id, 'org-1')
-      // Record is gone entirely — even a raw lookup finds nothing
-      expect(await repo.findById(created.id, 'org-1')).toBeNull()
+      // If the record were still in the map as DELETED, a second delete would succeed.
+      // The rejection here proves the map entry is truly gone.
+      await expect(repo.delete(created.id, 'org-1')).rejects.toThrow(
+        'customer not found'
+      )
     })
   })
 
