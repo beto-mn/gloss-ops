@@ -72,6 +72,21 @@ describe('CustomersService', () => {
       expect(result.meta.page).toBe(1)
       expect(result.meta.limit).toBe(20)
     })
+
+    it('does not include DELETED customers', async () => {
+      const active = await repo.create(
+        'org-1',
+        makeData({ firstName: 'Active' })
+      )
+      const deleted = await repo.create(
+        'org-1',
+        makeData({ firstName: 'Deleted', email: 'del@t.com' })
+      )
+      await repo.softDelete(deleted.id, 'org-1')
+      const result = await service.findAll('org-1', {})
+      expect(result.data.map((c) => c.id)).toContain(active.id)
+      expect(result.data.map((c) => c.id)).not.toContain(deleted.id)
+    })
   })
 
   describe('findOne', () => {
@@ -83,6 +98,14 @@ describe('CustomersService', () => {
 
     it('throws NotFoundException when customer does not exist in the org', async () => {
       await expect(service.findOne('unknown', 'org-1')).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('throws NotFoundException for a DELETED customer', async () => {
+      const created = await repo.create('org-1', makeData())
+      await repo.softDelete(created.id, 'org-1')
+      await expect(service.findOne(created.id, 'org-1')).rejects.toThrow(
         NotFoundException
       )
     })
@@ -143,16 +166,55 @@ describe('CustomersService', () => {
   })
 
   describe('remove', () => {
-    it('deletes the customer', async () => {
+    it('soft-deletes an ACTIVE customer (default)', async () => {
       const created = await repo.create('org-1', makeData())
-      await service.remove(created.id, 'org-1')
+      await service.remove(created.id, 'org-1', false)
       await expect(service.findOne(created.id, 'org-1')).rejects.toThrow(
         NotFoundException
       )
     })
 
-    it('throws NotFoundException when customer does not exist in the org', async () => {
-      await expect(service.remove('unknown', 'org-1')).rejects.toThrow(
+    it('throws NotFoundException when soft-deleting an already-DELETED customer', async () => {
+      const created = await repo.create('org-1', makeData())
+      await repo.softDelete(created.id, 'org-1')
+      await expect(service.remove(created.id, 'org-1', false)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('throws NotFoundException when soft-deleting a non-existent customer', async () => {
+      await expect(service.remove('unknown', 'org-1', false)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('permanently deletes an ACTIVE customer', async () => {
+      const created = await repo.create('org-1', makeData())
+      await service.remove(created.id, 'org-1', true)
+      await expect(service.remove(created.id, 'org-1', true)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('permanently deletes a DELETED customer (Owner cleaning up)', async () => {
+      const created = await repo.create('org-1', makeData())
+      await repo.softDelete(created.id, 'org-1')
+      await expect(
+        service.remove(created.id, 'org-1', true)
+      ).resolves.toBeUndefined()
+    })
+
+    it('throws NotFoundException when permanently deleting from a different org', async () => {
+      const created = await repo.create('org-1', makeData())
+      await expect(service.remove(created.id, 'org-2', true)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+
+    it('throws NotFoundException when permanently deleting an already-hard-deleted customer', async () => {
+      const created = await repo.create('org-1', makeData())
+      await repo.delete(created.id, 'org-1')
+      await expect(service.remove(created.id, 'org-1', true)).rejects.toThrow(
         NotFoundException
       )
     })
