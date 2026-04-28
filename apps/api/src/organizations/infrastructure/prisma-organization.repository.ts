@@ -38,10 +38,13 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
   }
 
   async softDelete(id: string): Promise<Prisma.OrganizationModel> {
-    return this.prisma.organization.update({
+    const result = await this.prisma.organization.updateMany({
       where: { id },
       data: { status: ResourceStatus.DELETED },
     })
+    if (result.count === 0) throw new Error('organization not found')
+    const record = await this.prisma.organization.findFirst({ where: { id } })
+    return record!
   }
 
   async delete(id: string): Promise<void> {

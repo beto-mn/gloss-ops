@@ -113,10 +113,11 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     id: string,
     organizationId: string
   ): Promise<Prisma.CustomerModel> {
-    await this.prisma.customer.updateMany({
+    const result = await this.prisma.customer.updateMany({
       where: { id, organizationId },
       data: { status: ResourceStatus.DELETED },
     })
+    if (result.count === 0) throw new Error('customer not found')
     const record = await this.prisma.customer.findFirst({
       where: { id, organizationId },
     })
