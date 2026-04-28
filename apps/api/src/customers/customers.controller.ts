@@ -10,6 +10,7 @@ import {
   Post,
   Get,
 } from '@nestjs/common'
+import { ApiOperation, ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 
 import type { Prisma } from '@glossops/database'
 import { Role } from '@glossops/database'
@@ -21,12 +22,15 @@ import type { AuthContext } from '@auth/interfaces'
 import { CreateCustomerDto, UpdateCustomerDto, ListCustomersDto } from './dto'
 import { CustomersService } from './customers.service'
 
+@ApiTags('Customers')
+@ApiBearerAuth()
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Post()
   @Roles(Role.OWNER, Role.MANAGER, Role.FRONT_DESK)
+  @ApiOperation({ summary: 'Create a new customer' })
   create(
     @CurrentAccount() account: AuthContext,
     @Body() dto: CreateCustomerDto
@@ -35,6 +39,9 @@ export class CustomersController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'List customers with optional search and pagination',
+  })
   findAll(
     @CurrentAccount() account: AuthContext,
     @Query() dto: ListCustomersDto
@@ -43,6 +50,7 @@ export class CustomersController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a customer by ID' })
   findOne(
     @CurrentAccount() account: AuthContext,
     @Param('id') id: string
@@ -52,6 +60,7 @@ export class CustomersController {
 
   @Patch(':id')
   @Roles(Role.OWNER, Role.MANAGER, Role.FRONT_DESK)
+  @ApiOperation({ summary: 'Update a customer' })
   update(
     @CurrentAccount() account: AuthContext,
     @Param('id') id: string,
@@ -63,6 +72,10 @@ export class CustomersController {
   @Delete(':id')
   @HttpCode(204)
   @Roles(Role.OWNER, Role.MANAGER)
+  @ApiOperation({
+    summary:
+      'Soft-delete a customer. Pass ?permanent=true (Owner only) to hard delete.',
+  })
   remove(
     @CurrentAccount() account: AuthContext,
     @Param('id') id: string,
