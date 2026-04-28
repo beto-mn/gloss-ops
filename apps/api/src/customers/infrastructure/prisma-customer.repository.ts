@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 
+import { ResourceStatus } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
@@ -26,14 +27,19 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     id: string,
     organizationId: string
   ): Promise<Prisma.CustomerModel | null> {
-    return this.prisma.customer.findFirst({ where: { id, organizationId } })
+    return this.prisma.customer.findFirst({
+      where: { id, organizationId, status: ResourceStatus.ACTIVE },
+    })
   }
 
   async findAll(
     organizationId: string,
     query: CustomerQuery
   ): Promise<CustomerPage> {
-    const where: Prisma.CustomerWhereInput = { organizationId }
+    const where: Prisma.CustomerWhereInput = {
+      organizationId,
+      status: ResourceStatus.ACTIVE,
+    }
 
     if (query.search) {
       const term = query.search
@@ -74,14 +80,18 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     email: string,
     organizationId: string
   ): Promise<Prisma.CustomerModel | null> {
-    return this.prisma.customer.findFirst({ where: { email, organizationId } })
+    return this.prisma.customer.findFirst({
+      where: { email, organizationId, status: ResourceStatus.ACTIVE },
+    })
   }
 
   findByPhone(
     phone: string,
     organizationId: string
   ): Promise<Prisma.CustomerModel | null> {
-    return this.prisma.customer.findFirst({ where: { phone, organizationId } })
+    return this.prisma.customer.findFirst({
+      where: { phone, organizationId, status: ResourceStatus.ACTIVE },
+    })
   }
 
   async update(
@@ -99,7 +109,24 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     return record!
   }
 
+  async softDelete(
+    id: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel> {
+    await this.prisma.customer.updateMany({
+      where: { id, organizationId },
+      data: { status: ResourceStatus.DELETED },
+    })
+    const record = await this.prisma.customer.findFirst({
+      where: { id, organizationId },
+    })
+    return record!
+  }
+
   async delete(id: string, organizationId: string): Promise<void> {
-    await this.prisma.customer.deleteMany({ where: { id, organizationId } })
+    const result = await this.prisma.customer.deleteMany({
+      where: { id, organizationId },
+    })
+    if (result.count === 0) throw new Error('customer not found')
   }
 }
