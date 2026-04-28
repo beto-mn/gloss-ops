@@ -64,7 +64,7 @@ describe('InMemoryCustomerRepository', () => {
       )
       const result = await repo.findAll('org-1', { page: 1, limit: 20 })
       expect(result.data).toHaveLength(2)
-      expect(result.data.every((c) => c.organizationId === 'org-1')).toBe(true)
+      expect(result.data.every(c => c.organizationId === 'org-1')).toBe(true)
     })
 
     it('returns empty data and correct meta when org has no customers', async () => {

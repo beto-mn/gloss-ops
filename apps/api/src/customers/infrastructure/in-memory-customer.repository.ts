@@ -56,14 +56,14 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
 
   findAll(organizationId: string, query: CustomerQuery): Promise<CustomerPage> {
     let list = [...this.customers.values()].filter(
-      (c) =>
+      c =>
         c.organizationId === organizationId &&
         c.status === ResourceStatus.ACTIVE
     )
 
     if (query.search) {
       const term = query.search.toLowerCase()
-      list = list.filter((c) => {
+      list = list.filter(c => {
         const fullName = `${c.firstName} ${c.lastName}`.toLowerCase()
         return (
           fullName.includes(term) ||

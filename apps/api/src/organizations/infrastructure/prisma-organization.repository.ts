@@ -30,7 +30,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
       },
       include: { branch: { include: { organization: true } } },
     })
-    return members.map((m) => ({ ...m.branch.organization, role: m.role }))
+    return members.map(m => ({ ...m.branch.organization, role: m.role }))
   }
 
   update(id: string, data: UpdateOrgData): Promise<Prisma.OrganizationModel> {
@@ -105,7 +105,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
       where: { accountId },
       include: { branch: { select: { organizationId: true } } },
     })
-    const orgIds = new Set(members.map((m) => m.branch.organizationId))
+    const orgIds = new Set(members.map(m => m.branch.organizationId))
     return orgIds.size
   }
 

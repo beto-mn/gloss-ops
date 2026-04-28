@@ -15,11 +15,11 @@ export class InMemoryAccountRepository implements AccountRepositoryInterface {
   }
 
   findByEmail(email: string): Promise<Prisma.AccountModel | null> {
-    return Promise.resolve(this.accounts.find((a) => a.email === email) ?? null)
+    return Promise.resolve(this.accounts.find(a => a.email === email) ?? null)
   }
 
   findById(id: string): Promise<Prisma.AccountModel | null> {
-    return Promise.resolve(this.accounts.find((a) => a.id === id) ?? null)
+    return Promise.resolve(this.accounts.find(a => a.id === id) ?? null)
   }
 
   create(data: CreateAccountData): Promise<Prisma.AccountModel> {

@@ -29,7 +29,7 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
       'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'
     >[]
   ): void {
-    accounts.forEach((a) => this.accounts.set(a.id, a))
+    accounts.forEach(a => this.accounts.set(a.id, a))
   }
 
   findById(id: string): Promise<Prisma.OrganizationModel | null> {
@@ -130,8 +130,8 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
   listMembers(organizationId: string): Promise<MemberWithAccount[]> {
     const orgBranchIds = new Set(
       [...this.branches.values()]
-        .filter((b) => b.organizationId === organizationId)
-        .map((b) => b.id)
+        .filter(b => b.organizationId === organizationId)
+        .map(b => b.id)
     )
 
     const result: MemberWithAccount[] = []
@@ -150,8 +150,8 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
   ): Promise<Prisma.OrganizationMemberModel | null> {
     const orgBranchIds = new Set(
       [...this.branches.values()]
-        .filter((b) => b.organizationId === organizationId)
-        .map((b) => b.id)
+        .filter(b => b.organizationId === organizationId)
+        .map(b => b.id)
     )
 
     for (const member of this.members.values()) {
@@ -178,7 +178,7 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
     role: Role
   ): Promise<Prisma.OrganizationMemberModel> {
     const mainBranch = [...this.branches.values()].find(
-      (b) => b.organizationId === organizationId && b.isMain
+      b => b.organizationId === organizationId && b.isMain
     )
     if (!mainBranch) return Promise.reject(new Error('main branch not found'))
 

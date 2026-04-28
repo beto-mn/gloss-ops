@@ -84,8 +84,8 @@ describe('CustomersService', () => {
       )
       await repo.softDelete(deleted.id, 'org-1')
       const result = await service.findAll('org-1', {})
-      expect(result.data.map((c) => c.id)).toContain(active.id)
-      expect(result.data.map((c) => c.id)).not.toContain(deleted.id)
+      expect(result.data.map(c => c.id)).toContain(active.id)
+      expect(result.data.map(c => c.id)).not.toContain(deleted.id)
     })
   })
 

@@ -79,8 +79,8 @@ describe('InMemoryOrganizationRepository', () => {
       )
       await repo.softDelete(deleted.id)
       const orgs = await repo.findAllByAccountId('acc-1')
-      expect(orgs.map((o) => o.id)).toContain(active.id)
-      expect(orgs.map((o) => o.id)).not.toContain(deleted.id)
+      expect(orgs.map(o => o.id)).toContain(active.id)
+      expect(orgs.map(o => o.id)).not.toContain(deleted.id)
     })
   })
 
