@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 
+import { ResourceStatus, Role } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
-import { Role } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
@@ -17,12 +17,17 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
   constructor(private readonly prisma: PrismaService) {}
 
   findById(id: string): Promise<Prisma.OrganizationModel | null> {
-    return this.prisma.organization.findUnique({ where: { id } })
+    return this.prisma.organization.findFirst({
+      where: { id, status: ResourceStatus.ACTIVE },
+    })
   }
 
   async findAllByAccountId(accountId: string): Promise<OrganizationWithRole[]> {
     const members = await this.prisma.organizationMember.findMany({
-      where: { accountId },
+      where: {
+        accountId,
+        branch: { organization: { status: ResourceStatus.ACTIVE } },
+      },
       include: { branch: { include: { organization: true } } },
     })
     return members.map((m) => ({ ...m.branch.organization, role: m.role }))
@@ -30,6 +35,18 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
 
   update(id: string, data: UpdateOrgData): Promise<Prisma.OrganizationModel> {
     return this.prisma.organization.update({ where: { id }, data })
+  }
+
+  async softDelete(id: string): Promise<Prisma.OrganizationModel> {
+    return this.prisma.organization.update({
+      where: { id },
+      data: { status: ResourceStatus.DELETED },
+    })
+  }
+
+  async delete(id: string): Promise<void> {
+    const result = await this.prisma.organization.deleteMany({ where: { id } })
+    if (result.count === 0) throw new Error('organization not found')
   }
 
   async createWithBranch(
