@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 
+import { ResourceStatus, Role } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
-import { Role } from '@glossops/database'
 
 import type {
   CreateOrgData,
@@ -33,7 +33,10 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
   }
 
   findById(id: string): Promise<Prisma.OrganizationModel | null> {
-    return Promise.resolve(this.organizations.get(id) ?? null)
+    const org = this.organizations.get(id)
+    if (!org || org.status !== ResourceStatus.ACTIVE)
+      return Promise.resolve(null)
+    return Promise.resolve(org)
   }
 
   findAllByAccountId(accountId: string): Promise<OrganizationWithRole[]> {
@@ -43,7 +46,7 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
       const branch = this.branches.get(member.branchId)
       if (!branch) continue
       const org = this.organizations.get(branch.organizationId)
-      if (!org) continue
+      if (!org || org.status !== ResourceStatus.ACTIVE) continue
       result.push({ ...org, role: member.role })
     }
     return Promise.resolve(result)
@@ -55,6 +58,25 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
     const updated = { ...org, ...data, updatedAt: new Date() }
     this.organizations.set(id, updated)
     return Promise.resolve(updated)
+  }
+
+  softDelete(id: string): Promise<Prisma.OrganizationModel> {
+    const org = this.organizations.get(id)
+    if (!org) return Promise.reject(new Error('organization not found'))
+    const updated = {
+      ...org,
+      status: ResourceStatus.DELETED,
+      updatedAt: new Date(),
+    }
+    this.organizations.set(id, updated)
+    return Promise.resolve(updated)
+  }
+
+  delete(id: string): Promise<void> {
+    if (!this.organizations.has(id))
+      return Promise.reject(new Error('organization not found'))
+    this.organizations.delete(id)
+    return Promise.resolve()
   }
 
   createWithBranch(
@@ -73,6 +95,7 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
       name: data.name,
       slug: data.slug,
       logoUrl: null,
+      status: ResourceStatus.ACTIVE,
       createdAt: now,
       updatedAt: now,
     }

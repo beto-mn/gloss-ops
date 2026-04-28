@@ -44,6 +44,15 @@ describe('InMemoryOrganizationRepository', () => {
     it('returns null when not found', async () => {
       expect(await repo.findById('unknown')).toBeNull()
     })
+
+    it('returns null for a DELETED organization', async () => {
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await repo.softDelete(organization.id)
+      expect(await repo.findById(organization.id)).toBeNull()
+    })
   })
 
   describe('findAllByAccountId', () => {
@@ -57,6 +66,21 @@ describe('InMemoryOrganizationRepository', () => {
 
     it('returns empty array when account has no memberships', async () => {
       expect(await repo.findAllByAccountId('nobody')).toEqual([])
+    })
+
+    it('excludes DELETED organizations', async () => {
+      const { organization: active } = await repo.createWithBranch(
+        { name: 'Active', slug: 'active' },
+        'acc-1'
+      )
+      const { organization: deleted } = await repo.createWithBranch(
+        { name: 'Deleted', slug: 'deleted' },
+        'acc-1'
+      )
+      await repo.softDelete(deleted.id)
+      const orgs = await repo.findAllByAccountId('acc-1')
+      expect(orgs.map((o) => o.id)).toContain(active.id)
+      expect(orgs.map((o) => o.id)).not.toContain(deleted.id)
     })
   })
 
@@ -128,6 +152,55 @@ describe('InMemoryOrganizationRepository', () => {
       const members = await repo.listMembers(organization.id)
       expect(members).toHaveLength(1)
       expect(members[0].account.id).toBe('acc-1')
+    })
+  })
+
+  describe('softDelete', () => {
+    it('marks the organization as DELETED and hides it from findById', async () => {
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await repo.softDelete(organization.id)
+      expect(await repo.findById(organization.id)).toBeNull()
+    })
+
+    it('rejects when organization does not exist', async () => {
+      await expect(repo.softDelete('unknown')).rejects.toThrow(
+        'organization not found'
+      )
+    })
+  })
+
+  describe('delete', () => {
+    it('removes an ACTIVE organization from the store', async () => {
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await repo.delete(organization.id)
+      // Verify it's gone by attempting a second delete which should reject
+      await expect(repo.delete(organization.id)).rejects.toThrow(
+        'organization not found'
+      )
+    })
+
+    it('removes a DELETED organization from the store (hard delete any status)', async () => {
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      await repo.softDelete(organization.id)
+      await repo.delete(organization.id)
+      await expect(repo.delete(organization.id)).rejects.toThrow(
+        'organization not found'
+      )
+    })
+
+    it('rejects when organization does not exist', async () => {
+      await expect(repo.delete('unknown')).rejects.toThrow(
+        'organization not found'
+      )
     })
   })
 })
