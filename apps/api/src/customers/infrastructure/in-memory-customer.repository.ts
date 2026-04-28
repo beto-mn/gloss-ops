@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 
+import { ResourceStatus } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
 
 import type {
@@ -31,6 +32,7 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
       zipCode: data.zipCode ?? null,
       source: data.source ?? null,
       note: data.note ?? null,
+      status: ResourceStatus.ACTIVE,
       createdAt: now,
       updatedAt: now,
     }
@@ -43,14 +45,20 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     organizationId: string
   ): Promise<Prisma.CustomerModel | null> {
     const customer = this.customers.get(id)
-    if (!customer || customer.organizationId !== organizationId)
+    if (
+      !customer ||
+      customer.organizationId !== organizationId ||
+      customer.status !== ResourceStatus.ACTIVE
+    )
       return Promise.resolve(null)
     return Promise.resolve(customer)
   }
 
   findAll(organizationId: string, query: CustomerQuery): Promise<CustomerPage> {
     let list = [...this.customers.values()].filter(
-      (c) => c.organizationId === organizationId
+      (c) =>
+        c.organizationId === organizationId &&
+        c.status === ResourceStatus.ACTIVE
     )
 
     if (query.search) {
@@ -90,7 +98,8 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     for (const customer of this.customers.values()) {
       if (
         customer.organizationId === organizationId &&
-        customer.email === email
+        customer.email === email &&
+        customer.status === ResourceStatus.ACTIVE
       ) {
         return Promise.resolve(customer)
       }
@@ -105,7 +114,8 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     for (const customer of this.customers.values()) {
       if (
         customer.organizationId === organizationId &&
-        customer.phone === phone
+        customer.phone === phone &&
+        customer.status === ResourceStatus.ACTIVE
       ) {
         return Promise.resolve(customer)
       }
@@ -125,6 +135,23 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     const updated: Prisma.CustomerModel = {
       ...customer,
       ...data,
+      updatedAt: new Date(),
+    }
+    this.customers.set(id, updated)
+    return Promise.resolve(updated)
+  }
+
+  softDelete(
+    id: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel> {
+    const customer = this.customers.get(id)
+    if (!customer || customer.organizationId !== organizationId) {
+      return Promise.reject(new Error('customer not found'))
+    }
+    const updated: Prisma.CustomerModel = {
+      ...customer,
+      status: ResourceStatus.DELETED,
       updatedAt: new Date(),
     }
     this.customers.set(id, updated)

@@ -14,8 +14,8 @@ import type {
   CustomerPage,
 } from '@customers/interfaces'
 
-import { ListCustomersDto } from './dto'
 import { CUSTOMER_REPOSITORY } from './customers.tokens'
+import { ListCustomersDto } from './dto'
 
 @Injectable()
 export class CustomersService {
