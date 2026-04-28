@@ -58,8 +58,8 @@ TTL is driven by env var `INVITATION_EXPIRES_IN_DAYS` (default: 7).
 ### `RegisterDto` — new fields
 
 ```ts
-organizationName: string   // "Taller El Mejor"
-organizationSlug: string   // "taller-el-mejor" — validated: lowercase, alphanumeric + hyphens
+organizationName: string // "Taller El Mejor"
+organizationSlug: string // "taller-el-mejor" — validated: lowercase, alphanumeric + hyphens
 ```
 
 Slug is validated with a regex (`/^[a-z0-9-]+$/`). If the user does not provide it, the frontend auto-generates it from `organizationName`.
@@ -76,7 +76,10 @@ Slug is validated with a regex (`/^[a-z0-9-]+$/`). If the user does not provide 
 
 ```ts
 // JwtPayload
-{ sub: string; email: string }
+{
+  sub: string
+  email: string
+}
 ```
 
 `issueTokens(accountId, email)` — `memberId` parameter removed.
@@ -124,14 +127,14 @@ organizations/
 
 ### Endpoints
 
-| Method | Route | Description | Required role |
-|--------|-------|-------------|---------------|
-| `GET` | `/organizations` | List orgs the account belongs to | Any authenticated |
-| `GET` | `/organizations/me` | Get active org detail | Any member |
-| `PATCH` | `/organizations/me` | Update org name / logoUrl | OWNER, MANAGER |
-| `GET` | `/organizations/me/members` | List members of active org | Any member |
-| `POST` | `/organizations/invitations` | Generate invitation link | OWNER, MANAGER |
-| `POST` | `/organizations/invitations/accept` | Accept invitation | `@Public()` |
+| Method  | Route                               | Description                      | Required role     |
+| ------- | ----------------------------------- | -------------------------------- | ----------------- |
+| `GET`   | `/organizations`                    | List orgs the account belongs to | Any authenticated |
+| `GET`   | `/organizations/me`                 | Get active org detail            | Any member        |
+| `PATCH` | `/organizations/me`                 | Update org name / logoUrl        | OWNER, MANAGER    |
+| `GET`   | `/organizations/me/members`         | List members of active org       | Any member        |
+| `POST`  | `/organizations/invitations`        | Generate invitation link         | OWNER, MANAGER    |
+| `POST`  | `/organizations/invitations/accept` | Accept invitation                | `@Public()`       |
 
 `GET /organizations` does not require `X-Organization-Id` — it uses only the JWT `sub` to list all memberships.
 
@@ -143,7 +146,10 @@ type OrganizationWithRole = Organization & { role: Role }
 
 // Member record + the linked account info (for GET /organizations/me/members)
 type MemberWithAccount = OrganizationMember & {
-  account: Pick<Account, 'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'>
+  account: Pick<
+    Account,
+    'id' | 'email' | 'firstName' | 'lastName' | 'avatarUrl'
+  >
 }
 ```
 
@@ -163,6 +169,7 @@ addMember(organizationId: string, accountId: string, role: Role): Promise<Organi
 > **Note — `OrganizationMember` links to `branchId`, not `organizationId`.**
 > `findMember` and `addMember` accept `organizationId` at the interface level for simplicity.
 > The Prisma implementation resolves this by joining through `Branch`:
+>
 > - `findMember` → `WHERE branch.organization_id = ? AND account_id = ?`
 > - `addMember` → uses the org's main branch (`isMain: true`) as the target `branchId`
 
@@ -171,7 +178,7 @@ addMember(organizationId: string, accountId: string, role: Role): Promise<Organi
 ```ts
 // organizations.tokens.ts
 export const ORGANIZATION_REPOSITORY = Symbol('ORGANIZATION_REPOSITORY')
-export const INVITATION_STORE       = Symbol('INVITATION_STORE')
+export const INVITATION_STORE = Symbol('INVITATION_STORE')
 ```
 
 ### `InvitationStoreInterface`
@@ -180,11 +187,15 @@ export const INVITATION_STORE       = Symbol('INVITATION_STORE')
 export interface InvitationPayload {
   orgId: string
   email: string
-  role:  Role
+  role: Role
 }
 
 export interface InvitationStoreInterface {
-  save(token: string, payload: InvitationPayload, ttlDays: number): Promise<void>
+  save(
+    token: string,
+    payload: InvitationPayload,
+    ttlDays: number
+  ): Promise<void>
   get(token: string): Promise<InvitationPayload | null>
   delete(token: string): Promise<void>
 }
@@ -218,25 +229,25 @@ Redis key pattern: `invitation:<uuid>`
 
 ### Registration
 
-| Case | Exception |
-|------|-----------|
+| Case                     | Exception                                                     |
+| ------------------------ | ------------------------------------------------------------- |
 | Email already registered | `409 ConflictException { error: 'email_already_registered' }` |
-| Slug already taken | `409 ConflictException { error: 'slug_already_taken' }` |
+| Slug already taken       | `409 ConflictException { error: 'slug_already_taken' }`       |
 
 ### AuthGuard
 
-| Case | Exception |
-|------|-----------|
-| Header absent on org-required route | `403 ForbiddenException { error: 'organization_context_required' }` |
-| Account not a member of org | `403 ForbiddenException { error: 'not_a_member' }` |
-| Org does not exist | `403 ForbiddenException { error: 'not_a_member' }` (same — do not reveal existence) |
+| Case                                | Exception                                                                           |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| Header absent on org-required route | `403 ForbiddenException { error: 'organization_context_required' }`                 |
+| Account not a member of org         | `403 ForbiddenException { error: 'not_a_member' }`                                  |
+| Org does not exist                  | `403 ForbiddenException { error: 'not_a_member' }` (same — do not reveal existence) |
 
 ### Invitations
 
-| Case | Exception |
-|------|-----------|
-| Invalid or expired token | `400 BadRequestException { error: 'invalid_invitation' }` |
-| Already a member | `409 ConflictException { error: 'already_a_member' }` |
+| Case                           | Exception                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| Invalid or expired token       | `400 BadRequestException { error: 'invalid_invitation' }`                  |
+| Already a member               | `409 ConflictException { error: 'already_a_member' }`                      |
 | Org membership cap reached (5) | `422 UnprocessableEntityException { error: 'organization_limit_reached' }` |
 
 ---

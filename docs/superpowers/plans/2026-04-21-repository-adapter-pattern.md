@@ -13,32 +13,35 @@
 ## File Map
 
 ### New Files
-| File | Responsibility |
-|------|---------------|
-| `apps/api/src/auth/interfaces/account.repository.interface.ts` | `AccountRepositoryInterface`, `AccountWithMemberships`, `CreateAccountData` |
-| `apps/api/src/auth/interfaces/token.store.interface.ts` | `TokenStoreInterface` |
-| `apps/api/src/auth/auth.tokens.ts` | `ACCOUNT_REPOSITORY`, `TOKEN_STORE` injection symbols |
-| `apps/api/src/auth/infrastructure/prisma-account.repository.ts` | Prisma implementation of `AccountRepositoryInterface` |
-| `apps/api/src/auth/infrastructure/redis-token.store.ts` | Redis implementation of `TokenStoreInterface` (moved) |
-| `apps/api/src/auth/infrastructure/redis-token.store.spec.ts` | Concrete Redis store tests (moved) |
-| `apps/api/src/auth/infrastructure/in-memory-account.repository.ts` | In-memory implementation for tests |
-| `apps/api/src/auth/infrastructure/in-memory-token.store.ts` | In-memory implementation for tests |
+
+| File                                                               | Responsibility                                                              |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `apps/api/src/auth/interfaces/account.repository.interface.ts`     | `AccountRepositoryInterface`, `AccountWithMemberships`, `CreateAccountData` |
+| `apps/api/src/auth/interfaces/token.store.interface.ts`            | `TokenStoreInterface`                                                       |
+| `apps/api/src/auth/auth.tokens.ts`                                 | `ACCOUNT_REPOSITORY`, `TOKEN_STORE` injection symbols                       |
+| `apps/api/src/auth/infrastructure/prisma-account.repository.ts`    | Prisma implementation of `AccountRepositoryInterface`                       |
+| `apps/api/src/auth/infrastructure/redis-token.store.ts`            | Redis implementation of `TokenStoreInterface` (moved)                       |
+| `apps/api/src/auth/infrastructure/redis-token.store.spec.ts`       | Concrete Redis store tests (moved)                                          |
+| `apps/api/src/auth/infrastructure/in-memory-account.repository.ts` | In-memory implementation for tests                                          |
+| `apps/api/src/auth/infrastructure/in-memory-token.store.ts`        | In-memory implementation for tests                                          |
 
 ### Modified Files
-| File | Change |
-|------|--------|
-| `apps/api/src/auth/interfaces/index.ts` | Add exports for new interfaces and types |
-| `apps/api/src/auth/auth.service.ts` | Inject `ACCOUNT_REPOSITORY` + `TOKEN_STORE` instead of concrete classes |
-| `apps/api/src/auth/token.service.ts` | Inject `TOKEN_STORE` instead of `RedisTokenStore` |
-| `apps/api/src/auth/guards/auth.guard.ts` | Inject `ACCOUNT_REPOSITORY` instead of `PrismaService` |
-| `apps/api/src/auth/auth.module.ts` | Bind tokens to implementations, remove `RedisTokenStore` export |
-| `apps/api/src/auth/index.ts` | Remove `RedisTokenStore` export |
-| `apps/api/src/auth/auth.service.spec.ts` | Replace Prisma/Redis mocks with in-memory implementations |
-| `apps/api/src/auth/token.service.spec.ts` | Replace `RedisTokenStore` mock with `InMemoryTokenStore` |
-| `apps/api/src/auth/guards/auth.guard.spec.ts` | Replace `PrismaService` mock with `InMemoryAccountRepository` |
-| `CLAUDE.md` | Document repository pattern as standard for all modules |
+
+| File                                          | Change                                                                  |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
+| `apps/api/src/auth/interfaces/index.ts`       | Add exports for new interfaces and types                                |
+| `apps/api/src/auth/auth.service.ts`           | Inject `ACCOUNT_REPOSITORY` + `TOKEN_STORE` instead of concrete classes |
+| `apps/api/src/auth/token.service.ts`          | Inject `TOKEN_STORE` instead of `RedisTokenStore`                       |
+| `apps/api/src/auth/guards/auth.guard.ts`      | Inject `ACCOUNT_REPOSITORY` instead of `PrismaService`                  |
+| `apps/api/src/auth/auth.module.ts`            | Bind tokens to implementations, remove `RedisTokenStore` export         |
+| `apps/api/src/auth/index.ts`                  | Remove `RedisTokenStore` export                                         |
+| `apps/api/src/auth/auth.service.spec.ts`      | Replace Prisma/Redis mocks with in-memory implementations               |
+| `apps/api/src/auth/token.service.spec.ts`     | Replace `RedisTokenStore` mock with `InMemoryTokenStore`                |
+| `apps/api/src/auth/guards/auth.guard.spec.ts` | Replace `PrismaService` mock with `InMemoryAccountRepository`           |
+| `CLAUDE.md`                                   | Document repository pattern as standard for all modules                 |
 
 ### Deleted Files
+
 - `apps/api/src/auth/redis-token.store.ts` (moved to `infrastructure/`)
 - `apps/api/src/auth/redis-token.store.spec.ts` (moved to `infrastructure/`)
 
@@ -47,6 +50,7 @@
 ## Task 1: Define interfaces and injection tokens
 
 **Files:**
+
 - Create: `apps/api/src/auth/interfaces/account.repository.interface.ts`
 - Create: `apps/api/src/auth/interfaces/token.store.interface.ts`
 - Create: `apps/api/src/auth/auth.tokens.ts`
@@ -133,6 +137,7 @@ git commit -m "feat(auth): define AccountRepositoryInterface and TokenStoreInter
 ## Task 2: InMemoryTokenStore (TDD)
 
 **Files:**
+
 - Create: `apps/api/src/auth/infrastructure/in-memory-token.store.ts`
 - Create: `apps/api/src/auth/infrastructure/in-memory-token.store.spec.ts`
 
@@ -188,7 +193,11 @@ import type { TokenStoreInterface } from '@auth/interfaces'
 export class InMemoryTokenStore implements TokenStoreInterface {
   private readonly tokens = new Map<string, true>()
 
-  async save(accountId: string, tokenId: string, _ttlDays: number): Promise<void> {
+  async save(
+    accountId: string,
+    tokenId: string,
+    _ttlDays: number
+  ): Promise<void> {
     this.tokens.set(`${accountId}:${tokenId}`, true)
   }
 
@@ -223,6 +232,7 @@ git commit -m "feat(auth): add InMemoryTokenStore for testing"
 ## Task 3: InMemoryAccountRepository (TDD)
 
 **Files:**
+
 - Create: `apps/api/src/auth/infrastructure/in-memory-account.repository.ts`
 - Create: `apps/api/src/auth/infrastructure/in-memory-account.repository.spec.ts`
 
@@ -255,7 +265,12 @@ describe('InMemoryAccountRepository', () => {
 
   describe('findByEmail', () => {
     it('returns account when email matches', async () => {
-      await repo.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      await repo.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       const result = await repo.findByEmail('a@b.com')
       expect(result?.email).toBe('a@b.com')
       expect(result?.memberships).toEqual([])
@@ -268,7 +283,12 @@ describe('InMemoryAccountRepository', () => {
 
   describe('findByIdWithMemberships', () => {
     it('returns account with empty memberships after create', async () => {
-      const created = await repo.create({ email: 'a@b.com', passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      const created = await repo.create({
+        email: 'a@b.com',
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       const result = await repo.findByIdWithMemberships(created.id)
       expect(result?.id).toBe(created.id)
       expect(result?.memberships).toEqual([])
@@ -281,17 +301,19 @@ describe('InMemoryAccountRepository', () => {
 
   describe('seed', () => {
     it('pre-populates accounts accessible via findByEmail', async () => {
-      repo.seed([{
-        id: 'seeded-id',
-        email: 'seeded@b.com',
-        passwordHash: 'h',
-        firstName: 'S',
-        lastName: 'T',
-        avatarUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        memberships: [],
-      }])
+      repo.seed([
+        {
+          id: 'seeded-id',
+          email: 'seeded@b.com',
+          passwordHash: 'h',
+          firstName: 'S',
+          lastName: 'T',
+          avatarUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          memberships: [],
+        },
+      ])
       const result = await repo.findByEmail('seeded@b.com')
       expect(result?.id).toBe('seeded-id')
     })
@@ -329,11 +351,13 @@ export class InMemoryAccountRepository implements AccountRepositoryInterface {
   }
 
   async findByEmail(email: string): Promise<AccountWithMemberships | null> {
-    return this.accounts.find(a => a.email === email) ?? null
+    return this.accounts.find((a) => a.email === email) ?? null
   }
 
-  async findByIdWithMemberships(id: string): Promise<AccountWithMemberships | null> {
-    return this.accounts.find(a => a.id === id) ?? null
+  async findByIdWithMemberships(
+    id: string
+  ): Promise<AccountWithMemberships | null> {
+    return this.accounts.find((a) => a.id === id) ?? null
   }
 
   async create(data: CreateAccountData): Promise<Account> {
@@ -372,6 +396,7 @@ git commit -m "feat(auth): add InMemoryAccountRepository for testing"
 ## Task 4: PrismaAccountRepository
 
 **Files:**
+
 - Create: `apps/api/src/auth/infrastructure/prisma-account.repository.ts`
 
 No unit test — this is infrastructure. It is covered by integration tests when they exist.
@@ -402,7 +427,9 @@ export class PrismaAccountRepository implements AccountRepositoryInterface {
     })
   }
 
-  async findByIdWithMemberships(id: string): Promise<AccountWithMemberships | null> {
+  async findByIdWithMemberships(
+    id: string
+  ): Promise<AccountWithMemberships | null> {
     return this.prisma.account.findUnique({
       where: { id },
       include: { memberships: { include: { branch: true } } },
@@ -435,6 +462,7 @@ git commit -m "feat(auth): add PrismaAccountRepository"
 ## Task 5: Move RedisTokenStore to infrastructure/
 
 **Files:**
+
 - Create: `apps/api/src/auth/infrastructure/redis-token.store.ts`
 - Create: `apps/api/src/auth/infrastructure/redis-token.store.spec.ts`
 - Delete: `apps/api/src/auth/redis-token.store.ts`
@@ -458,7 +486,11 @@ export class RedisTokenStore implements TokenStoreInterface, OnModuleDestroy {
     this.client = new Redis(envs.redis.url)
   }
 
-  async save(accountId: string, tokenId: string, ttlDays: number): Promise<void> {
+  async save(
+    accountId: string,
+    tokenId: string,
+    ttlDays: number
+  ): Promise<void> {
     const key = `refresh:${accountId}:${tokenId}`
     await this.client.set(key, '1', 'EX', ttlDays * 24 * 60 * 60)
   }
@@ -571,6 +603,7 @@ git commit -m "refactor(auth): move RedisTokenStore to infrastructure/ and imple
 ## Task 6: Refactor TokenService
 
 **Files:**
+
 - Modify: `apps/api/src/auth/token.service.ts`
 - Modify: `apps/api/src/auth/token.service.spec.ts`
 
@@ -582,7 +615,11 @@ import { Injectable, Inject } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { randomUUID } from 'crypto'
 
-import type { JwtPayload, TokenPair, TokenStoreInterface } from '@auth/interfaces'
+import type {
+  JwtPayload,
+  TokenPair,
+  TokenStoreInterface,
+} from '@auth/interfaces'
 import { envs } from '@config'
 
 import { TOKEN_STORE } from './auth.tokens'
@@ -601,7 +638,11 @@ export class TokenService {
     const payload: JwtPayload = { sub: accountId, memberId }
     const accessToken = await this.jwtService.signAsync(payload)
     const tokenId = randomUUID()
-    await this.tokenStore.save(accountId, tokenId, envs.jwt.refreshExpiresInDays)
+    await this.tokenStore.save(
+      accountId,
+      tokenId,
+      envs.jwt.refreshExpiresInDays
+    )
     return {
       accessToken,
       refreshToken: `${accountId}:${tokenId}`,
@@ -766,6 +807,7 @@ git commit -m "refactor(auth): inject TokenStoreInterface into TokenService via 
 ## Task 7: Refactor AuthService
 
 **Files:**
+
 - Modify: `apps/api/src/auth/auth.service.ts`
 - Modify: `apps/api/src/auth/auth.service.spec.ts`
 
@@ -794,7 +836,8 @@ import { TokenService } from './token.service'
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepositoryInterface,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accounts: AccountRepositoryInterface,
     private readonly tokenService: TokenService,
     @Inject(TOKEN_STORE) private readonly tokenStore: TokenStoreInterface
   ) {}
@@ -922,7 +965,12 @@ describe('AuthService', () => {
     }
 
     it('throws ConflictException when email is already registered', async () => {
-      await accounts.create({ email: dto.email, passwordHash: 'h', firstName: 'A', lastName: 'B' })
+      await accounts.create({
+        email: dto.email,
+        passwordHash: 'h',
+        firstName: 'A',
+        lastName: 'B',
+      })
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       await expect(service.register(dto)).rejects.toThrow(ConflictException)
     })
@@ -1079,6 +1127,7 @@ git commit -m "refactor(auth): inject AccountRepositoryInterface and TokenStoreI
 ## Task 8: Refactor AuthGuard
 
 **Files:**
+
 - Modify: `apps/api/src/auth/guards/auth.guard.ts`
 - Modify: `apps/api/src/auth/guards/auth.guard.spec.ts`
 
@@ -1105,7 +1154,8 @@ import { TokenService } from '../token.service'
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepositoryInterface,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accounts: AccountRepositoryInterface,
     private readonly tokenService: TokenService,
     private readonly reflector: Reflector
   ) {}
@@ -1345,6 +1395,7 @@ git commit -m "refactor(auth): inject AccountRepositoryInterface into AuthGuard 
 ## Task 9: Wire AuthModule and update barrel
 
 **Files:**
+
 - Modify: `apps/api/src/auth/auth.module.ts`
 - Modify: `apps/api/src/auth/index.ts`
 
@@ -1418,6 +1469,7 @@ git commit -m "refactor(auth): wire AuthModule with repository and token store p
 ## Task 10: Document pattern in CLAUDE.md
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 1: Add repository pattern section to `CLAUDE.md`**
@@ -1428,18 +1480,19 @@ Add the following section after the existing "Barrel Exports (index.ts)" section
 ## Repository Pattern (all domain modules)
 
 Every domain module MUST follow this structure:
-
 ```
+
 <module>/
-  interfaces/
-    <entity>.repository.interface.ts   ← contract
-    index.ts                           ← barrel (types only)
-  infrastructure/
-    prisma-<entity>.repository.ts      ← Prisma implementation
-    in-memory-<entity>.repository.ts   ← in-memory implementation for tests
-  <module>.tokens.ts                   ← DI injection token symbols
-  <module>.module.ts                   ← binds tokens to implementations
-  <module>.service.ts                  ← depends on interfaces only
+interfaces/
+<entity>.repository.interface.ts ← contract
+index.ts ← barrel (types only)
+infrastructure/
+prisma-<entity>.repository.ts ← Prisma implementation
+in-memory-<entity>.repository.ts ← in-memory implementation for tests
+<module>.tokens.ts ← DI injection token symbols
+<module>.module.ts ← binds tokens to implementations
+<module>.service.ts ← depends on interfaces only
+
 ```
 
 **Rules:**

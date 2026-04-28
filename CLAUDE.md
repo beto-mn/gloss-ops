@@ -81,6 +81,7 @@ import 'dotenv/config'
 ```
 
 **Rules:**
+
 - Skip a tier entirely if it has no imports — do not leave an empty blank line
 - Side-effect imports (e.g. `import 'dotenv/config'`) are always Tier 6 (last), even if they must run first at runtime. `main.ts` is a known exception: `dotenv/config` must load env vars before modules are evaluated, so it stays at the top functionally — it is not moved to Tier 6 in that file.
 - Use `import type` whenever only the type is needed (not the value at runtime)
@@ -91,14 +92,15 @@ import 'dotenv/config'
 Each `index.ts` re-exports from sibling files. Exports are sorted by line length, longest first.
 
 ```ts
-export { RedisTokenStore } from './redis-token.store'   // 53 chars — first
-export { AuthController } from './auth.controller'      // 51 chars
-export { TokenService } from './token.service'          // 47 chars
-export { AuthService } from './auth.service'            // 44 chars
-export { AuthModule } from './auth.module'              // 42 chars — last
+export { RedisTokenStore } from './redis-token.store' // 53 chars — first
+export { AuthController } from './auth.controller' // 51 chars
+export { TokenService } from './token.service' // 47 chars
+export { AuthService } from './auth.service' // 44 chars
+export { AuthModule } from './auth.module' // 42 chars — last
 ```
 
 **Rules:**
+
 - One export per line — no grouping multiple modules into one export statement
 - Use `export type` for interfaces and types
 - No blank lines between exports within the same barrel
@@ -122,6 +124,7 @@ Every domain module MUST follow this structure:
 ```
 
 **Rules:**
+
 - `PrismaService` may only be injected inside `infrastructure/` classes — never in services, guards, or controllers
 - Injection tokens are named `SCREAMING_SNAKE_CASE` and defined in `<module>.tokens.ts`
 - Interface names end with `Interface` (e.g., `AccountRepositoryInterface`)

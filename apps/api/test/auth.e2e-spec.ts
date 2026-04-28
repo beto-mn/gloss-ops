@@ -2,8 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication, ValidationPipe } from '@nestjs/common'
 import request from 'supertest'
 import { App } from 'supertest/types'
+
 import { AppModule } from '../src/app.module'
 import { PrismaService } from '../src/prisma/prisma.service'
+
+interface TokenPairBody {
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+}
+
+interface ErrorBody {
+  error: string
+}
 
 describe('Auth (e2e)', () => {
   let app: INestApplication<App>
@@ -47,11 +58,10 @@ describe('Auth (e2e)', () => {
         .send(payload)
         .expect(201)
 
-      expect(res.body).toMatchObject({
-        accessToken: expect.any(String),
-        refreshToken: expect.any(String),
-        expiresIn: 900,
-      })
+      const body = res.body as TokenPairBody
+      expect(body.accessToken).toEqual(expect.any(String))
+      expect(body.refreshToken).toEqual(expect.any(String))
+      expect(body.expiresIn).toBe(900)
     })
 
     it('409 — returns email_already_registered when email is taken', async () => {
@@ -61,7 +71,7 @@ describe('Auth (e2e)', () => {
         .send(payload)
         .expect(409)
 
-      expect(res.body.error).toBe('email_already_registered')
+      expect((res.body as ErrorBody).error).toBe('email_already_registered')
     })
 
     it('400 — returns validation error for invalid body', async () => {
@@ -83,11 +93,10 @@ describe('Auth (e2e)', () => {
         .send({ email: payload.email, password: payload.password })
         .expect(200)
 
-      expect(res.body).toMatchObject({
-        accessToken: expect.any(String),
-        refreshToken: expect.any(String),
-        expiresIn: 900,
-      })
+      const body = res.body as TokenPairBody
+      expect(body.accessToken).toEqual(expect.any(String))
+      expect(body.refreshToken).toEqual(expect.any(String))
+      expect(body.expiresIn).toBe(900)
     })
 
     it('401 — returns invalid_credentials for wrong password', async () => {
@@ -96,7 +105,7 @@ describe('Auth (e2e)', () => {
         .send({ email: payload.email, password: 'wrong-password' })
         .expect(401)
 
-      expect(res.body.error).toBe('invalid_credentials')
+      expect((res.body as ErrorBody).error).toBe('invalid_credentials')
     })
 
     it('401 — returns invalid_credentials for unknown email', async () => {
@@ -105,7 +114,7 @@ describe('Auth (e2e)', () => {
         .send({ email: 'unknown@e2e.test', password: 'password123' })
         .expect(401)
 
-      expect(res.body.error).toBe('invalid_credentials')
+      expect((res.body as ErrorBody).error).toBe('invalid_credentials')
     })
   })
 
@@ -116,7 +125,7 @@ describe('Auth (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send(payload)
-      refreshToken = res.body.refreshToken
+      refreshToken = (res.body as TokenPairBody).refreshToken
     })
 
     it('200 — returns new token pair for valid refresh token', async () => {
@@ -125,11 +134,10 @@ describe('Auth (e2e)', () => {
         .send({ refreshToken })
         .expect(200)
 
-      expect(res.body).toMatchObject({
-        accessToken: expect.any(String),
-        refreshToken: expect.any(String),
-        expiresIn: 900,
-      })
+      const body = res.body as TokenPairBody
+      expect(body.accessToken).toEqual(expect.any(String))
+      expect(body.refreshToken).toEqual(expect.any(String))
+      expect(body.expiresIn).toBe(900)
     })
 
     it('401 — returns invalid_refresh_token for unknown token', async () => {
@@ -138,7 +146,7 @@ describe('Auth (e2e)', () => {
         .send({ refreshToken: 'fake-acc-id:fake-tok-id' })
         .expect(401)
 
-      expect(res.body.error).toBe('invalid_refresh_token')
+      expect((res.body as ErrorBody).error).toBe('invalid_refresh_token')
     })
 
     it('401 — old refresh token is rejected after rotation', async () => {
@@ -151,7 +159,7 @@ describe('Auth (e2e)', () => {
         .send({ refreshToken })
         .expect(401)
 
-      expect(res.body.error).toBe('invalid_refresh_token')
+      expect((res.body as ErrorBody).error).toBe('invalid_refresh_token')
     })
   })
 
@@ -163,8 +171,8 @@ describe('Auth (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
         .send(payload)
-      accessToken = res.body.accessToken
-      refreshToken = res.body.refreshToken
+      accessToken = (res.body as TokenPairBody).accessToken
+      refreshToken = (res.body as TokenPairBody).refreshToken
     })
 
     it('200 — logs out successfully', async () => {
@@ -186,7 +194,7 @@ describe('Auth (e2e)', () => {
         .send({ refreshToken })
         .expect(401)
 
-      expect(res.body.error).toBe('invalid_refresh_token')
+      expect((res.body as ErrorBody).error).toBe('invalid_refresh_token')
     })
 
     it('401 — returns Unauthorized when no access token provided', async () => {

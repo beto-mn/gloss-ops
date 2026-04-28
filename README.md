@@ -33,15 +33,15 @@ The platform is designed for vinyl wrap shops, detailing studios, PPF installers
 
 > Last updated: April 2026
 
-| Component | Status | Details |
-| --------- | ------ | ------- |
-| Database schema | ✅ Done | Full Prisma schema, migrations, seed |
-| API — Config | ✅ Done | Zod-validated env vars |
-| API — Auth module | ✅ Done | JWT + Redis refresh tokens, RBAC, 36 unit tests |
-| API — Domain modules | ⏳ Next | organizations, customers, work-orders, inventory |
-| Web — Auth + layout | ⏳ Pending | — |
-| Web — Core pages | ⏳ Pending | — |
-| Infrastructure | ⏳ Pending | Dockerfiles, CI |
+| Component            | Status     | Details                                          |
+| -------------------- | ---------- | ------------------------------------------------ |
+| Database schema      | ✅ Done    | Full Prisma schema, migrations, seed             |
+| API — Config         | ✅ Done    | Zod-validated env vars                           |
+| API — Auth module    | ✅ Done    | JWT + Redis refresh tokens, RBAC, 36 unit tests  |
+| API — Domain modules | ⏳ Next    | organizations, customers, work-orders, inventory |
+| Web — Auth + layout  | ⏳ Pending | —                                                |
+| Web — Core pages     | ⏳ Pending | —                                                |
+| Infrastructure       | ⏳ Pending | Dockerfiles, CI                                  |
 
 Full roadmap: [`docs/next-steps.md`](docs/next-steps.md)
 
@@ -331,32 +331,32 @@ glossops/
 
 ### Root
 
-| Command           | Description                        |
-| ----------------- | ---------------------------------- |
-| `pnpm dev`        | Start all apps in development mode |
-| `pnpm build`      | Build all apps for production      |
-| `pnpm test`       | Run all tests                      |
-| `pnpm lint`       | Run linter across the project      |
+| Command      | Description                        |
+| ------------ | ---------------------------------- |
+| `pnpm dev`   | Start all apps in development mode |
+| `pnpm build` | Build all apps for production      |
+| `pnpm test`  | Run all tests                      |
+| `pnpm lint`  | Run linter across the project      |
 
 ### Database (`pnpm --filter @glossops/database <script>`)
 
-| Command        | Description                            |
-| -------------- | -------------------------------------- |
-| `db:migrate`   | Apply pending Prisma migrations        |
-| `db:reset`     | Reset database and re-run migrations   |
-| `db:seed`      | Seed the database with sample data     |
-| `db:studio`    | Open Prisma Studio                     |
-| `build`        | Compile the package to `dist/`         |
+| Command      | Description                          |
+| ------------ | ------------------------------------ |
+| `db:migrate` | Apply pending Prisma migrations      |
+| `db:reset`   | Reset database and re-run migrations |
+| `db:seed`    | Seed the database with sample data   |
+| `db:studio`  | Open Prisma Studio                   |
+| `build`      | Compile the package to `dist/`       |
 
 ### API (`pnpm --filter api <script>`)
 
-| Command        | Description                            |
-| -------------- | -------------------------------------- |
-| `start:dev`    | Start NestJS in watch mode             |
-| `test`         | Run Jest unit tests                    |
-| `test:cov`     | Run tests with coverage report         |
-| `lint`         | Run ESLint                             |
-| `build`        | Build for production                   |
+| Command     | Description                    |
+| ----------- | ------------------------------ |
+| `start:dev` | Start NestJS in watch mode     |
+| `test`      | Run Jest unit tests            |
+| `test:cov`  | Run tests with coverage report |
+| `lint`      | Run ESLint                     |
+| `build`     | Build for production           |
 
 ---
 

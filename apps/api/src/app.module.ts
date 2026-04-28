@@ -7,6 +7,7 @@ import { PrismaModule } from '@prisma'
 import { AuthModule } from '@auth'
 
 import { OrganizationsModule } from './organizations/organizations.module'
+import { CustomersModule } from './customers/customers.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 
@@ -16,6 +17,7 @@ import { AppService } from './app.service'
     PrismaModule,
     AuthModule,
     OrganizationsModule,
+    CustomersModule,
   ],
   controllers: [AppController],
   providers: [

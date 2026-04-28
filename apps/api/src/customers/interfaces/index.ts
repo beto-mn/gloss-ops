@@ -1,0 +1,6 @@
+export type { CustomerRepositoryInterface } from './customer.repository.interface'
+export type { CreateCustomerData } from './customer.repository.interface'
+export type { UpdateCustomerData } from './customer.repository.interface'
+export type { CustomerPageMeta } from './customer.repository.interface'
+export type { CustomerQuery } from './customer.repository.interface'
+export type { CustomerPage } from './customer.repository.interface'
