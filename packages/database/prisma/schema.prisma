@@ -175,14 +175,16 @@ model OrganizationFiscalProfile {
 }
 
 model Branch {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
   name           String
   address        String?
   phone          String?
   email          String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  status         ResourceStatus @default(ACTIVE)
+  deletedAt      DateTime?      @map("deleted_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
 
   organization   Organization         @relation(fields: [organizationId], references: [id])
   members        OrganizationMember[]
@@ -219,7 +221,7 @@ model OrganizationMember {
   role      Role     @default(FRONT_DESK)
   joinedAt  DateTime @default(now()) @map("joined_at")
 
-  branch      Branch                @relation(fields: [branchId], references: [id])
+  branch      Branch                @relation(fields: [branchId], references: [id], onDelete: Cascade)
   account     Account               @relation(fields: [accountId], references: [id])
   assignments WorkOrderAssignment[]
 
