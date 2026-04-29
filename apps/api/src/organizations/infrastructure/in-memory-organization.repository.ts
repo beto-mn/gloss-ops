@@ -107,7 +107,6 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
       address: null,
       phone: null,
       email: null,
-      isMain: true,
       createdAt: now,
       updatedAt: now,
     }
@@ -173,23 +172,31 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
   }
 
   addMember(
-    organizationId: string,
+    branchId: string,
     accountId: string,
     role: Role
   ): Promise<Prisma.OrganizationMemberModel> {
-    const mainBranch = [...this.branches.values()].find(
-      b => b.organizationId === organizationId && b.isMain
-    )
-    if (!mainBranch) return Promise.reject(new Error('main branch not found'))
+    if (!this.branches.has(branchId))
+      return Promise.reject(new Error('branch not found'))
 
     const member: Prisma.OrganizationMemberModel = {
       id: randomUUID(),
-      branchId: mainBranch.id,
+      branchId,
       accountId,
       role,
       joinedAt: new Date(),
     }
     this.members.set(member.id, member)
     return Promise.resolve(member)
+  }
+
+  findBranchById(
+    branchId: string,
+    organizationId: string
+  ): Promise<Prisma.BranchModel | null> {
+    const branch = this.branches.get(branchId)
+    if (!branch || branch.organizationId !== organizationId)
+      return Promise.resolve(null)
+    return Promise.resolve(branch)
   }
 }

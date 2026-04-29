@@ -18,7 +18,7 @@ describe('InMemoryOrganizationRepository', () => {
   })
 
   describe('createWithBranch', () => {
-    it('creates org, a main branch, and an OWNER member for the given account', async () => {
+    it('creates org, a branch named after the org, and an OWNER member for the given account', async () => {
       const { organization, member } = await repo.createWithBranch(
         { name: 'Taller', slug: 'taller' },
         'acc-1'
@@ -27,6 +27,7 @@ describe('InMemoryOrganizationRepository', () => {
       expect(organization.slug).toBe('taller')
       expect(member.accountId).toBe('acc-1')
       expect(member.role).toBe(Role.OWNER)
+      expect(member.branchId).toBeTruthy()
     })
   })
 
@@ -127,18 +128,56 @@ describe('InMemoryOrganizationRepository', () => {
   })
 
   describe('addMember', () => {
-    it('adds a new member to the main branch of the org', async () => {
-      const { organization } = await repo.createWithBranch(
+    it('adds a new member anchored to the given branchId', async () => {
+      const { member: ownerMember } = await repo.createWithBranch(
         { name: 'T', slug: 't' },
         'acc-1'
       )
       const member = await repo.addMember(
-        organization.id,
+        ownerMember.branchId,
         'acc-2',
         Role.TECHNICIAN
       )
       expect(member.accountId).toBe('acc-2')
       expect(member.role).toBe(Role.TECHNICIAN)
+      expect(member.branchId).toBe(ownerMember.branchId)
+    })
+
+    it('rejects when the branchId does not exist', async () => {
+      await expect(
+        repo.addMember('non-existent-branch', 'acc-2', Role.TECHNICIAN)
+      ).rejects.toThrow('branch not found')
+    })
+  })
+
+  describe('findBranchById', () => {
+    it('returns branch when (branchId, organizationId) match', async () => {
+      const { organization, member } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      const branch = await repo.findBranchById(member.branchId, organization.id)
+      expect(branch?.id).toBe(member.branchId)
+    })
+
+    it('returns null when branchId belongs to a different organization', async () => {
+      const { member } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      const { organization: otherOrg } = await repo.createWithBranch(
+        { name: 'Other', slug: 'other' },
+        'acc-2'
+      )
+      expect(await repo.findBranchById(member.branchId, otherOrg.id)).toBeNull()
+    })
+
+    it('returns null when branchId does not exist', async () => {
+      const { organization } = await repo.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      expect(await repo.findBranchById('unknown', organization.id)).toBeNull()
     })
   })
 

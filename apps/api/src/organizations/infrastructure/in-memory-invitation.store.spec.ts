@@ -2,7 +2,12 @@ import { Role } from '@glossops/database'
 
 import { InMemoryInvitationStore } from './in-memory-invitation.store'
 
-const payload = { orgId: 'org-1', email: 'a@b.com', role: Role.TECHNICIAN }
+const payload = {
+  orgId: 'org-1',
+  email: 'a@b.com',
+  role: Role.TECHNICIAN,
+  branchId: 'branch-1',
+}
 
 describe('InMemoryInvitationStore', () => {
   let store: InMemoryInvitationStore

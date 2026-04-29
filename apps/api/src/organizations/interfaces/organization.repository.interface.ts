@@ -40,8 +40,12 @@ export interface OrganizationRepositoryInterface {
   ): Promise<Prisma.OrganizationMemberModel | null>
   countMembershipsByAccount(accountId: string): Promise<number>
   addMember(
-    organizationId: string,
+    branchId: string,
     accountId: string,
     role: Role
   ): Promise<Prisma.OrganizationMemberModel>
+  findBranchById(
+    branchId: string,
+    organizationId: string
+  ): Promise<Prisma.BranchModel | null>
 }

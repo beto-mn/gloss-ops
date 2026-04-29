@@ -91,12 +91,19 @@ export class OrganizationService {
   async createInvitation(
     organizationId: string,
     email: string,
-    role: Role
+    role: Role,
+    branchId: string
   ): Promise<{ invitationUrl: string }> {
+    const branch = await this.organizations.findBranchById(
+      branchId,
+      organizationId
+    )
+    if (!branch) throw new NotFoundException({ error: 'branch_not_found' })
+
     const token = randomUUID()
     await this.invitationStore.save(
       token,
-      { orgId: organizationId, email, role },
+      { orgId: organizationId, email, role, branchId },
       envs.invitation.expiresInDays
     )
     const invitationUrl = `${envs.app.frontendUrl}/invitations/accept?token=${token}`
@@ -142,7 +149,7 @@ export class OrganizationService {
     if (existingMember)
       throw new ConflictException({ error: 'already_a_member' })
 
-    await this.organizations.addMember(orgId, account.id, role)
+    await this.organizations.addMember(payload.branchId, account.id, role)
     await this.invitationStore.delete(dto.token)
 
     return account

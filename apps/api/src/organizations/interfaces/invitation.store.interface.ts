@@ -4,6 +4,7 @@ export interface InvitationPayload {
   orgId: string
   email: string
   role: Role
+  branchId: string
 }
 
 export interface InvitationStoreInterface {

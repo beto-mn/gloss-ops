@@ -97,7 +97,8 @@ export class OrganizationController {
     return this.orgService.createInvitation(
       account.organizationId!,
       dto.email,
-      dto.role
+      dto.role,
+      dto.branchId
     )
   }
 
