@@ -72,6 +72,8 @@ In the Prisma schema, models and fields use PascalCase/camelCase (Prisma convent
 
 The `organization_member` table has no `organizationId` — only `branchId`. This is valid because the system enforces that every organization has at least one branch. The organization is always reachable via `branch.organizationId`. This simplifies RBAC: all permission checks start from the branch the member belongs to.
 
+Branches are peers — there is no `is_main` flag or hierarchy. The first branch is auto-created on org registration with the organization name; subsequent branches are added through the branches CRUD. Inviting a member is an explicit choice: the inviter must select which branch the invitee joins by passing `branchId` in the invitation request.
+
 ### 3.3 Customers and assets are org-scoped, not branch-scoped
 
 A customer belongs to the organization, not to a specific branch. The same applies to their assets. This is intentional — a customer who brings their car to branch CDMX one month and branch MTY the next is the same customer with the same asset history. No re-registration, no data duplication.
