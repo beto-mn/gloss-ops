@@ -33,15 +33,20 @@ The platform is designed for vinyl wrap shops, detailing studios, PPF installers
 
 > Last updated: April 2026
 
-| Component            | Status     | Details                                          |
-| -------------------- | ---------- | ------------------------------------------------ |
-| Database schema      | ✅ Done    | Full Prisma schema, migrations, seed             |
-| API — Config         | ✅ Done    | Zod-validated env vars                           |
-| API — Auth module    | ✅ Done    | JWT + Redis refresh tokens, RBAC, 36 unit tests  |
-| API — Domain modules | ⏳ Next    | organizations, customers, work-orders, inventory |
-| Web — Auth + layout  | ⏳ Pending | —                                                |
-| Web — Core pages     | ⏳ Pending | —                                                |
-| Infrastructure       | ⏳ Pending | Dockerfiles, CI                                  |
+| Component            | Status     | Details                                                   |
+| -------------------- | ---------- | --------------------------------------------------------- |
+| Database schema      | ✅ Done    | Full Prisma schema, migrations, seed                      |
+| API — Config         | ✅ Done    | Zod-validated env vars                                    |
+| API — Auth module    | ✅ Done    | JWT + Redis refresh tokens, RBAC                          |
+| API — Organizations  | ✅ Done    | CRUD, invitations with `branchId`, soft/hard delete       |
+| API — Customers      | ✅ Done    | CRUD, soft/hard delete, status filters                    |
+| API — Swagger UI     | ✅ Done    | Neon dark theme, OpenAPI decorators on all endpoints      |
+| API — Tests          | ✅ Done    | 147 passing — 15 suites, all repositories use in-memory   |
+| API — Branches       | ⏳ Next    | CRUD endpoints (peer branches, no `isMain`)               |
+| API — Domain modules | ⏳ Pending | services, work-orders, inventory, suppliers, activity-log |
+| Web — Auth + layout  | ⏳ Pending | —                                                         |
+| Web — Core pages     | ⏳ Pending | —                                                         |
+| Infrastructure       | ⏳ Pending | Dockerfiles, CI                                           |
 
 Full roadmap: [`docs/next-steps.md`](docs/next-steps.md)
 
@@ -63,7 +68,7 @@ The initial version will focus on the MVP, which includes the following capabili
 
 - 👥 Customer management
 - 🚗 Asset management (vehicles, motorcycles, boats, and more)
-- 🏢 Multi-branch organization support
+- 🏢 Multi-branch organization support — peer branches, explicit `branchId` on invitations
 - 🛎️ Service catalog with warranty configuration
 - 📋 Work order management with warranty claim support
 - 🧾 Invoice generation with CFDI 4.0 support (Mexico)
@@ -156,10 +161,11 @@ Two types of inventory, both scoped per branch:
 #### 🏢 Multi-Tenant Organization Support
 
 - Support multiple organizations (shops) within the platform
-- Each organization can have multiple branches (physical locations)
+- Each organization can have multiple branches (physical locations) — branches are peers, no hierarchy
+- The first branch is auto-created on org registration with the organization name
 - Customer and asset data shared across branches — no re-registration
 - Inventory and work orders scoped per branch
-- Invite team members and assign roles per branch
+- Invite team members with explicit branch selection — the inviter chooses which branch the member joins
 - Fiscal profiles (RFC, CSD) for CFDI 4.0 invoice generation
 
 ### 👤 Roles
@@ -305,11 +311,20 @@ glossops/
 │   ├── web/                        # Next.js frontend (scaffolded)
 │   └── api/                        # NestJS backend
 │       └── src/
-│           ├── auth/               # Auth module (complete)
+│           ├── auth/               # JWT auth, RBAC guards, refresh tokens
 │           │   ├── decorators/     # @Public(), @Roles(), @CurrentAccount()
 │           │   ├── dto/            # RegisterDto, LoginDto, TokenResponseDto
 │           │   ├── guards/         # AuthGuard, RolesGuard
+│           │   ├── infrastructure/ # PrismaAccountRepository, RedisTokenStore + in-memory variants
 │           │   └── interfaces/     # AuthContext, JwtPayload, TokenPair
+│           ├── organizations/      # Org CRUD, members, invitations (with branchId)
+│           │   ├── dto/            # CreateInvitationDto, UpdateOrganizationDto
+│           │   ├── infrastructure/ # PrismaOrganizationRepository, RedisInvitationStore + in-memory
+│           │   └── interfaces/     # OrganizationRepositoryInterface, InvitationStoreInterface
+│           ├── customers/          # Customer CRUD with soft/hard delete
+│           │   ├── dto/            # CreateCustomerDto, UpdateCustomerDto
+│           │   ├── infrastructure/ # PrismaCustomerRepository + in-memory
+│           │   └── interfaces/     # CustomerRepositoryInterface
 │           ├── config/             # Zod env validation
 │           └── prisma/             # PrismaService
 ├── packages/
@@ -319,6 +334,8 @@ glossops/
 │   ├── database-design.md
 │   ├── database-constraints.md
 │   ├── database-schema.dbml
+│   ├── decisions/                  # Architectural decision records
+│   ├── superpowers/                # Specs and implementation plans
 │   └── next-steps.md
 ├── docker-compose.yml
 ├── .env.example
