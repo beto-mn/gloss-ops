@@ -112,41 +112,84 @@ describe('OrganizationService', () => {
   })
 
   describe('createInvitation', () => {
+    let orgId: string
+    let branchId: string
+
+    beforeEach(async () => {
+      const { organization, member } = await organizations.createWithBranch(
+        { name: 'T', slug: 't' },
+        'acc-1'
+      )
+      orgId = organization.id
+      branchId = member.branchId
+    })
+
     it('returns an invitationUrl containing the token', async () => {
       const { invitationUrl } = await service.createInvitation(
-        'org-1',
+        orgId,
         'a@b.com',
-        Role.TECHNICIAN
+        Role.TECHNICIAN,
+        branchId
       )
       expect(invitationUrl).toContain('http://localhost:3001')
       expect(invitationUrl).toContain('token=')
     })
 
-    it('saves the token in the invitation store', async () => {
+    it('saves the token in the invitation store with branchId', async () => {
       const { invitationUrl } = await service.createInvitation(
-        'org-1',
+        orgId,
         'a@b.com',
-        Role.TECHNICIAN
+        Role.TECHNICIAN,
+        branchId
       )
       const token = new URL(invitationUrl).searchParams.get('token')!
       const payload = await invitationStore.get(token)
       expect(payload).toEqual({
-        orgId: 'org-1',
+        orgId,
         email: 'a@b.com',
         role: Role.TECHNICIAN,
+        branchId,
       })
+    })
+
+    it('throws NotFoundException when branchId does not belong to the org', async () => {
+      await expect(
+        service.createInvitation(
+          orgId,
+          'a@b.com',
+          Role.TECHNICIAN,
+          'foreign-branch'
+        )
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('throws NotFoundException when branchId belongs to a different organization', async () => {
+      const { member: otherMember } = await organizations.createWithBranch(
+        { name: 'Other', slug: 'other' },
+        'acc-2'
+      )
+      await expect(
+        service.createInvitation(
+          orgId,
+          'a@b.com',
+          Role.TECHNICIAN,
+          otherMember.branchId
+        )
+      ).rejects.toThrow(NotFoundException)
     })
   })
 
   describe('acceptInvitation', () => {
     let orgId: string
+    let branchId: string
 
     beforeEach(async () => {
-      const { organization } = await organizations.createWithBranch(
+      const { organization, member } = await organizations.createWithBranch(
         { name: 'T', slug: 't' },
         'owner-acc'
       )
       orgId = organization.id
+      branchId = member.branchId
     })
 
     it('throws BadRequestException for invalid or expired token', async () => {
@@ -164,7 +207,7 @@ describe('OrganizationService', () => {
       })
       await invitationStore.save(
         'tok-1',
-        { orgId, email: 'a@b.com', role: Role.TECHNICIAN },
+        { orgId, email: 'a@b.com', role: Role.TECHNICIAN, branchId },
         7
       )
 
@@ -180,7 +223,7 @@ describe('OrganizationService', () => {
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed' as never)
       await invitationStore.save(
         'tok-2',
-        { orgId, email: 'new@b.com', role: Role.FRONT_DESK },
+        { orgId, email: 'new@b.com', role: Role.FRONT_DESK, branchId },
         7
       )
 
@@ -198,7 +241,7 @@ describe('OrganizationService', () => {
     it('throws BadRequestException when new account fields missing', async () => {
       await invitationStore.save(
         'tok-3',
-        { orgId, email: 'new@b.com', role: Role.FRONT_DESK },
+        { orgId, email: 'new@b.com', role: Role.FRONT_DESK, branchId },
         7
       )
       await expect(
@@ -213,10 +256,10 @@ describe('OrganizationService', () => {
         firstName: 'A',
         lastName: 'B',
       })
-      await organizations.addMember(orgId, existing.id, Role.TECHNICIAN)
+      await organizations.addMember(branchId, existing.id, Role.TECHNICIAN)
       await invitationStore.save(
         'tok-4',
-        { orgId, email: 'a@b.com', role: Role.TECHNICIAN },
+        { orgId, email: 'a@b.com', role: Role.TECHNICIAN, branchId },
         7
       )
 
@@ -240,7 +283,7 @@ describe('OrganizationService', () => {
       }
       await invitationStore.save(
         'tok-5',
-        { orgId, email: 'capped@b.com', role: Role.FRONT_DESK },
+        { orgId, email: 'capped@b.com', role: Role.FRONT_DESK, branchId },
         7
       )
 
@@ -256,10 +299,10 @@ describe('OrganizationService', () => {
         firstName: 'A',
         lastName: 'B',
       })
-      await organizations.addMember(orgId, existing.id, Role.TECHNICIAN)
+      await organizations.addMember(branchId, existing.id, Role.TECHNICIAN)
       await invitationStore.save(
         'tok-6',
-        { orgId, email: 'a@b.com', role: Role.TECHNICIAN },
+        { orgId, email: 'a@b.com', role: Role.TECHNICIAN, branchId },
         7
       )
 
