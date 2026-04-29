@@ -8,6 +8,7 @@ import { AuthModule } from '@auth'
 
 import { OrganizationsModule } from './organizations/organizations.module'
 import { CustomersModule } from './customers/customers.module'
+import { BranchesModule } from './branches/branches.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 
@@ -18,6 +19,7 @@ import { AppService } from './app.service'
     AuthModule,
     OrganizationsModule,
     CustomersModule,
+    BranchesModule,
   ],
   controllers: [AppController],
   providers: [
