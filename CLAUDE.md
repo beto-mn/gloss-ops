@@ -6,45 +6,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 GlossOps is a **multi-tenant SaaS platform** for automotive wrap, detailing, and restyling shops. It replaces WhatsApp + spreadsheet workflows with a structured operational system covering customers, vehicles, work orders, and inventory.
 
-The project is in early development — the README and LICENSE exist but the monorepo structure has not been scaffolded yet.
+## Architecture
 
-## Planned Architecture
-
-### Monorepo Structure (to be created)
+### Monorepo Structure
 
 ```
 glossops/
 ├── apps/
-│   ├── web/        # Next.js 14+ (App Router), TypeScript, Tailwind CSS
-│   └── api/        # NestJS, TypeScript, Prisma ORM
+│   ├── web/        # Next.js (App Router) — scaffold only
+│   └── api/        # NestJS
 ├── packages/
-│   ├── database/   # Prisma schema, migrations, seed scripts
-│   └── shared/     # Shared types, DTOs, Zod schemas
+│   ├── database/   # Prisma schema, migrations, seed
+│   └── shared/     # Shared types/DTOs (empty)
 ├── docker-compose.yml
 └── .env.example
 ```
 
 ### Multi-Tenancy Model
 
-Every resource is scoped to an **Organization** (the tenant). All database queries must filter by `organizationId`. The `OrganizationMember` table is the join between `User` and `Organization`, and holds the user's `role` (Owner, Manager, Technician, Front Desk).
+Every resource is scoped to an **Organization** (the tenant) — all queries must filter by `organizationId`, or derive it via `branchId → branch.organizationId` for branch-scoped tables.
+
+- `Account` is the login identity (the table is `account` because `USER` is a reserved word in PostgreSQL)
+- An organization has one or more **peer Branches** — there is no `isMain` flag and no hierarchy
+- The first branch is auto-created on org registration carrying the organization name
+- An account joins a branch via `OrganizationMember`, which holds the `role` (`OWNER`, `MANAGER`, `TECHNICIAN`, `FRONT_DESK`)
+- Invitations require an explicit `branchId` chosen by the inviter — never inferred
 
 ### Core Domain Entities
 
-The domain revolves around a shop's daily operations:
-
 - `Organization` → tenant boundary, all data isolated here
-- `Customer` → `Vehicle` → `WorkOrder` → `WorkOrderItem` (linked to `Service`)
-- `WorkOrder` → `InventoryUsage` → `InventoryItem` or `WrapRoll`
-- `Supplier` → supplies both `InventoryItem` and `WrapRoll`
+- `Customer` → `CustomerAsset` (vehicles, motorcycles, boats, etc.) → `WorkOrder` → `WorkOrderItem` (linked to `Service`)
+- `WorkOrder` → `InventoryUsage` → `InventoryItem` or `MaterialRoll`
+- `Supplier` → supplies both `InventoryItem` and `MaterialRoll`
 - `ActivityLog` → append-only audit trail of operational events
 
-`WrapRoll` is a domain-specific entity with fields like `brand`, `series`, `finish`, `width`, `remainingLength`, and `lotNumber` — distinct from general `InventoryItem`.
+`MaterialRoll` (vinyl wrap, PPF, film) has domain fields like `brand`, `series`, `finish`, `width`, `remainingLength`, `lotNumber`. Both `InventoryItem` and `MaterialRoll` extend a base `Inventory` table via class table inheritance (1-to-1 FK on `id`).
 
 ### Auth & RBAC
 
-- JWT-based authentication
+- JWT access + Redis-backed refresh tokens
 - Role-based access control with four roles: **Owner**, **Manager**, **Technician**, **Front Desk**
-- Role is stored in `OrganizationMember.role`, not on the `User` itself — a user can have different roles in different organizations
+- Role is stored in `OrganizationMember.role`, not on the `Account` itself — an account can have different roles in different organizations
 
 ## Import Organization
 

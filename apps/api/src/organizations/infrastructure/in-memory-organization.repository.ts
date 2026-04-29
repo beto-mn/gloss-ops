@@ -107,6 +107,8 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
       address: null,
       phone: null,
       email: null,
+      status: ResourceStatus.ACTIVE,
+      deletedAt: null,
       createdAt: now,
       updatedAt: now,
     }

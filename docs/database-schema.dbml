@@ -190,18 +190,20 @@ Table branch {
   address         String
   phone           String
   email           String   [note: 'Contact email shown on customer documents']
-  is_main         Boolean  [not null, default: false, note: 'True = the headquarters/principal branch']
   created_at      DateTime [default: `now()`]
   updated_at      DateTime
 
   Note: '''
     A physical location belonging to an organization.
     Every organization has at least one branch — even single-location businesses.
+    Branches are peers — there is no hierarchy or "main" flag. The first branch
+    auto-created on org registration carries the organization name and has no
+    special status.
     Branch is the operational unit: employees, work orders and inventory are scoped here.
     name, address, phone and email appear on all customer-facing documents.
     Customer and asset data are NOT scoped to a branch — they belong to the org and
     can be served at any branch without duplicating data.
-    Examples: "Sucursal CDMX", "Sucursal MTY", "Taller Principal".
+    Examples: "Sucursal CDMX", "Sucursal MTY", "Taller Centro".
   '''
 }
 
