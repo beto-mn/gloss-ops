@@ -82,7 +82,6 @@ async function main() {
         address: 'Av. Insurgentes Sur 1234, Col. Del Valle, CDMX',
         phone: '+52 55 1234 5678',
         email: 'cdmx@chromeshield.mx',
-        isMain: true,
       },
     }),
     prisma.branch.upsert({
@@ -95,7 +94,6 @@ async function main() {
         address: 'Blvd. Puerta de Hierro 4965, Col. Jardines del Sol, Zapopan',
         phone: '+52 33 9876 5432',
         email: 'gdl@chromeshield.mx',
-        isMain: false,
       },
     }),
   ])
