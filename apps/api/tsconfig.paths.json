@@ -10,6 +10,11 @@
       "@branches/dto": ["./src/branches/dto/index.ts"],
       "@branches/interfaces": ["./src/branches/interfaces/index.ts"],
       "@config": ["./src/config/index.ts"],
+      "@customer-assets": ["./src/customer-assets/index.ts"],
+      "@customer-assets/dto": ["./src/customer-assets/dto/index.ts"],
+      "@customer-assets/interfaces": [
+        "./src/customer-assets/interfaces/index.ts"
+      ],
       "@customers": ["./src/customers/index.ts"],
       "@customers/dto": ["./src/customers/dto/index.ts"],
       "@customers/interfaces": ["./src/customers/interfaces/index.ts"],
