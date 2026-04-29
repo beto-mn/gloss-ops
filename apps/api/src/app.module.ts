@@ -6,6 +6,7 @@ import { AuthGuard, RolesGuard } from '@auth/guards'
 import { PrismaModule } from '@prisma'
 import { AuthModule } from '@auth'
 
+import { CustomerAssetsModule } from './customer-assets/customer-assets.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { CustomersModule } from './customers/customers.module'
 import { BranchesModule } from './branches/branches.module'
@@ -20,6 +21,7 @@ import { AppService } from './app.service'
     OrganizationsModule,
     CustomersModule,
     BranchesModule,
+    CustomerAssetsModule,
   ],
   controllers: [AppController],
   providers: [
