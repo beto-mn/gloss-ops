@@ -64,7 +64,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     })
 
     const branch = await this.prisma.branch.create({
-      data: { organizationId: organization.id, name: data.name, isMain: true },
+      data: { organizationId: organization.id, name: data.name },
     })
 
     const member = await this.prisma.organizationMember.create({
@@ -109,16 +109,22 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     return orgIds.size
   }
 
-  async addMember(
-    organizationId: string,
+  addMember(
+    branchId: string,
     accountId: string,
     role: Role
   ): Promise<Prisma.OrganizationMemberModel> {
-    const branch = await this.prisma.branch.findFirst({
-      where: { organizationId, isMain: true },
-    })
     return this.prisma.organizationMember.create({
-      data: { branchId: branch!.id, accountId, role },
+      data: { branchId, accountId, role },
+    })
+  }
+
+  findBranchById(
+    branchId: string,
+    organizationId: string
+  ): Promise<Prisma.BranchModel | null> {
+    return this.prisma.branch.findFirst({
+      where: { id: branchId, organizationId },
     })
   }
 }
