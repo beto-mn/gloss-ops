@@ -100,7 +100,10 @@
       "^@services/interfaces$": "<rootDir>/services/interfaces/index.ts",
       "^@suppliers$": "<rootDir>/suppliers/index.ts",
       "^@suppliers/dto$": "<rootDir>/suppliers/dto/index.ts",
-      "^@suppliers/interfaces$": "<rootDir>/suppliers/interfaces/index.ts"
+      "^@suppliers/interfaces$": "<rootDir>/suppliers/interfaces/index.ts",
+      "^@brands$": "<rootDir>/brands/index.ts",
+      "^@brands/dto$": "<rootDir>/brands/dto/index.ts",
+      "^@brands/interfaces$": "<rootDir>/brands/interfaces/index.ts"
     }
   }
 }
