@@ -10,6 +10,7 @@ import { CustomerAssetsModule } from './customer-assets/customer-assets.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { CustomersModule } from './customers/customers.module'
 import { BranchesModule } from './branches/branches.module'
+import { SuppliersModule } from './suppliers/suppliers.module'
 import { ServicesModule } from './services/services.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
@@ -24,6 +25,7 @@ import { AppService } from './app.service'
     BranchesModule,
     CustomerAssetsModule,
     ServicesModule,
+    SuppliersModule,
   ],
   controllers: [AppController],
   providers: [
