@@ -485,6 +485,7 @@ model Supplier {
   inventory      Inventory[]
   purchaseOrders PurchaseOrder[]
 
+  @@unique([organizationId, name])
   @@map("supplier")
 }
 
