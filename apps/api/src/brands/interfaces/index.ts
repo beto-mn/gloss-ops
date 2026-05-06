@@ -1,0 +1,6 @@
+export type { BrandRepositoryInterface } from './brand.repository.interface'
+export type { CreateBrandData } from './brand.repository.interface'
+export type { UpdateBrandData } from './brand.repository.interface'
+export type { BrandQuery } from './brand.repository.interface'
+export type { BrandPage } from './brand.repository.interface'
+export type { BrandPageMeta } from './brand.repository.interface'
