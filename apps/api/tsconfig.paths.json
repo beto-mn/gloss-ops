@@ -27,7 +27,10 @@
       "@services/interfaces": ["./src/services/interfaces/index.ts"],
       "@suppliers": ["./src/suppliers/index.ts"],
       "@suppliers/dto": ["./src/suppliers/dto/index.ts"],
-      "@suppliers/interfaces": ["./src/suppliers/interfaces/index.ts"]
+      "@suppliers/interfaces": ["./src/suppliers/interfaces/index.ts"],
+      "@brands": ["./src/brands/index.ts"],
+      "@brands/dto": ["./src/brands/dto/index.ts"],
+      "@brands/interfaces": ["./src/brands/interfaces/index.ts"]
     }
   }
 }
