@@ -112,9 +112,11 @@ export class InMemorySupplierRepository implements SupplierRepositoryInterface {
     const existing = this.store.get(id)!
     const updated: Prisma.SupplierModel = {
       ...existing,
-      ...Object.fromEntries(
-        Object.entries(data).filter(([, v]) => v !== undefined)
-      ),
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.contactName !== undefined && { contactName: data.contactName }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.email !== undefined && { email: data.email }),
+      ...(data.note !== undefined && { note: data.note }),
       updatedAt: new Date(),
     }
     this.store.set(id, updated)
