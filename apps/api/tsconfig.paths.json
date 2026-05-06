@@ -21,7 +21,10 @@
       "@organizations": ["./src/organizations/index.ts"],
       "@organizations/dto": ["./src/organizations/dto/index.ts"],
       "@organizations/interfaces": ["./src/organizations/interfaces/index.ts"],
-      "@prisma": ["./src/prisma/index.ts"]
+      "@prisma": ["./src/prisma/index.ts"],
+      "@services": ["./src/services/index.ts"],
+      "@services/dto": ["./src/services/dto/index.ts"],
+      "@services/interfaces": ["./src/services/interfaces/index.ts"]
     }
   }
 }

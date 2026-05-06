@@ -318,6 +318,7 @@ model Service {
   workOrderItems WorkOrderItem[]
   warranties     Warranty[]
 
+  @@unique([organizationId, name])
   @@map("service")
 }
 

@@ -9,8 +9,8 @@
     "lint": "turbo lint",
     "lint:fix": "turbo lint -- --fix",
     "test": "turbo test",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "prepare": "husky"
   },
   "keywords": [],

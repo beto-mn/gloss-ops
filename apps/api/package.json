@@ -94,7 +94,10 @@
       "^@organizations$": "<rootDir>/organizations/index.ts",
       "^@organizations/dto$": "<rootDir>/organizations/dto/index.ts",
       "^@organizations/interfaces$": "<rootDir>/organizations/interfaces/index.ts",
-      "^@prisma$": "<rootDir>/prisma/index.ts"
+      "^@prisma$": "<rootDir>/prisma/index.ts",
+      "^@services$": "<rootDir>/services/index.ts",
+      "^@services/dto$": "<rootDir>/services/dto/index.ts",
+      "^@services/interfaces$": "<rootDir>/services/interfaces/index.ts"
     }
   }
 }
