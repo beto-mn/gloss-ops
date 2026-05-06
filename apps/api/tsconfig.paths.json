@@ -24,7 +24,10 @@
       "@prisma": ["./src/prisma/index.ts"],
       "@services": ["./src/services/index.ts"],
       "@services/dto": ["./src/services/dto/index.ts"],
-      "@services/interfaces": ["./src/services/interfaces/index.ts"]
+      "@services/interfaces": ["./src/services/interfaces/index.ts"],
+      "@suppliers": ["./src/suppliers/index.ts"],
+      "@suppliers/dto": ["./src/suppliers/dto/index.ts"],
+      "@suppliers/interfaces": ["./src/suppliers/interfaces/index.ts"]
     }
   }
 }
