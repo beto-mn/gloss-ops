@@ -12,6 +12,7 @@ import { CustomersModule } from './customers/customers.module'
 import { BranchesModule } from './branches/branches.module'
 import { SuppliersModule } from './suppliers/suppliers.module'
 import { ServicesModule } from './services/services.module'
+import { BrandsModule } from './brands/brands.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 
@@ -26,6 +27,7 @@ import { AppService } from './app.service'
     CustomerAssetsModule,
     ServicesModule,
     SuppliersModule,
+    BrandsModule,
   ],
   controllers: [AppController],
   providers: [
