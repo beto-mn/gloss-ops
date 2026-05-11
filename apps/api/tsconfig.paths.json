@@ -30,7 +30,10 @@
       "@suppliers/interfaces": ["./src/suppliers/interfaces/index.ts"],
       "@brands": ["./src/brands/index.ts"],
       "@brands/dto": ["./src/brands/dto/index.ts"],
-      "@brands/interfaces": ["./src/brands/interfaces/index.ts"]
+      "@brands/interfaces": ["./src/brands/interfaces/index.ts"],
+      "@work-orders": ["./src/work-orders/index.ts"],
+      "@work-orders/dto": ["./src/work-orders/dto/index.ts"],
+      "@work-orders/interfaces": ["./src/work-orders/interfaces/index.ts"]
     }
   }
 }
