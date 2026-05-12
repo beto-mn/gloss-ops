@@ -25,5 +25,6 @@ export interface InventoryUsageRepositoryInterface {
     quantityUsed: Prisma.Decimal
   ): Promise<Prisma.InventoryUsageModel>
   deleteByWorkOrder(workOrderId: string): Promise<void>
+  /** Decrements stock/length for all usages of the work order. Idempotency is guaranteed by the WorkOrderStatus state machine (only callable on COMPLETED transition). */
   commitAll(workOrderId: string): Promise<CommitUsagesResult>
 }

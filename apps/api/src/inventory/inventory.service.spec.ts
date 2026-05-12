@@ -168,6 +168,31 @@ describe('InventoryService', () => {
     })
   })
 
+  describe('updateRoll', () => {
+    it('updates series and remainingLength', async () => {
+      const created = await service.createRoll(BRANCH, {
+        name: 'R',
+        series: 'S',
+        finish: 'F',
+        color: 'C',
+        width: 1.52,
+        remainingLength: 10,
+      })
+      const updated = await service.updateRoll(created.id, BRANCH, {
+        series: 'X',
+        remainingLength: 8,
+      })
+      expect(updated.materialRoll!.series).toBe('X')
+      expect(Number(updated.materialRoll!.remainingLength)).toBe(8)
+    })
+
+    it('throws 404 when roll not found', async () => {
+      await expect(
+        service.updateRoll('nonexistent', BRANCH, { series: 'X' })
+      ).rejects.toThrow(NotFoundException)
+    })
+  })
+
   describe('removeRoll', () => {
     it('throws 409 when roll has active usages', async () => {
       const roll = await service.createRoll(BRANCH, {

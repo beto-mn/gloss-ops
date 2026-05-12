@@ -32,5 +32,6 @@ export interface InventoryRepositoryInterface {
   findById(id: string, branchId: string): Promise<InventoryRecord | null>
   findByIdDirect(id: string): Promise<InventoryRecord | null>
   findAll(branchId: string, query: InventoryQuery): Promise<InventoryPage>
+  /** Returns true only if there are active (non-COMPLETED, non-CANCELLED) work order usages for this inventory. */
   hasActiveUsages(id: string): Promise<boolean>
 }

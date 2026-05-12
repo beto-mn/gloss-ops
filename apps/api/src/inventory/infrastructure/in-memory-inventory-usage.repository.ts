@@ -95,7 +95,7 @@ export class InMemoryInventoryUsageRepository implements InventoryUsageRepositor
   }
 
   deleteByWorkOrder(workOrderId: string): Promise<void> {
-    for (const [id, u] of this.store) {
+    for (const [id, u] of [...this.store.entries()]) {
       if (u.workOrderId === workOrderId) this.store.delete(id)
     }
     return Promise.resolve()

@@ -1,22 +1,22 @@
 // apps/api/src/inventory/inventory.service.ts
 import {
   ConflictException,
+  NotFoundException,
   Injectable,
   Inject,
-  NotFoundException,
 } from '@nestjs/common'
 
 import { Prisma } from '@glossops/database'
 
 import type {
-  CommitUsagesResult,
-  InventoryItemRepositoryInterface,
-  InventoryPage,
-  InventoryRecord,
-  InventoryRepositoryInterface,
-  InventoryUsageRepositoryInterface,
-  MaterialRollRepositoryInterface,
   ServiceDefaultsRepositoryInterface,
+  InventoryUsageRepositoryInterface,
+  InventoryItemRepositoryInterface,
+  MaterialRollRepositoryInterface,
+  InventoryRepositoryInterface,
+  CommitUsagesResult,
+  InventoryRecord,
+  InventoryPage,
 } from '@inventory/interfaces'
 import type {
   CreateInventoryItemDto,
