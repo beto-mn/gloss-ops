@@ -3,6 +3,8 @@ import { Test } from '@nestjs/testing'
 
 import { WorkOrderStatus, WorkOrderType } from '@glossops/database'
 
+import { InventoryService } from '../inventory/inventory.service'
+
 import { InMemoryWorkOrderItemRepository } from './infrastructure/in-memory-work-order-item.repository'
 import { InMemoryWorkOrderRepository } from './infrastructure/in-memory-work-order.repository'
 import { WorkOrdersService } from './work-orders.service'
@@ -20,6 +22,11 @@ describe('WorkOrdersService', () => {
   let service: WorkOrdersService
   let woRepo: InMemoryWorkOrderRepository
   let itemRepo: InMemoryWorkOrderItemRepository
+  let inventoryService: {
+    maybeCreateUsage: jest.Mock
+    commitUsages: jest.Mock
+    deleteUsagesByWorkOrder: jest.Mock
+  }
 
   beforeEach(async () => {
     woRepo = new InMemoryWorkOrderRepository()
@@ -27,11 +34,18 @@ describe('WorkOrdersService', () => {
     woRepo.seedBranches([{ id: BRANCH, organizationId: ORG }])
     woRepo.setItemsGetter(id => itemRepo.findAllByWorkOrder(id))
 
+    inventoryService = {
+      maybeCreateUsage: jest.fn().mockResolvedValue(undefined),
+      commitUsages: jest.fn().mockResolvedValue({ warnings: [] }),
+      deleteUsagesByWorkOrder: jest.fn().mockResolvedValue(undefined),
+    }
+
     const module = await Test.createTestingModule({
       providers: [
         WorkOrdersService,
         { provide: WORK_ORDER_REPOSITORY, useValue: woRepo },
         { provide: WORK_ORDER_ITEM_REPOSITORY, useValue: itemRepo },
+        { provide: InventoryService, useValue: inventoryService },
       ],
     }).compile()
 
@@ -381,6 +395,40 @@ describe('WorkOrdersService', () => {
       await woRepo.updateStatus(wo.id, ORG, WorkOrderStatus.CONFIRMED)
       await expect(service.removeItem(wo.id, item.id, ORG)).rejects.toThrow(
         ConflictException
+      )
+    })
+  })
+
+  describe('addItem — inventory integration', () => {
+    it('calls inventoryService.maybeCreateUsage with workOrderId and serviceId', async () => {
+      const wo = await service.create(BRANCH, ORG, { assetId: ASSET })
+      await service.addItem(wo.id, ORG, {
+        serviceId: SERVICE,
+        unitPrice: 100,
+        quantity: 1,
+        discount: 0,
+      })
+      expect(inventoryService.maybeCreateUsage).toHaveBeenCalledWith(
+        wo.id,
+        SERVICE
+      )
+    })
+  })
+
+  describe('transition — inventory integration', () => {
+    it('calls commitUsages when transitioning to COMPLETED', async () => {
+      const wo = await service.create(BRANCH, ORG, { assetId: ASSET })
+      await service.transition(wo.id, ORG, WorkOrderStatus.CONFIRMED)
+      await service.transition(wo.id, ORG, WorkOrderStatus.IN_PROGRESS)
+      await service.transition(wo.id, ORG, WorkOrderStatus.COMPLETED)
+      expect(inventoryService.commitUsages).toHaveBeenCalledWith(wo.id)
+    })
+
+    it('calls deleteUsagesByWorkOrder when transitioning to CANCELLED', async () => {
+      const wo = await service.create(BRANCH, ORG, { assetId: ASSET })
+      await service.transition(wo.id, ORG, WorkOrderStatus.CANCELLED)
+      expect(inventoryService.deleteUsagesByWorkOrder).toHaveBeenCalledWith(
+        wo.id
       )
     })
   })
