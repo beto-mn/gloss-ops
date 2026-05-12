@@ -33,10 +33,14 @@ export class PrismaInventoryRepository implements InventoryRepositoryInterface {
     query: InventoryQuery
   ): Promise<InventoryPage> {
     const where: Record<string, unknown> = { branchId }
-    if (query.type) where.type = query.type
+    // lowStock only applies to ITEMs (they carry stock/lowStockAlert); type filter is ignored when lowStock=true
+    if (query.lowStock) {
+      where.type = InventoryType.ITEM
+    } else if (query.type) {
+      where.type = query.type
+    }
     if (query.supplierId) where.supplierId = query.supplierId
     if (query.brandId) where.brandId = query.brandId
-    if (query.lowStock) where.type = InventoryType.ITEM
 
     const allData = await this.prisma.inventory.findMany({
       where,

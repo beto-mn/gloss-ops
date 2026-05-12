@@ -29,17 +29,19 @@ export class InMemoryInventoryRepository implements InventoryRepositoryInterface
   findAll(branchId: string, query: InventoryQuery): Promise<InventoryPage> {
     let data = [...this.store.values()].filter(r => r.branchId === branchId)
 
-    if (query.type) data = data.filter(r => r.type === query.type)
-    if (query.supplierId)
-      data = data.filter(r => r.supplierId === query.supplierId)
-    if (query.brandId) data = data.filter(r => r.brandId === query.brandId)
+    // lowStock only applies to ITEMs; type filter is ignored when lowStock=true
     if (query.lowStock) {
       data = data.filter(r => {
         if (r.type !== InventoryType.ITEM || !r.inventoryItem) return false
         const { stock, lowStockAlert } = r.inventoryItem
         return lowStockAlert !== null && Number(stock) <= Number(lowStockAlert)
       })
+    } else if (query.type) {
+      data = data.filter(r => r.type === query.type)
     }
+    if (query.supplierId)
+      data = data.filter(r => r.supplierId === query.supplierId)
+    if (query.brandId) data = data.filter(r => r.brandId === query.brandId)
 
     data.sort((a, b) => a.name.localeCompare(b.name))
 
