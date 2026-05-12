@@ -106,7 +106,10 @@
       "^@brands/interfaces$": "<rootDir>/brands/interfaces/index.ts",
       "^@work-orders$": "<rootDir>/work-orders/index.ts",
       "^@work-orders/dto$": "<rootDir>/work-orders/dto/index.ts",
-      "^@work-orders/interfaces$": "<rootDir>/work-orders/interfaces/index.ts"
+      "^@work-orders/interfaces$": "<rootDir>/work-orders/interfaces/index.ts",
+      "^@inventory$": "<rootDir>/inventory/index.ts",
+      "^@inventory/dto$": "<rootDir>/inventory/dto/index.ts",
+      "^@inventory/interfaces$": "<rootDir>/inventory/interfaces/index.ts"
     }
   }
 }

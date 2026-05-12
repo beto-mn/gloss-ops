@@ -63,6 +63,8 @@ export class InMemoryServiceRepository implements ServiceRepositoryInterface {
       warrantyDays: data.warrantyDays ?? null,
       warrantyDescription: data.warrantyDescription ?? null,
       warrantyTerm: data.warrantyTerm ?? null,
+      defaultInventoryId: null,
+      defaultQuantity: null,
       createdAt: now,
       updatedAt: now,
     }

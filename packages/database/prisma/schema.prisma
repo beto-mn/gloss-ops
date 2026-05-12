@@ -311,12 +311,16 @@ model Service {
   warrantyDescription String? @map("warranty_description")
   warrantyTerm        String? @map("warranty_term")
 
+  defaultInventoryId String?  @map("default_inventory_id") @db.Uuid
+  defaultQuantity    Decimal? @map("default_quantity") @db.Decimal(10, 3)
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  organization   Organization    @relation(fields: [organizationId], references: [id])
-  workOrderItems WorkOrderItem[]
-  warranties     Warranty[]
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+  defaultInventory Inventory?      @relation("ServiceDefaultInventory", fields: [defaultInventoryId], references: [id])
+  workOrderItems   WorkOrderItem[]
+  warranties       Warranty[]
 
   @@unique([organizationId, name])
   @@map("service")
@@ -553,6 +557,7 @@ model Inventory {
   materialRoll  MaterialRoll?
   usages        InventoryUsage[]
   purchaseItems PurchaseOrderItem[]
+  services      Service[]           @relation("ServiceDefaultInventory")
 
   @@map("inventory")
 }

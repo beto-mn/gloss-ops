@@ -14,6 +14,7 @@ import type {
   WorkOrderPage,
 } from '@work-orders/interfaces'
 
+import { InventoryService } from '../inventory/inventory.service'
 import type {
   CreateWorkOrderDto,
   UpdateWorkOrderDto,
@@ -50,7 +51,8 @@ export class WorkOrdersService {
     @Inject(WORK_ORDER_REPOSITORY)
     private readonly workOrders: WorkOrderRepositoryInterface,
     @Inject(WORK_ORDER_ITEM_REPOSITORY)
-    private readonly workOrderItems: WorkOrderItemRepositoryInterface
+    private readonly workOrderItems: WorkOrderItemRepositoryInterface,
+    private readonly inventoryService: InventoryService
   ) {}
 
   create(
@@ -117,12 +119,18 @@ export class WorkOrdersService {
     }
     const completedAt =
       newStatus === WorkOrderStatus.COMPLETED ? new Date() : undefined
-    return this.workOrders.updateStatus(
+    const updated = await this.workOrders.updateStatus(
       id,
       organizationId,
       newStatus,
       completedAt
     )
+    if (newStatus === WorkOrderStatus.COMPLETED) {
+      await this.inventoryService.commitUsages(id)
+    } else if (newStatus === WorkOrderStatus.CANCELLED) {
+      await this.inventoryService.deleteUsagesByWorkOrder(id)
+    }
+    return updated
   }
 
   async remove(id: string, organizationId: string): Promise<void> {
@@ -152,6 +160,7 @@ export class WorkOrdersService {
       isBillable: dto.isBillable ?? true,
     })
     await this.syncTotal(workOrderId, organizationId)
+    await this.inventoryService.maybeCreateUsage(workOrderId, dto.serviceId)
     return item
   }
 
