@@ -14,6 +14,7 @@ import { SuppliersModule } from './suppliers/suppliers.module'
 import { ServicesModule } from './services/services.module'
 import { WorkOrdersModule } from './work-orders/work-orders.module'
 import { BrandsModule } from './brands/brands.module'
+import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module'
 import { InventoryModule } from './inventory/inventory.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
@@ -32,6 +33,7 @@ import { AppService } from './app.service'
     BrandsModule,
     WorkOrdersModule,
     InventoryModule,
+    PurchaseOrdersModule,
   ],
   controllers: [AppController],
   providers: [
