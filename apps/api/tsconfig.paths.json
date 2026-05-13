@@ -36,7 +36,12 @@
       "@work-orders/interfaces": ["./src/work-orders/interfaces/index.ts"],
       "@inventory": ["./src/inventory/index.ts"],
       "@inventory/dto": ["./src/inventory/dto/index.ts"],
-      "@inventory/interfaces": ["./src/inventory/interfaces/index.ts"]
+      "@inventory/interfaces": ["./src/inventory/interfaces/index.ts"],
+      "@purchase-orders": ["./src/purchase-orders/index.ts"],
+      "@purchase-orders/dto": ["./src/purchase-orders/dto/index.ts"],
+      "@purchase-orders/interfaces": [
+        "./src/purchase-orders/interfaces/index.ts"
+      ]
     }
   }
 }

@@ -41,4 +41,9 @@ export interface MaterialRollRepositoryInterface {
     id: string,
     quantity: Prisma.Decimal
   ): Promise<Prisma.MaterialRollModel>
+  incrementLength(
+    id: string,
+    quantity: Prisma.Decimal,
+    unitCost: Prisma.Decimal
+  ): Promise<void>
 }
