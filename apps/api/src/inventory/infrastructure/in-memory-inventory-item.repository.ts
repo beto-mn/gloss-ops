@@ -95,4 +95,20 @@ export class InMemoryInventoryItemRepository implements InventoryItemRepositoryI
     this.store.set(id, { ...record, inventoryItem: updatedItem })
     return Promise.resolve(updatedItem)
   }
+
+  incrementStock(
+    id: string,
+    quantity: Prisma.Decimal,
+    unitCost: Prisma.Decimal
+  ): Promise<void> {
+    const record = this.store.get(id)!
+    const item = record.inventoryItem!
+    const newStock = new Prisma.Decimal(Number(item.stock) + Number(quantity))
+    this.store.set(id, {
+      ...record,
+      unitCost,
+      inventoryItem: { ...item, stock: newStock },
+    })
+    return Promise.resolve()
+  }
 }

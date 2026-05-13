@@ -434,4 +434,39 @@ describe('InventoryService', () => {
       expect(Number(invRepo.store.get(item.id)!.inventoryItem!.stock)).toBe(10)
     })
   })
+
+  describe('applyReceive', () => {
+    it('increments stock and updates unitCost for ITEM', async () => {
+      const item = await service.createItem(BRANCH, {
+        name: 'Tape',
+        unit: 'roll',
+        stock: 10,
+      })
+      await service.applyReceive(item.id, 5, 25.5)
+      const updated = await invRepo.findByIdDirect(item.id)
+      expect(Number(updated!.inventoryItem!.stock)).toBe(15)
+      expect(Number(updated!.unitCost)).toBe(25.5)
+    })
+
+    it('increments remainingLength and updates unitCost for ROLL', async () => {
+      const roll = await service.createRoll(BRANCH, {
+        name: 'Vinyl',
+        series: 'S1',
+        finish: 'Gloss',
+        color: 'Black',
+        width: 1.52,
+        remainingLength: 20,
+      })
+      await service.applyReceive(roll.id, 10, 50)
+      const updated = await invRepo.findByIdDirect(roll.id)
+      expect(Number(updated!.materialRoll!.remainingLength)).toBe(30)
+      expect(Number(updated!.unitCost)).toBe(50)
+    })
+
+    it('throws NotFoundException if inventory not found', async () => {
+      await expect(service.applyReceive('nonexistent', 5, 10)).rejects.toThrow(
+        NotFoundException
+      )
+    })
+  })
 })

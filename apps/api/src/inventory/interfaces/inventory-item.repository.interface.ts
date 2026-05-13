@@ -39,4 +39,9 @@ export interface InventoryItemRepositoryInterface {
     id: string,
     quantity: Prisma.Decimal
   ): Promise<Prisma.InventoryItemModel>
+  incrementStock(
+    id: string,
+    quantity: Prisma.Decimal,
+    unitCost: Prisma.Decimal
+  ): Promise<void>
 }

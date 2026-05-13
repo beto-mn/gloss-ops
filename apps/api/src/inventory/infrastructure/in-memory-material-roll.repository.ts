@@ -94,4 +94,22 @@ export class InMemoryMaterialRollRepository implements MaterialRollRepositoryInt
     this.store.set(id, { ...record, materialRoll: updatedRoll })
     return Promise.resolve(updatedRoll)
   }
+
+  incrementLength(
+    id: string,
+    quantity: Prisma.Decimal,
+    unitCost: Prisma.Decimal
+  ): Promise<void> {
+    const record = this.store.get(id)!
+    const roll = record.materialRoll!
+    const newLength = new Prisma.Decimal(
+      Number(roll.remainingLength) + Number(quantity)
+    )
+    this.store.set(id, {
+      ...record,
+      unitCost,
+      materialRoll: { ...roll, remainingLength: newLength },
+    })
+    return Promise.resolve()
+  }
 }

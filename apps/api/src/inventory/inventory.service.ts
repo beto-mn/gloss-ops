@@ -6,7 +6,7 @@ import {
   Inject,
 } from '@nestjs/common'
 
-import { Prisma } from '@glossops/database'
+import { InventoryType, Prisma } from '@glossops/database'
 
 import type {
   ServiceDefaultsRepositoryInterface,
@@ -181,5 +181,21 @@ export class InventoryService {
 
   deleteUsagesByWorkOrder(workOrderId: string): Promise<void> {
     return this.usages.deleteByWorkOrder(workOrderId)
+  }
+
+  async applyReceive(
+    inventoryId: string,
+    quantity: number,
+    unitCost: number
+  ): Promise<void> {
+    const inv = await this.inventory.findByIdDirect(inventoryId)
+    if (!inv) throw new NotFoundException({ error: 'inventory_not_found' })
+    const qty = new Prisma.Decimal(quantity)
+    const cost = new Prisma.Decimal(unitCost)
+    if (inv.type === InventoryType.ITEM) {
+      await this.inventoryItems.incrementStock(inv.id, qty, cost)
+    } else {
+      await this.materialRolls.incrementLength(inv.id, qty, cost)
+    }
   }
 }

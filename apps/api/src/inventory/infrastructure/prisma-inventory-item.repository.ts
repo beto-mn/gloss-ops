@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 
-import { InventoryType, type Prisma } from '@glossops/database'
+import { InventoryType, Prisma } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
@@ -88,5 +88,22 @@ export class PrismaInventoryItemRepository implements InventoryItemRepositoryInt
       where: { id },
       data: { stock: { decrement: quantity } },
     })
+  }
+
+  async incrementStock(
+    id: string,
+    quantity: Prisma.Decimal,
+    unitCost: Prisma.Decimal
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.inventoryItem.update({
+        where: { id },
+        data: { stock: { increment: quantity } },
+      }),
+      this.prisma.inventory.update({
+        where: { id },
+        data: { unitCost },
+      }),
+    ])
   }
 }

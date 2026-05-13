@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 
-import { InventoryType, type Prisma } from '@glossops/database'
+import { InventoryType, Prisma } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
@@ -88,5 +88,22 @@ export class PrismaMaterialRollRepository implements MaterialRollRepositoryInter
       where: { id },
       data: { remainingLength: { decrement: quantity } },
     })
+  }
+
+  async incrementLength(
+    id: string,
+    quantity: Prisma.Decimal,
+    unitCost: Prisma.Decimal
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.materialRoll.update({
+        where: { id },
+        data: { remainingLength: { increment: quantity } },
+      }),
+      this.prisma.inventory.update({
+        where: { id },
+        data: { unitCost },
+      }),
+    ])
   }
 }
