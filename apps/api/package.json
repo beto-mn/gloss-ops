@@ -109,7 +109,10 @@
       "^@work-orders/interfaces$": "<rootDir>/work-orders/interfaces/index.ts",
       "^@inventory$": "<rootDir>/inventory/index.ts",
       "^@inventory/dto$": "<rootDir>/inventory/dto/index.ts",
-      "^@inventory/interfaces$": "<rootDir>/inventory/interfaces/index.ts"
+      "^@inventory/interfaces$": "<rootDir>/inventory/interfaces/index.ts",
+      "^@purchase-orders$": "<rootDir>/purchase-orders/index.ts",
+      "^@purchase-orders/dto$": "<rootDir>/purchase-orders/dto/index.ts",
+      "^@purchase-orders/interfaces$": "<rootDir>/purchase-orders/interfaces/index.ts"
     }
   }
 }
