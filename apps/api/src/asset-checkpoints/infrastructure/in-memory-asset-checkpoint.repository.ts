@@ -57,7 +57,8 @@ export class InMemoryAssetCheckpointRepository implements AssetCheckpointReposit
     id: string,
     data: UpdateAssetCheckpointData
   ): Promise<AssetCheckpointRecord> {
-    const existing = this.store.get(id)!
+    const existing = this.store.get(id)
+    if (!existing) throw new Error(`AssetCheckpoint ${id} not found`)
     const updated: AssetCheckpointRecord = {
       ...existing,
       ...(data.mileage !== undefined ? { mileage: data.mileage } : {}),
