@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { CheckpointType } from '@glossops/database'
 
+import { PrismaService } from '@prisma'
 import type {
   AssetCheckpointRepositoryInterface,
   UpdateAssetCheckpointData,
   CreateAssetCheckpointData,
   AssetCheckpointRecord,
 } from '@asset-checkpoints/interfaces'
-
-import { PrismaService } from '../../prisma/prisma.service'
 
 type PrismaCheckpointRow = Awaited<
   ReturnType<PrismaService['assetCheckpoint']['findUniqueOrThrow']>
