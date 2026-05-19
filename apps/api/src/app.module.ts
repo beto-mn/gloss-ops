@@ -12,6 +12,7 @@ import { CustomersModule } from './customers/customers.module'
 import { BranchesModule } from './branches/branches.module'
 import { SuppliersModule } from './suppliers/suppliers.module'
 import { ServicesModule } from './services/services.module'
+import { AssetCheckpointsModule } from './asset-checkpoints/asset-checkpoints.module'
 import { WorkOrdersModule } from './work-orders/work-orders.module'
 import { BrandsModule } from './brands/brands.module'
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module'
@@ -32,6 +33,7 @@ import { AppService } from './app.service'
     SuppliersModule,
     BrandsModule,
     WorkOrdersModule,
+    AssetCheckpointsModule,
     InventoryModule,
     PurchaseOrdersModule,
   ],
