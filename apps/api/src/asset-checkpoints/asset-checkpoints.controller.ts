@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common'
 import { Role } from '@glossops/database'
 
-import type { AuthContext } from '@auth/interfaces'
 import { CurrentAccount, Roles } from '@auth/decorators'
+import type { AuthContext } from '@auth/interfaces'
 
 import { UpdateAssetCheckpointDto } from './dto/update-asset-checkpoint.dto'
 import { CreateAssetCheckpointDto } from './dto/create-asset-checkpoint.dto'
@@ -22,6 +22,7 @@ export class AssetCheckpointsController {
   constructor(private readonly service: AssetCheckpointsService) {}
 
   @Post()
+  @HttpCode(201)
   create(
     @Param('workOrderId') workOrderId: string,
     @Body() dto: CreateAssetCheckpointDto,
