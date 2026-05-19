@@ -211,6 +211,22 @@ describe('AssetCheckpointsService', () => {
         response: { error: 'checkpoint_not_found' },
       })
     })
+
+    it('throws 404 checkpoint_not_found when checkpoint belongs to a different WO', async () => {
+      workOrdersService.findOne.mockResolvedValue(activeWo)
+      const checkpoint = await service.create(
+        WO_ID,
+        baseDto,
+        ACCOUNT_ID,
+        ORG_ID
+      )
+
+      await expect(
+        service.update('other-wo-id', checkpoint.id, { mileage: 1000 }, ORG_ID)
+      ).rejects.toMatchObject({
+        response: { error: 'checkpoint_not_found' },
+      })
+    })
   })
 
   // ── remove ─────────────────────────────────────────────────────────────────
@@ -235,6 +251,22 @@ describe('AssetCheckpointsService', () => {
 
       await expect(
         service.remove(WO_ID, 'nonexistent-id', ORG_ID)
+      ).rejects.toMatchObject({
+        response: { error: 'checkpoint_not_found' },
+      })
+    })
+
+    it('throws 404 checkpoint_not_found when checkpoint belongs to a different WO', async () => {
+      workOrdersService.findOne.mockResolvedValue(activeWo)
+      const checkpoint = await service.create(
+        WO_ID,
+        baseDto,
+        ACCOUNT_ID,
+        ORG_ID
+      )
+
+      await expect(
+        service.remove('other-wo-id', checkpoint.id, ORG_ID)
       ).rejects.toMatchObject({
         response: { error: 'checkpoint_not_found' },
       })

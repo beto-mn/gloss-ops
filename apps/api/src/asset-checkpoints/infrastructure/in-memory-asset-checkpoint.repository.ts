@@ -3,8 +3,8 @@ import { randomUUID } from 'crypto'
 import { Injectable } from '@nestjs/common'
 import { CheckpointType } from '@glossops/database'
 
-import type { AssetCheckpointRepositoryInterface } from '@asset-checkpoints/interfaces'
 import type {
+  AssetCheckpointRepositoryInterface,
   UpdateAssetCheckpointData,
   CreateAssetCheckpointData,
   AssetCheckpointRecord,

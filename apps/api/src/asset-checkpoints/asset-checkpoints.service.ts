@@ -8,7 +8,7 @@ import { CheckpointType, WorkOrderStatus } from '@glossops/database'
 
 import type { AssetCheckpointRecord } from '@asset-checkpoints/interfaces'
 
-import type { AssetCheckpointRepositoryInterface } from './interfaces/asset-checkpoint.repository.interface'
+import type { AssetCheckpointRepositoryInterface } from './interfaces'
 import { CreateAssetCheckpointDto } from './dto/create-asset-checkpoint.dto'
 import { UpdateAssetCheckpointDto } from './dto/update-asset-checkpoint.dto'
 import { ASSET_CHECKPOINT_REPOSITORY } from './asset-checkpoints.tokens'
