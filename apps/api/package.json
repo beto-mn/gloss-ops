@@ -112,7 +112,10 @@
       "^@inventory/interfaces$": "<rootDir>/inventory/interfaces/index.ts",
       "^@purchase-orders$": "<rootDir>/purchase-orders/index.ts",
       "^@purchase-orders/dto$": "<rootDir>/purchase-orders/dto/index.ts",
-      "^@purchase-orders/interfaces$": "<rootDir>/purchase-orders/interfaces/index.ts"
+      "^@purchase-orders/interfaces$": "<rootDir>/purchase-orders/interfaces/index.ts",
+      "^@asset-checkpoints$": "<rootDir>/asset-checkpoints/index.ts",
+      "^@asset-checkpoints/dto$": "<rootDir>/asset-checkpoints/dto/index.ts",
+      "^@asset-checkpoints/interfaces$": "<rootDir>/asset-checkpoints/interfaces/index.ts"
     }
   }
 }

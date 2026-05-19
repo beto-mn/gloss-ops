@@ -29,5 +29,6 @@ import { WorkOrdersService } from './work-orders.service'
     },
     WorkOrdersService,
   ],
+  exports: [WorkOrdersService],
 })
 export class WorkOrdersModule {}
