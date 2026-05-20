@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 
-import { Prisma } from '@glossops/database'
+import type { Prisma } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
