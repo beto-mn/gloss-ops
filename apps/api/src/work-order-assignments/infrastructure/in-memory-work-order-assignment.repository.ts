@@ -1,11 +1,14 @@
 import { randomUUID } from 'crypto'
 
+import { Injectable } from '@nestjs/common'
+
 import type {
   WorkOrderAssignmentRepositoryInterface,
   CreateWorkOrderAssignmentData,
   WorkOrderAssignmentRecord,
 } from '@work-order-assignments/interfaces'
 
+@Injectable()
 export class InMemoryWorkOrderAssignmentRepository implements WorkOrderAssignmentRepositoryInterface {
   readonly store = new Map<string, WorkOrderAssignmentRecord>()
   private readonly members = new Map<string, string>() // memberId → organizationId
@@ -21,7 +24,6 @@ export class InMemoryWorkOrderAssignmentRepository implements WorkOrderAssignmen
       id: randomUUID(),
       workOrderId: data.workOrderId,
       memberId: data.memberId,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       role: data.role,
       assignedAt: new Date(),
     }
