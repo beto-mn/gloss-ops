@@ -1,0 +1,81 @@
+import { Injectable } from '@nestjs/common'
+
+import { PrismaService } from '@prisma'
+import type {
+  WorkOrderAssignmentRepositoryInterface,
+  CreateWorkOrderAssignmentData,
+  WorkOrderAssignmentRecord,
+} from '@work-order-assignments/interfaces'
+
+type PrismaAssignmentRow = Awaited<
+  ReturnType<PrismaService['workOrderAssignment']['findUniqueOrThrow']>
+>
+
+@Injectable()
+export class PrismaWorkOrderAssignmentRepository implements WorkOrderAssignmentRepositoryInterface {
+  constructor(private readonly prisma: PrismaService) {}
+
+  private toRecord(row: PrismaAssignmentRow): WorkOrderAssignmentRecord {
+    return {
+      id: row.id,
+      workOrderId: row.workOrderId,
+      memberId: row.memberId,
+      role: row.role,
+      assignedAt: row.assignedAt,
+    }
+  }
+
+  async create(
+    data: CreateWorkOrderAssignmentData
+  ): Promise<WorkOrderAssignmentRecord> {
+    const row = await this.prisma.workOrderAssignment.create({
+      data: {
+        workOrderId: data.workOrderId,
+        memberId: data.memberId,
+        role: data.role,
+      },
+    })
+    return this.toRecord(row)
+  }
+
+  async findAllByWorkOrder(
+    workOrderId: string
+  ): Promise<WorkOrderAssignmentRecord[]> {
+    const rows = await this.prisma.workOrderAssignment.findMany({
+      where: { workOrderId },
+      orderBy: { assignedAt: 'asc' },
+    })
+    return rows.map(r => this.toRecord(r))
+  }
+
+  async findById(id: string): Promise<WorkOrderAssignmentRecord | null> {
+    const row = await this.prisma.workOrderAssignment.findUnique({
+      where: { id },
+    })
+    return row ? this.toRecord(row) : null
+  }
+
+  async existsByWorkOrderAndMember(
+    workOrderId: string,
+    memberId: string
+  ): Promise<boolean> {
+    const count = await this.prisma.workOrderAssignment.count({
+      where: { workOrderId, memberId },
+    })
+    return count > 0
+  }
+
+  async existsMemberInOrg(
+    memberId: string,
+    organizationId: string
+  ): Promise<boolean> {
+    const count = await this.prisma.organizationMember.count({
+      where: { id: memberId, branch: { organizationId } },
+    })
+    return count > 0
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.workOrderAssignment.delete({ where: { id } })
+  }
+}
