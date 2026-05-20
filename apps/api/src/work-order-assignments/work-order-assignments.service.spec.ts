@@ -1,5 +1,9 @@
 import { Test, type TestingModule } from '@nestjs/testing'
-import { AssignmentRole, WorkOrderStatus } from '@glossops/database'
+import {
+  ActivityAction,
+  AssignmentRole,
+  WorkOrderStatus,
+} from '@glossops/database'
 
 import type { WorkOrderWithItems } from '@work-orders/interfaces'
 
@@ -168,7 +172,7 @@ describe('WorkOrderAssignmentsService', () => {
         organizationId: ORG_ID,
         branchId: BRANCH_ID,
         accountId: ACCOUNT_ID,
-        action: 'ASSIGNED',
+        action: ActivityAction.ASSIGNED,
         entity: 'WorkOrder',
         entityId: WO_ID,
         metadata: { memberId: MEMBER_ID, role: AssignmentRole.ASSISTANT },
@@ -188,6 +192,16 @@ describe('WorkOrderAssignmentsService', () => {
 
       expect(results).toHaveLength(1)
       expect(results[0].workOrderId).toBe(WO_ID)
+    })
+
+    it('throws 404 work_order_not_found if WO does not exist', async () => {
+      workOrdersService.findOne.mockRejectedValue({
+        response: { error: 'work_order_not_found' },
+      })
+
+      await expect(service.findAll(WO_ID, ORG_ID)).rejects.toMatchObject({
+        response: { error: 'work_order_not_found' },
+      })
     })
   })
 
