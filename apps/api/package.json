@@ -118,7 +118,10 @@
       "^@asset-checkpoints/interfaces$": "<rootDir>/asset-checkpoints/interfaces/index.ts",
       "^@activity-logs$": "<rootDir>/activity-logs/index.ts",
       "^@activity-logs/dto$": "<rootDir>/activity-logs/dto/index.ts",
-      "^@activity-logs/interfaces$": "<rootDir>/activity-logs/interfaces/index.ts"
+      "^@activity-logs/interfaces$": "<rootDir>/activity-logs/interfaces/index.ts",
+      "^@work-order-assignments$": "<rootDir>/work-order-assignments/index.ts",
+      "^@work-order-assignments/dto$": "<rootDir>/work-order-assignments/dto/index.ts",
+      "^@work-order-assignments/interfaces$": "<rootDir>/work-order-assignments/interfaces/index.ts"
     }
   }
 }

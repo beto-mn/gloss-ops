@@ -49,7 +49,12 @@
       ],
       "@activity-logs": ["./src/activity-logs/index.ts"],
       "@activity-logs/dto": ["./src/activity-logs/dto/index.ts"],
-      "@activity-logs/interfaces": ["./src/activity-logs/interfaces/index.ts"]
+      "@activity-logs/interfaces": ["./src/activity-logs/interfaces/index.ts"],
+      "@work-order-assignments": ["./src/work-order-assignments/index.ts"],
+      "@work-order-assignments/dto": ["./src/work-order-assignments/dto/index.ts"],
+      "@work-order-assignments/interfaces": [
+        "./src/work-order-assignments/interfaces/index.ts"
+      ]
     }
   }
 }
