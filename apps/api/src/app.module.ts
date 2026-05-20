@@ -6,6 +6,7 @@ import { AuthGuard, RolesGuard } from '@auth/guards'
 import { PrismaModule } from '@prisma'
 import { AuthModule } from '@auth'
 
+import { WorkOrderAssignmentsModule } from './work-order-assignments/work-order-assignments.module'
 import { CustomerAssetsModule } from './customer-assets/customer-assets.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { ActivityLogsModule } from './activity-logs/activity-logs.module'
@@ -36,6 +37,7 @@ import { AppService } from './app.service'
     WorkOrdersModule,
     ActivityLogsModule,
     AssetCheckpointsModule,
+    WorkOrderAssignmentsModule,
     InventoryModule,
     PurchaseOrdersModule,
   ],
