@@ -3,9 +3,9 @@ import { AssignmentRole, WorkOrderStatus } from '@glossops/database'
 
 import type { WorkOrderWithItems } from '@work-orders/interfaces'
 
+import { InMemoryWorkOrderAssignmentRepository } from './infrastructure/in-memory-work-order-assignment.repository'
 import { WORK_ORDER_ASSIGNMENT_REPOSITORY } from './work-order-assignments.tokens'
 import { WorkOrderAssignmentsService } from './work-order-assignments.service'
-import { InMemoryWorkOrderAssignmentRepository } from './infrastructure/in-memory-work-order-assignment.repository'
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
 import { WorkOrdersService } from '../work-orders/work-orders.service'
 
@@ -107,6 +107,7 @@ describe('WorkOrderAssignmentsService', () => {
       await expect(
         service.create(WO_ID, baseDto, ACCOUNT_ID, ORG_ID)
       ).rejects.toMatchObject({ response: { error: 'work_order_not_found' } })
+      expect(activityLogs.record).not.toHaveBeenCalled()
     })
 
     it('throws 409 work_order_not_assignable if WO is COMPLETED', async () => {
@@ -117,6 +118,7 @@ describe('WorkOrderAssignmentsService', () => {
       ).rejects.toMatchObject({
         response: { error: 'work_order_not_assignable' },
       })
+      expect(activityLogs.record).not.toHaveBeenCalled()
     })
 
     it('throws 409 work_order_not_assignable if WO is CANCELLED', async () => {
@@ -127,6 +129,7 @@ describe('WorkOrderAssignmentsService', () => {
       ).rejects.toMatchObject({
         response: { error: 'work_order_not_assignable' },
       })
+      expect(activityLogs.record).not.toHaveBeenCalled()
     })
 
     it('throws 404 member_not_found if member is not in org', async () => {
@@ -140,6 +143,7 @@ describe('WorkOrderAssignmentsService', () => {
           ORG_ID
         )
       ).rejects.toMatchObject({ response: { error: 'member_not_found' } })
+      expect(activityLogs.record).not.toHaveBeenCalled()
     })
 
     it('throws 409 assignment_already_exists on duplicate', async () => {
@@ -151,6 +155,7 @@ describe('WorkOrderAssignmentsService', () => {
       ).rejects.toMatchObject({
         response: { error: 'assignment_already_exists' },
       })
+      expect(activityLogs.record).toHaveBeenCalledTimes(1)
     })
 
     it('calls activityLogs.record with ASSIGNED action and correct metadata', async () => {

@@ -33,11 +33,14 @@ export class WorkOrderAssignmentsService {
     accountId: string,
     organizationId: string
   ): Promise<WorkOrderAssignmentRecord> {
-    const wo = await this.workOrdersService.findOne(workOrderId, organizationId)
+    const workOrder = await this.workOrdersService.findOne(
+      workOrderId,
+      organizationId
+    )
 
     if (
-      wo.status === WorkOrderStatus.COMPLETED ||
-      wo.status === WorkOrderStatus.CANCELLED
+      workOrder.status === WorkOrderStatus.COMPLETED ||
+      workOrder.status === WorkOrderStatus.CANCELLED
     ) {
       throw new ConflictException({ error: 'work_order_not_assignable' })
     }
@@ -67,7 +70,7 @@ export class WorkOrderAssignmentsService {
 
     await this.activityLogs.record({
       organizationId,
-      branchId: wo.branchId,
+      branchId: workOrder.branchId,
       accountId,
       action: ActivityAction.ASSIGNED,
       entity: 'WorkOrder',
