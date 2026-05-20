@@ -56,7 +56,10 @@
       ],
       "@work-order-assignments/interfaces": [
         "./src/work-order-assignments/interfaces/index.ts"
-      ]
+      ],
+      "@warranties": ["./src/warranties/index.ts"],
+      "@warranties/dto": ["./src/warranties/dto/index.ts"],
+      "@warranties/interfaces": ["./src/warranties/interfaces/index.ts"]
     }
   }
 }

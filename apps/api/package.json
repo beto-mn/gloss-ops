@@ -121,7 +121,10 @@
       "^@activity-logs/interfaces$": "<rootDir>/activity-logs/interfaces/index.ts",
       "^@work-order-assignments$": "<rootDir>/work-order-assignments/index.ts",
       "^@work-order-assignments/dto$": "<rootDir>/work-order-assignments/dto/index.ts",
-      "^@work-order-assignments/interfaces$": "<rootDir>/work-order-assignments/interfaces/index.ts"
+      "^@work-order-assignments/interfaces$": "<rootDir>/work-order-assignments/interfaces/index.ts",
+      "^@warranties$": "<rootDir>/warranties/index.ts",
+      "^@warranties/dto$": "<rootDir>/warranties/dto/index.ts",
+      "^@warranties/interfaces$": "<rootDir>/warranties/interfaces/index.ts"
     }
   }
 }

@@ -8,7 +8,7 @@ import type {
   CreateWarrantyData,
   WarrantyWithAsset,
   WarrantyRecord,
-} from '../interfaces'
+} from '@warranties/interfaces'
 
 interface ItemContext {
   workOrderId: string
