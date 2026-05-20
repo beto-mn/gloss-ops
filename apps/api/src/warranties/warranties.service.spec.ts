@@ -7,8 +7,8 @@ import {
 import { ActivityAction } from '@glossops/database'
 
 import { InMemoryWarrantyRepository } from './infrastructure/in-memory-warranty.repository'
-import { WARRANTY_REPOSITORY } from './warranties.tokens'
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
+import { WARRANTY_REPOSITORY } from './warranties.tokens'
 import { WarrantyService } from './warranties.service'
 
 const ORG_ID = 'org-1'
