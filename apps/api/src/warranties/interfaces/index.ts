@@ -1,5 +1,5 @@
 export type { WarrantyRepositoryInterface } from './warranty.repository.interface'
-export type { ItemForGeneration } from './warranty.repository.interface'
 export type { CreateWarrantyData } from './warranty.repository.interface'
+export type { ItemForGeneration } from './warranty.repository.interface'
 export type { WarrantyWithAsset } from './warranty.repository.interface'
 export type { WarrantyRecord } from './warranty.repository.interface'
