@@ -5,6 +5,8 @@ import {
   WorkOrderStatus,
 } from '@glossops/database'
 
+import type { WorkOrderWithItems } from '@work-orders/interfaces'
+
 import { ASSET_CHECKPOINT_REPOSITORY } from './asset-checkpoints.tokens'
 import { AssetCheckpointsService } from './asset-checkpoints.service'
 import { InMemoryAssetCheckpointRepository } from './infrastructure/in-memory-asset-checkpoint.repository'
@@ -14,9 +16,18 @@ const WO_ID = 'wo-1'
 const ORG_ID = 'org-1'
 const ACCOUNT_ID = 'acc-1'
 
-const activeWo = { id: WO_ID, status: WorkOrderStatus.IN_PROGRESS } as any
-const completedWo = { id: WO_ID, status: WorkOrderStatus.COMPLETED } as any
-const cancelledWo = { id: WO_ID, status: WorkOrderStatus.CANCELLED } as any
+const activeWo = {
+  id: WO_ID,
+  status: WorkOrderStatus.IN_PROGRESS,
+} as unknown as WorkOrderWithItems
+const completedWo = {
+  id: WO_ID,
+  status: WorkOrderStatus.COMPLETED,
+} as unknown as WorkOrderWithItems
+const cancelledWo = {
+  id: WO_ID,
+  status: WorkOrderStatus.CANCELLED,
+} as unknown as WorkOrderWithItems
 
 const baseDto = {
   type: CheckpointType.RECEPTION,
