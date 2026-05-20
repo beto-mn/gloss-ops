@@ -10,6 +10,7 @@ import { CustomerAssetsModule } from './customer-assets/customer-assets.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { CustomersModule } from './customers/customers.module'
 import { BranchesModule } from './branches/branches.module'
+import { ActivityLogsModule } from './activity-logs/activity-logs.module'
 import { SuppliersModule } from './suppliers/suppliers.module'
 import { ServicesModule } from './services/services.module'
 import { AssetCheckpointsModule } from './asset-checkpoints/asset-checkpoints.module'
@@ -33,6 +34,7 @@ import { AppService } from './app.service'
     SuppliersModule,
     BrandsModule,
     WorkOrdersModule,
+    ActivityLogsModule,
     AssetCheckpointsModule,
     InventoryModule,
     PurchaseOrdersModule,
