@@ -19,8 +19,6 @@ const includeForRecord = {
 export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly includeForRecord = includeForRecord
-
   private toRecord(
     row: Prisma.WarrantyGetPayload<{ include: typeof includeForRecord }>
   ): WarrantyRecord {
@@ -52,7 +50,7 @@ export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
             validFrom: d.validFrom,
             validUntil: d.validUntil,
           },
-          include: this.includeForRecord,
+          include: includeForRecord,
         })
       )
     )
@@ -96,7 +94,7 @@ export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
         id,
         workOrderItem: { workOrder: { branch: { organizationId } } },
       },
-      include: this.includeForRecord,
+      include: includeForRecord,
     })
     return row ? this.toRecord(row) : null
   }
@@ -112,7 +110,7 @@ export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
           workOrder: { branch: { organizationId } },
         },
       },
-      include: this.includeForRecord,
+      include: includeForRecord,
       orderBy: { createdAt: 'asc' },
     })
     return rows.map(row => this.toRecord(row))
@@ -126,7 +124,7 @@ export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
       where: {
         workOrderItem: { workOrder: { assetId, branch: { organizationId } } },
       },
-      include: this.includeForRecord,
+      include: includeForRecord,
       orderBy: { createdAt: 'desc' },
     })
     return rows.map(row => this.toRecord(row))
@@ -160,7 +158,7 @@ export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
     const row = await this.prisma.warranty.update({
       where: { id },
       data: { isVoid: true, voidReason: reason },
-      include: this.includeForRecord,
+      include: includeForRecord,
     })
     return this.toRecord(row)
   }
