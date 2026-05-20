@@ -31,22 +31,31 @@ The platform is designed for vinyl wrap shops, detailing studios, PPF installers
 
 ## 🏗️ Build Status
 
-> Last updated: April 2026
+> Last updated: May 2026
 
-| Component            | Status     | Details                                                   |
-| -------------------- | ---------- | --------------------------------------------------------- |
-| Database schema      | ✅ Done    | Full Prisma schema, migrations, seed                      |
-| API — Config         | ✅ Done    | Zod-validated env vars                                    |
-| API — Auth module    | ✅ Done    | JWT + Redis refresh tokens, RBAC                          |
-| API — Organizations  | ✅ Done    | CRUD, invitations with `branchId`, soft/hard delete       |
-| API — Customers      | ✅ Done    | CRUD, soft/hard delete, status filters                    |
-| API — Swagger UI     | ✅ Done    | Neon dark theme, OpenAPI decorators on all endpoints      |
-| API — Tests          | ✅ Done    | 147 passing — 15 suites, all repositories use in-memory   |
-| API — Branches       | ⏳ Next    | CRUD endpoints (peer branches, no `isMain`)               |
-| API — Domain modules | ⏳ Pending | services, work-orders, inventory, suppliers, activity-log |
-| Web — Auth + layout  | ⏳ Pending | —                                                         |
-| Web — Core pages     | ⏳ Pending | —                                                         |
-| Infrastructure       | ⏳ Pending | Dockerfiles, CI                                           |
+| Component                | Status     | Details                                                  |
+| ------------------------ | ---------- | -------------------------------------------------------- |
+| Database schema          | ✅ Done    | Full Prisma schema, migrations, seed                     |
+| API — Config             | ✅ Done    | Zod-validated env vars                                   |
+| API — Auth module        | ✅ Done    | JWT + Redis refresh tokens, RBAC                         |
+| API — Organizations      | ✅ Done    | CRUD, invitations with `branchId`, soft/hard delete      |
+| API — Customers          | ✅ Done    | CRUD, soft/hard delete, status filters                   |
+| API — Branches           | ✅ Done    | CRUD, peer branches, no `isMain`                         |
+| API — Customer Assets    | ✅ Done    | CRUD nested under customer + flat read/update/delete     |
+| API — Services           | ✅ Done    | CRUD with activate/deactivate                            |
+| API — Suppliers          | ✅ Done    | CRUD                                                     |
+| API — Brands             | ✅ Done    | CRUD with seeded-brand protection                        |
+| API — Work Orders        | ✅ Done    | CRUD, status transitions                                 |
+| API — Work Order Assign. | ✅ Done    | Assign/unassign technicians with `LEAD`/`ASSISTANT` role |
+| API — Asset Checkpoints  | ✅ Done    | Reception/delivery checkpoints per work order            |
+| API — Activity Logs      | ✅ Done    | Append-only audit trail, read-only list endpoint         |
+| API — Inventory          | ✅ Done    | List inventory, usage history per item                   |
+| API — Purchase Orders    | ✅ Done    | CRUD, receive/cancel flow                                |
+| API — Swagger UI         | ✅ Done    | Neon dark theme, OpenAPI decorators on all endpoints     |
+| API — Tests              | ✅ Done    | 543 passing — 47 suites, all repositories use in-memory  |
+| Web — Auth + layout      | ⏳ Pending | —                                                        |
+| Web — Core pages         | ⏳ Pending | —                                                        |
+| Infrastructure           | ⏳ Pending | Dockerfiles, CI                                          |
 
 Full roadmap: [`docs/next-steps.md`](docs/next-steps.md)
 
@@ -308,34 +317,34 @@ The app should now be running at `http://localhost:3000` and the API at `http://
 ```
 glossops/
 ├── apps/
-│   ├── web/                        # Next.js frontend (scaffolded)
-│   └── api/                        # NestJS backend
+│   ├── web/                           # Next.js frontend (scaffolded)
+│   └── api/                           # NestJS backend
 │       └── src/
-│           ├── auth/               # JWT auth, RBAC guards, refresh tokens
-│           │   ├── decorators/     # @Public(), @Roles(), @CurrentAccount()
-│           │   ├── dto/            # RegisterDto, LoginDto, TokenResponseDto
-│           │   ├── guards/         # AuthGuard, RolesGuard
-│           │   ├── infrastructure/ # PrismaAccountRepository, RedisTokenStore + in-memory variants
-│           │   └── interfaces/     # AuthContext, JwtPayload, TokenPair
-│           ├── organizations/      # Org CRUD, members, invitations (with branchId)
-│           │   ├── dto/            # CreateInvitationDto, UpdateOrganizationDto
-│           │   ├── infrastructure/ # PrismaOrganizationRepository, RedisInvitationStore + in-memory
-│           │   └── interfaces/     # OrganizationRepositoryInterface, InvitationStoreInterface
-│           ├── customers/          # Customer CRUD with soft/hard delete
-│           │   ├── dto/            # CreateCustomerDto, UpdateCustomerDto
-│           │   ├── infrastructure/ # PrismaCustomerRepository + in-memory
-│           │   └── interfaces/     # CustomerRepositoryInterface
-│           ├── config/             # Zod env validation
-│           └── prisma/             # PrismaService
+│           ├── auth/                  # JWT auth, RBAC guards, refresh tokens
+│           ├── organizations/         # Org CRUD, members, invitations (with branchId)
+│           ├── customers/             # Customer CRUD with soft/hard delete
+│           ├── branches/              # Branch CRUD (peer branches, no isMain)
+│           ├── customer-assets/       # Asset CRUD nested under customer
+│           ├── services/              # Service catalog with activate/deactivate
+│           ├── suppliers/             # Supplier CRUD
+│           ├── brands/                # Brand catalog (seeded brands protected)
+│           ├── work-orders/           # Work order CRUD + status transitions
+│           ├── work-order-assignments/# Technician assignments (LEAD/ASSISTANT)
+│           ├── asset-checkpoints/     # Reception/delivery checkpoints per work order
+│           ├── activity-logs/         # Append-only audit trail
+│           ├── inventory/             # Inventory list + usage history
+│           ├── purchase-orders/       # Purchase order CRUD + receive/cancel
+│           ├── config/                # Zod env validation
+│           └── prisma/                # PrismaService
 ├── packages/
-│   ├── database/                   # Prisma schema, migrations, seed
-│   └── shared/                     # Shared types (pending)
+│   ├── database/                      # Prisma schema, migrations, seed
+│   └── shared/                        # Shared types (pending)
 ├── docs/
 │   ├── database-design.md
 │   ├── database-constraints.md
 │   ├── database-schema.dbml
-│   ├── decisions/                  # Architectural decision records
-│   ├── superpowers/                # Specs and implementation plans
+│   ├── decisions/                     # Architectural decision records
+│   ├── superpowers/                   # Specs and implementation plans
 │   └── next-steps.md
 ├── docker-compose.yml
 ├── .env.example

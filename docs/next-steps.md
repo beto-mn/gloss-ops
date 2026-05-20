@@ -1,25 +1,34 @@
 # GlossOps — Next Steps
 
-> Last updated: April 2026
+> Last updated: May 2026
 
 ## Current State
 
-| Layer                          | Status      | Notes                                                                                  |
-| ------------------------------ | ----------- | -------------------------------------------------------------------------------------- |
-| Monorepo scaffold              | ✅ Complete | pnpm workspaces, Husky, docker-compose                                                 |
-| `packages/database`            | ✅ Complete | Full Prisma schema, migrations, seed, tsconfig (Branch.isMain removed)                 |
-| `apps/api` — Config            | ✅ Complete | Zod-validated env schema, barrel export                                                |
-| `apps/api` — Auth module       | ✅ Complete | JWT + Redis refresh tokens, RBAC guards, repository pattern                            |
-| `apps/api` — Organizations     | ✅ Complete | CRUD, invitations require `branchId`, soft/hard delete, member listing                 |
-| `apps/api` — Customers         | ✅ Complete | CRUD, soft/hard delete, status filters                                                 |
-| `apps/api` — Swagger UI        | ✅ Complete | OpenAPI decorators, neon dark theme at `/docs`                                         |
-| `apps/api` — TS path aliases   | ✅ Complete | `tsconfig.paths.json`, barrel exports, Jest mapper                                     |
-| `apps/api` — Tests             | ✅ Complete | 147 tests across 15 suites — repos use in-memory, no Prisma/Redis mocks                |
-| `apps/api` — Branches CRUD     | ⏳ Next     | List/create/update/delete branches (peer branches, no `isMain`)                        |
-| `packages/shared`              | ⏳ Pending  | No source yet                                                                          |
-| `apps/api` — Remaining modules | ⏳ Pending  | services, work-orders, inventory, suppliers, purchase-orders, warranties, activity-log |
-| `apps/web`                     | ⏳ Pending  | Next.js default page only                                                              |
-| Infrastructure                 | ⏳ Pending  | Dockerfiles, GitHub Actions CI                                                         |
+| Layer                           | Status      | Notes                                                                   |
+| ------------------------------- | ----------- | ----------------------------------------------------------------------- |
+| Monorepo scaffold               | ✅ Complete | pnpm workspaces, Husky, docker-compose                                  |
+| `packages/database`             | ✅ Complete | Full Prisma schema, migrations, seed, `AssignmentRole` enum added       |
+| `apps/api` — Config             | ✅ Complete | Zod-validated env schema, barrel export                                 |
+| `apps/api` — Auth module        | ✅ Complete | JWT + Redis refresh tokens, RBAC guards, repository pattern             |
+| `apps/api` — Organizations      | ✅ Complete | CRUD, invitations require `branchId`, soft/hard delete, member listing  |
+| `apps/api` — Customers          | ✅ Complete | CRUD, soft/hard delete, status filters                                  |
+| `apps/api` — Branches           | ✅ Complete | CRUD, peer branches, no `isMain`                                        |
+| `apps/api` — Customer Assets    | ✅ Complete | CRUD nested under customer + flat read/update/delete                    |
+| `apps/api` — Services           | ✅ Complete | CRUD with activate/deactivate                                           |
+| `apps/api` — Suppliers          | ✅ Complete | CRUD                                                                    |
+| `apps/api` — Brands             | ✅ Complete | CRUD with seeded-brand protection                                       |
+| `apps/api` — Work Orders        | ✅ Complete | CRUD, status transitions                                                |
+| `apps/api` — Work Order Assign. | ✅ Complete | Assign/unassign technicians with `LEAD`/`ASSISTANT` role                |
+| `apps/api` — Asset Checkpoints  | ✅ Complete | Reception/delivery checkpoints per work order                           |
+| `apps/api` — Activity Logs      | ✅ Complete | Append-only audit trail, read-only list endpoint                        |
+| `apps/api` — Inventory          | ✅ Complete | List inventory, usage history per item                                  |
+| `apps/api` — Purchase Orders    | ✅ Complete | CRUD, receive/cancel flow                                               |
+| `apps/api` — Swagger UI         | ✅ Complete | OpenAPI decorators, neon dark theme at `/docs`                          |
+| `apps/api` — TS path aliases    | ✅ Complete | `tsconfig.paths.json`, barrel exports, Jest mapper                      |
+| `apps/api` — Tests              | ✅ Complete | 543 tests across 47 suites — repos use in-memory, no Prisma/Redis mocks |
+| `packages/shared`               | ⏳ Pending  | No source yet                                                           |
+| `apps/web`                      | ⏳ Pending  | Next.js default page only                                               |
+| Infrastructure                  | ⏳ Pending  | Dockerfiles, GitHub Actions CI                                          |
 
 ---
 
@@ -124,9 +133,7 @@ CRUD `/customers` with soft delete (`status = DELETED`) and Owner-only hard dele
 
 ---
 
-## ⏳ Step 4c — API: Branches CRUD `apps/api/src/branches`
-
-Now that `Branch.isMain` is removed and invitations require `branchId`, the next module exposes CRUD over branches.
+## ✅ Step 4c — API: Branches CRUD — DONE
 
 | Method   | Path            | Description                         |
 | -------- | --------------- | ----------------------------------- |
@@ -134,40 +141,99 @@ Now that `Branch.isMain` is removed and invitations require `branchId`, the next
 | `POST`   | `/branches`     | Create a new branch (Owner/Manager) |
 | `GET`    | `/branches/:id` | Read a single branch                |
 | `PATCH`  | `/branches/:id` | Update a branch                     |
-| `DELETE` | `/branches/:id` | Delete a branch                     |
-
-Open design questions:
-
-- Cannot delete the last branch of an organization
-- Reassign existing members when a branch is deleted? Or block deletion if members exist?
-- Naming uniqueness within an organization?
+| `DELETE` | `/branches/:id` | Delete a branch (Owner only)        |
 
 ---
 
-## ⏳ Step 4d — Remaining Domain Modules
+## ✅ Step 4d — Remaining Domain Modules — DONE
 
-Each module follows the pattern: `module / controller / service`, all scoped by `organizationId` extracted from the JWT via `@CurrentAccount()`.
+All domain modules are implemented following the repository pattern established in `auth/`.
 
-**Priority order:**
+### Customer Assets (`src/customer-assets/`)
 
-| #   | Module            | Endpoints                                                         |
-| --- | ----------------- | ----------------------------------------------------------------- |
-| 1   | `customer-assets` | CRUD `/customer-assets`, nested under customer                    |
-| 2   | `services`        | CRUD `/services`                                                  |
-| 3   | `work-orders`     | CRUD `/work-orders`, status transitions, `WARRANTY_CLAIM` support |
-| 4   | `inventory`       | CRUD `/inventory/items`, CRUD `/inventory/material-rolls`         |
-| 5   | `suppliers`       | CRUD `/suppliers`                                                 |
-| 6   | `purchase-orders` | CRUD `/purchase-orders`, partial-receive flow                     |
-| 7   | `invoices`        | CFDI 4.0 generation, `taxRate` snapshot                           |
-| 8   | `warranties`      | Auto-generated on work order completion                           |
-| 9   | `activity-log`    | `GET /activity-log` (read-only)                                   |
+| Method   | Path                            | Description                 |
+| -------- | ------------------------------- | --------------------------- |
+| `POST`   | `/customers/:customerId/assets` | Create asset under customer |
+| `GET`    | `/customers/:customerId/assets` | List assets for a customer  |
+| `GET`    | `/customer-assets/:id`          | Get a single asset          |
+| `PATCH`  | `/customer-assets/:id`          | Update an asset             |
+| `DELETE` | `/customer-assets/:id`          | Delete an asset             |
 
-**Notes for implementation:**
+### Services (`src/services/`)
 
-- `organizationId` must always come from `request.user.organizationId` — never from the request body
-- All Prisma queries must include tenant scope (`organizationId` or `branchId`) before executing
-- Each module must follow the repository pattern established in `auth/` — see `CLAUDE.md` for the required structure
-- `PrismaService` may only be injected inside `infrastructure/` classes — never in services, guards, or controllers
+| Method   | Path                       | Description          |
+| -------- | -------------------------- | -------------------- |
+| `POST`   | `/services`                | Create a service     |
+| `GET`    | `/services`                | List services        |
+| `GET`    | `/services/:id`            | Get a single service |
+| `PATCH`  | `/services/:id`            | Update a service     |
+| `DELETE` | `/services/:id`            | Delete a service     |
+| `POST`   | `/services/:id/activate`   | Activate a service   |
+| `POST`   | `/services/:id/deactivate` | Deactivate a service |
+
+### Suppliers (`src/suppliers/`)
+
+Standard CRUD at `/suppliers` (POST, GET, GET /:id, PATCH /:id, DELETE /:id).
+
+### Brands (`src/brands/`)
+
+Standard CRUD at `/brands` (POST, GET, GET /:id, PATCH /:id, DELETE /:id). Seeded brands cannot be deleted.
+
+### Work Orders (`src/work-orders/`)
+
+| Method   | Path                      | Description                  |
+| -------- | ------------------------- | ---------------------------- |
+| `POST`   | `/work-orders`            | Create a work order          |
+| `GET`    | `/work-orders`            | List work orders             |
+| `GET`    | `/work-orders/:id`        | Get a single work order      |
+| `PATCH`  | `/work-orders/:id`        | Update a work order          |
+| `PATCH`  | `/work-orders/:id/status` | Transition work order status |
+| `DELETE` | `/work-orders/:id`        | Delete a work order          |
+
+### Work Order Assignments (`src/work-order-assignments/`)
+
+| Method   | Path                                        | Description                           |
+| -------- | ------------------------------------------- | ------------------------------------- |
+| `POST`   | `/work-orders/:workOrderId/assignments`     | Assign a technician (Owner/Manager)   |
+| `GET`    | `/work-orders/:workOrderId/assignments`     | List assignments for a work order     |
+| `DELETE` | `/work-orders/:workOrderId/assignments/:id` | Unassign a technician (Owner/Manager) |
+
+Assignment roles: `LEAD`, `ASSISTANT`.
+
+### Asset Checkpoints (`src/asset-checkpoints/`)
+
+| Method   | Path                                        | Description                         |
+| -------- | ------------------------------------------- | ----------------------------------- |
+| `POST`   | `/work-orders/:workOrderId/checkpoints`     | Create a checkpoint (Owner/Manager) |
+| `GET`    | `/work-orders/:workOrderId/checkpoints`     | List checkpoints for a work order   |
+| `GET`    | `/work-orders/:workOrderId/checkpoints/:id` | Get a single checkpoint             |
+| `PATCH`  | `/work-orders/:workOrderId/checkpoints/:id` | Update a checkpoint (Owner/Manager) |
+| `DELETE` | `/work-orders/:workOrderId/checkpoints/:id` | Delete a checkpoint (Owner/Manager) |
+
+### Activity Logs (`src/activity-logs/`)
+
+| Method | Path             | Description                           |
+| ------ | ---------------- | ------------------------------------- |
+| `GET`  | `/activity-logs` | List activity log entries (read-only) |
+
+### Inventory (`src/inventory/`)
+
+| Method | Path                    | Description                              |
+| ------ | ----------------------- | ---------------------------------------- |
+| `GET`  | `/inventory`            | List inventory items and rolls           |
+| `GET`  | `/inventory/:id/usages` | List usage history for an inventory item |
+
+### Purchase Orders (`src/purchase-orders/`)
+
+| Method   | Path                           | Description                     |
+| -------- | ------------------------------ | ------------------------------- |
+| `POST`   | `/purchase-orders`             | Create a purchase order         |
+| `GET`    | `/purchase-orders`             | List purchase orders            |
+| `GET`    | `/purchase-orders/:id`         | Get a single purchase order     |
+| `PATCH`  | `/purchase-orders/:id`         | Update a purchase order         |
+| `DELETE` | `/purchase-orders/:id`         | Delete a purchase order         |
+| `POST`   | `/purchase-orders/:id/receive` | Receive items (full or partial) |
+| `POST`   | `/purchase-orders/:id/cancel`  | Cancel a purchase order         |
 
 ---
 
