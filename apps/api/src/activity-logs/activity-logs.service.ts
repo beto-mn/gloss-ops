@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common'
 
+import { ACTIVITY_LOG_REPOSITORY } from './activity-logs.tokens'
+import type { ListActivityLogsDto } from './dto'
 import type {
   ActivityLogPage,
   ActivityLogRepositoryInterface,
   CreateActivityLogData,
 } from './interfaces'
-import type { ListActivityLogsDto } from './dto'
-import { ACTIVITY_LOG_REPOSITORY } from './activity-logs.tokens'
 
 @Injectable()
 export class ActivityLogsService {
