@@ -38,7 +38,12 @@ export class WorkOrdersController {
     @CurrentAccount() account: AuthContext,
     @Body() dto: CreateWorkOrderDto
   ) {
-    return this.service.create(account.branchId!, account.organizationId!, dto)
+    return this.service.create(
+      account.branchId!,
+      account.organizationId!,
+      dto,
+      account.sub
+    )
   }
 
   @Get()
@@ -75,7 +80,12 @@ export class WorkOrdersController {
     @Param('id') id: string,
     @Body() dto: TransitionStatusDto
   ) {
-    return this.service.transition(id, account.organizationId!, dto.status)
+    return this.service.transition(
+      id,
+      account.organizationId!,
+      dto.status,
+      account.sub
+    )
   }
 
   @Delete(':id')
@@ -83,6 +93,6 @@ export class WorkOrdersController {
   @Roles(Role.OWNER, Role.MANAGER)
   @ApiOperation({ summary: 'Delete a DRAFT work order' })
   remove(@CurrentAccount() account: AuthContext, @Param('id') id: string) {
-    return this.service.remove(id, account.organizationId!)
+    return this.service.remove(id, account.organizationId!, account.sub)
   }
 }
