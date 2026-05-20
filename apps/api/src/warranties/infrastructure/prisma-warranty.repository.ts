@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common'
 
+import { Prisma } from '@glossops/database'
+
 import { PrismaService } from '@prisma'
 import type {
   WarrantyRepositoryInterface,
@@ -9,15 +11,19 @@ import type {
   WarrantyRecord,
 } from '@warranties/interfaces'
 
+const includeForRecord = {
+  workOrderItem: { include: { workOrder: { select: { branchId: true } } } },
+} as const
+
 @Injectable()
 export class PrismaWarrantyRepository implements WarrantyRepositoryInterface {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly includeForRecord = {
-    workOrderItem: { include: { workOrder: { select: { branchId: true } } } },
-  } as const
+  private readonly includeForRecord = includeForRecord
 
-  private toRecord(row: any): WarrantyRecord {
+  private toRecord(
+    row: Prisma.WarrantyGetPayload<{ include: typeof includeForRecord }>
+  ): WarrantyRecord {
     return {
       id: row.id,
       workOrderItemId: row.workOrderItemId,
