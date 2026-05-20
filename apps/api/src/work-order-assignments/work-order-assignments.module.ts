@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
 
-import { PrismaModule } from '@prisma'
-import { WorkOrdersModule } from '@work-orders'
 import { ActivityLogsModule } from '@activity-logs'
+import { WorkOrdersModule } from '@work-orders'
+import { PrismaModule } from '@prisma'
 
 import { PrismaWorkOrderAssignmentRepository } from './infrastructure/prisma-work-order-assignment.repository'
 import { WORK_ORDER_ASSIGNMENT_REPOSITORY } from './work-order-assignments.tokens'
