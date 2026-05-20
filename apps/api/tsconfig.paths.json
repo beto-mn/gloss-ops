@@ -41,6 +41,11 @@
       "@purchase-orders/dto": ["./src/purchase-orders/dto/index.ts"],
       "@purchase-orders/interfaces": [
         "./src/purchase-orders/interfaces/index.ts"
+      ],
+      "@asset-checkpoints": ["./src/asset-checkpoints/index.ts"],
+      "@asset-checkpoints/dto": ["./src/asset-checkpoints/dto/index.ts"],
+      "@asset-checkpoints/interfaces": [
+        "./src/asset-checkpoints/interfaces/index.ts"
       ]
     }
   }
