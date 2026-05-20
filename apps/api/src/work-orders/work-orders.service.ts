@@ -1,25 +1,31 @@
 import {
   ConflictException,
-  Injectable,
   Inject,
+  Injectable,
   NotFoundException,
 } from '@nestjs/common'
 
-import { WorkOrderStatus, WorkOrderType, type Prisma } from '@glossops/database'
+import {
+  ActivityAction,
+  WorkOrderStatus,
+  WorkOrderType,
+  type Prisma,
+} from '@glossops/database'
 
 import type {
-  WorkOrderRepositoryInterface,
   WorkOrderItemRepositoryInterface,
-  WorkOrderWithItems,
   WorkOrderPage,
+  WorkOrderRepositoryInterface,
+  WorkOrderWithItems,
 } from '@work-orders/interfaces'
 
+import { ActivityLogsService } from '../activity-logs/activity-logs.service'
 import { InventoryService } from '../inventory/inventory.service'
 import type {
   CreateWorkOrderDto,
-  UpdateWorkOrderDto,
-  ListWorkOrdersDto,
   CreateWorkOrderItemDto,
+  ListWorkOrdersDto,
+  UpdateWorkOrderDto,
   UpdateWorkOrderItemDto,
 } from './dto'
 import {
@@ -52,15 +58,17 @@ export class WorkOrdersService {
     private readonly workOrders: WorkOrderRepositoryInterface,
     @Inject(WORK_ORDER_ITEM_REPOSITORY)
     private readonly workOrderItems: WorkOrderItemRepositoryInterface,
-    private readonly inventoryService: InventoryService
+    private readonly inventoryService: InventoryService,
+    private readonly activityLogs: ActivityLogsService
   ) {}
 
-  create(
+  async create(
     branchId: string,
-    _organizationId: string,
-    dto: CreateWorkOrderDto
+    organizationId: string,
+    dto: CreateWorkOrderDto,
+    accountId: string
   ): Promise<Prisma.WorkOrderModel> {
-    return this.workOrders.create({
+    const wo = await this.workOrders.create({
       branchId,
       assetId: dto.assetId,
       type: dto.type ?? WorkOrderType.STANDARD,
@@ -68,6 +76,15 @@ export class WorkOrdersService {
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
       note: dto.note,
     })
+    await this.activityLogs.record({
+      organizationId,
+      branchId,
+      accountId,
+      action: ActivityAction.CREATED,
+      entity: 'WorkOrder',
+      entityId: wo.id,
+    })
+    return wo
   }
 
   findAll(
@@ -111,9 +128,11 @@ export class WorkOrdersService {
   async transition(
     id: string,
     organizationId: string,
-    newStatus: WorkOrderStatus
+    newStatus: WorkOrderStatus,
+    accountId: string
   ): Promise<Prisma.WorkOrderModel> {
     const wo = await this.findOne(id, organizationId)
+    const prevStatus = wo.status
     if (!VALID_TRANSITIONS[wo.status].includes(newStatus)) {
       throw new ConflictException({ error: 'invalid_status_transition' })
     }
@@ -130,15 +149,36 @@ export class WorkOrdersService {
     } else if (newStatus === WorkOrderStatus.CANCELLED) {
       await this.inventoryService.deleteUsagesByWorkOrder(id)
     }
+    await this.activityLogs.record({
+      organizationId,
+      branchId: wo.branchId,
+      accountId,
+      action: ActivityAction.STATUS_CHANGED,
+      entity: 'WorkOrder',
+      entityId: id,
+      metadata: { from: prevStatus, to: newStatus },
+    })
     return updated
   }
 
-  async remove(id: string, organizationId: string): Promise<void> {
+  async remove(
+    id: string,
+    organizationId: string,
+    accountId: string
+  ): Promise<void> {
     const wo = await this.findOne(id, organizationId)
     if (wo.status !== WorkOrderStatus.DRAFT) {
       throw new ConflictException({ error: 'work_order_not_deletable' })
     }
     await this.workOrders.delete(id, organizationId)
+    await this.activityLogs.record({
+      organizationId,
+      branchId: wo.branchId,
+      accountId,
+      action: ActivityAction.DELETED,
+      entity: 'WorkOrder',
+      entityId: id,
+    })
   }
 
   async addItem(

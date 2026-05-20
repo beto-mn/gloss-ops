@@ -50,7 +50,12 @@ describe('WorkOrdersController', () => {
     it('passes branchId and organizationId from account', async () => {
       const dto = { assetId: 'asset-1' } as never
       await controller.create(OWNER, dto)
-      expect(service.create).toHaveBeenCalledWith('branch-1', 'org-1', dto)
+      expect(service.create).toHaveBeenCalledWith(
+        'branch-1',
+        'org-1',
+        dto,
+        'acc-1'
+      )
     })
   })
 
@@ -85,7 +90,8 @@ describe('WorkOrdersController', () => {
       expect(service.transition).toHaveBeenCalledWith(
         'wo-1',
         'org-1',
-        WorkOrderStatus.CONFIRMED
+        WorkOrderStatus.CONFIRMED,
+        'acc-1'
       )
     })
   })
@@ -93,7 +99,7 @@ describe('WorkOrdersController', () => {
   describe('remove', () => {
     it('passes id and organizationId', async () => {
       await controller.remove(OWNER, 'wo-1')
-      expect(service.remove).toHaveBeenCalledWith('wo-1', 'org-1')
+      expect(service.remove).toHaveBeenCalledWith('wo-1', 'org-1', 'acc-1')
     })
   })
 })

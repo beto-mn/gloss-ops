@@ -1,0 +1,5 @@
+export type { ActivityLogRepositoryInterface } from './activity-log.repository.interface'
+export type { CreateActivityLogData } from './activity-log.repository.interface'
+export type { ActivityLogRecord } from './activity-log.repository.interface'
+export type { ActivityLogQuery } from './activity-log.repository.interface'
+export type { ActivityLogPage } from './activity-log.repository.interface'
