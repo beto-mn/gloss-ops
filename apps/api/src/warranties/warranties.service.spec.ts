@@ -1,9 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing'
-import {
-  ConflictException,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common'
+import { NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { ActivityAction } from '@glossops/database'
 
 import { InMemoryWarrantyRepository } from './infrastructure/in-memory-warranty.repository'
