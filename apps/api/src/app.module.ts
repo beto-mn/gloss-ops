@@ -16,6 +16,7 @@ import { SuppliersModule } from './suppliers/suppliers.module'
 import { ServicesModule } from './services/services.module'
 import { AssetCheckpointsModule } from './asset-checkpoints/asset-checkpoints.module'
 import { WorkOrdersModule } from './work-orders/work-orders.module'
+import { WarrantiesModule } from './warranties/warranties.module'
 import { BrandsModule } from './brands/brands.module'
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module'
 import { InventoryModule } from './inventory/inventory.module'
@@ -40,6 +41,7 @@ import { AppService } from './app.service'
     WorkOrderAssignmentsModule,
     InventoryModule,
     PurchaseOrdersModule,
+    WarrantiesModule,
   ],
   controllers: [AppController],
   providers: [

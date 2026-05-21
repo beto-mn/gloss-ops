@@ -8,6 +8,7 @@ import {
 } from '@glossops/database'
 
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
+import { WarrantyService } from '../warranties/warranties.service'
 import { InventoryService } from '../inventory/inventory.service'
 
 import { InMemoryWorkOrderItemRepository } from './infrastructure/in-memory-work-order-item.repository'
@@ -34,6 +35,10 @@ describe('WorkOrdersService', () => {
     deleteUsagesByWorkOrder: jest.Mock
   }
   let activityLogs: { record: jest.Mock }
+  let warrantyService: {
+    validateClaim: jest.Mock
+    generateForWorkOrder: jest.Mock
+  }
 
   beforeEach(async () => {
     woRepo = new InMemoryWorkOrderRepository()
@@ -51,12 +56,18 @@ describe('WorkOrdersService', () => {
       record: jest.fn().mockResolvedValue(undefined),
     }
 
+    warrantyService = {
+      validateClaim: jest.fn().mockResolvedValue(undefined),
+      generateForWorkOrder: jest.fn().mockResolvedValue(undefined),
+    }
+
     const module = await Test.createTestingModule({
       providers: [
         WorkOrdersService,
         { provide: WORK_ORDER_REPOSITORY, useValue: woRepo },
         { provide: WORK_ORDER_ITEM_REPOSITORY, useValue: itemRepo },
         { provide: InventoryService, useValue: inventoryService },
+        { provide: WarrantyService, useValue: warrantyService },
         { provide: ActivityLogsService, useValue: activityLogs },
       ],
     }).compile()
@@ -86,6 +97,30 @@ describe('WorkOrdersService', () => {
       )
       expect(wo.type).toBe(WorkOrderType.WARRANTY_CLAIM)
       expect(wo.scheduledAt).not.toBeNull()
+    })
+
+    it('calls validateClaim when type is WARRANTY_CLAIM and warrantyClaimId is set', async () => {
+      const WARRANTY = 'warranty-1'
+      await service.create(
+        BRANCH,
+        ORG,
+        {
+          assetId: ASSET,
+          type: WorkOrderType.WARRANTY_CLAIM,
+          warrantyClaimId: WARRANTY,
+        },
+        ACCOUNT
+      )
+      expect(warrantyService.validateClaim).toHaveBeenCalledWith(
+        WARRANTY,
+        ASSET,
+        ORG
+      )
+    })
+
+    it('does not call validateClaim for STANDARD work orders', async () => {
+      await service.create(BRANCH, ORG, { assetId: ASSET }, ACCOUNT)
+      expect(warrantyService.validateClaim).not.toHaveBeenCalled()
     })
   })
 
@@ -246,6 +281,24 @@ describe('WorkOrdersService', () => {
       await expect(
         service.transition('unknown', ORG, WorkOrderStatus.CONFIRMED, ACCOUNT)
       ).rejects.toThrow(NotFoundException)
+    })
+
+    it('calls generateForWorkOrder when transitioning to COMPLETED', async () => {
+      const wo = await service.create(BRANCH, ORG, { assetId: ASSET }, ACCOUNT)
+      await woRepo.updateStatus(wo.id, ORG, WorkOrderStatus.CONFIRMED)
+      await woRepo.updateStatus(wo.id, ORG, WorkOrderStatus.IN_PROGRESS)
+      await service.transition(wo.id, ORG, WorkOrderStatus.COMPLETED, ACCOUNT)
+      expect(warrantyService.generateForWorkOrder).toHaveBeenCalledWith(
+        wo.id,
+        ORG,
+        expect.any(Date)
+      )
+    })
+
+    it('does not call generateForWorkOrder when transitioning to CANCELLED', async () => {
+      const wo = await service.create(BRANCH, ORG, { assetId: ASSET }, ACCOUNT)
+      await service.transition(wo.id, ORG, WorkOrderStatus.CANCELLED, ACCOUNT)
+      expect(warrantyService.generateForWorkOrder).not.toHaveBeenCalled()
     })
   })
 

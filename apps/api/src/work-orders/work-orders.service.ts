@@ -20,6 +20,7 @@ import type {
 } from '@work-orders/interfaces'
 
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
+import { WarrantyService } from '../warranties/warranties.service'
 import { InventoryService } from '../inventory/inventory.service'
 import type {
   CreateWorkOrderDto,
@@ -59,6 +60,7 @@ export class WorkOrdersService {
     @Inject(WORK_ORDER_ITEM_REPOSITORY)
     private readonly workOrderItems: WorkOrderItemRepositoryInterface,
     private readonly inventoryService: InventoryService,
+    private readonly warrantyService: WarrantyService,
     private readonly activityLogs: ActivityLogsService
   ) {}
 
@@ -68,6 +70,13 @@ export class WorkOrdersService {
     dto: CreateWorkOrderDto,
     accountId: string
   ): Promise<Prisma.WorkOrderModel> {
+    if (dto.type === WorkOrderType.WARRANTY_CLAIM && dto.warrantyClaimId) {
+      await this.warrantyService.validateClaim(
+        dto.warrantyClaimId,
+        dto.assetId,
+        organizationId
+      )
+    }
     const wo = await this.workOrders.create({
       branchId,
       assetId: dto.assetId,
@@ -146,6 +155,11 @@ export class WorkOrdersService {
     )
     if (newStatus === WorkOrderStatus.COMPLETED) {
       await this.inventoryService.commitUsages(id)
+      await this.warrantyService.generateForWorkOrder(
+        id,
+        organizationId,
+        completedAt!
+      )
     } else if (newStatus === WorkOrderStatus.CANCELLED) {
       await this.inventoryService.deleteUsagesByWorkOrder(id)
     }

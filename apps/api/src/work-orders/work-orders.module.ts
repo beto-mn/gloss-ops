@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common'
 import { PrismaModule } from '@prisma'
 
 import { ActivityLogsModule } from '../activity-logs/activity-logs.module'
+import { WarrantiesModule } from '../warranties/warranties.module'
 import { InventoryModule } from '../inventory/inventory.module'
 import { PrismaWorkOrderItemRepository } from './infrastructure/prisma-work-order-item.repository'
 import { PrismaWorkOrderRepository } from './infrastructure/prisma-work-order.repository'
@@ -16,7 +17,12 @@ import {
 import { WorkOrdersService } from './work-orders.service'
 
 @Module({
-  imports: [PrismaModule, InventoryModule, ActivityLogsModule],
+  imports: [
+    PrismaModule,
+    InventoryModule,
+    ActivityLogsModule,
+    WarrantiesModule,
+  ],
   controllers: [
     WorkOrdersController,
     WorkOrderItemsController,
