@@ -1,0 +1,15 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  GlossOps is a multi-tenant SaaS platform for automotive wrap, detailing, and restyling shops.
+
+  Tech stack: NestJS, TypeScript, PostgreSQL, Prisma ORM, Redis, Next.js
+  Auth: JWT access tokens + Redis-backed refresh token rotation
+  RBAC: four roles — OWNER, MANAGER, TECHNICIAN, FRONT_DESK (stored in OrganizationMember.role)
+  Multi-tenancy: every query scoped by organizationId (or derived via branchId → branch.organizationId)
+  Pattern: repository pattern with interfaces/, infrastructure/ (Prisma + InMemory), tokens, module
+  Imports: 6 tiers (external npm → company libs → @glossops/* → path aliases → relative → side-effects)
+  Barrel exports: sorted longest → shortest line
+  Tests: in-memory repositories only — no Prisma or Redis mocks
