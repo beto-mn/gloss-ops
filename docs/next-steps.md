@@ -1,6 +1,6 @@
 # GlossOps — Next Steps
 
-> Last updated: May 2026
+> Last updated: 2026-05-21
 
 ## Current State
 
@@ -17,15 +17,17 @@
 | `apps/api` — Services           | ✅ Complete | CRUD with activate/deactivate                                           |
 | `apps/api` — Suppliers          | ✅ Complete | CRUD                                                                    |
 | `apps/api` — Brands             | ✅ Complete | CRUD with seeded-brand protection                                       |
-| `apps/api` — Work Orders        | ✅ Complete | CRUD, status transitions                                                |
+| `apps/api` — Work Orders        | ✅ Complete | CRUD, status transitions, warranty generation on COMPLETED              |
 | `apps/api` — Work Order Assign. | ✅ Complete | Assign/unassign technicians with `LEAD`/`ASSISTANT` role                |
 | `apps/api` — Asset Checkpoints  | ✅ Complete | Reception/delivery checkpoints per work order                           |
 | `apps/api` — Activity Logs      | ✅ Complete | Append-only audit trail, read-only list endpoint                        |
 | `apps/api` — Inventory          | ✅ Complete | List inventory, usage history per item                                  |
 | `apps/api` — Purchase Orders    | ✅ Complete | CRUD, receive/cancel flow                                               |
+| `apps/api` — Warranties         | ✅ Complete | Auto-generated on WO completion, validate/void, find by asset/WO        |
+| `apps/api` — Invoices           | ✅ Complete | CRUD, per-branch folio `INV-YYYY-NNNN`, DRAFT→ISSUED→PAID transitions   |
 | `apps/api` — Swagger UI         | ✅ Complete | OpenAPI decorators, neon dark theme at `/docs`                          |
 | `apps/api` — TS path aliases    | ✅ Complete | `tsconfig.paths.json`, barrel exports, Jest mapper                      |
-| `apps/api` — Tests              | ✅ Complete | 543 tests across 47 suites — repos use in-memory, no Prisma/Redis mocks |
+| `apps/api` — Tests              | ✅ Complete | 596 tests across 54 suites — repos use in-memory, no Prisma/Redis mocks |
 | `packages/shared`               | ⏳ Pending  | No source yet                                                           |
 | `apps/web`                      | ⏳ Pending  | Next.js default page only                                               |
 | Infrastructure                  | ⏳ Pending  | Dockerfiles, GitHub Actions CI                                          |
@@ -234,6 +236,40 @@ Assignment roles: `LEAD`, `ASSISTANT`.
 | `DELETE` | `/purchase-orders/:id`         | Delete a purchase order         |
 | `POST`   | `/purchase-orders/:id/receive` | Receive items (full or partial) |
 | `POST`   | `/purchase-orders/:id/cancel`  | Cancel a purchase order         |
+
+---
+
+## ✅ Step 4e — API: Warranties + Invoices — DONE
+
+### Warranties (`src/warranties/`)
+
+Auto-generated when a work order transitions to `COMPLETED`. Each `WorkOrderItem` linked to a `Service` with `warrantyDays > 0` produces a `Warranty` record scoped to the branch.
+
+| Method  | Path                                   | Description                      |
+| ------- | -------------------------------------- | -------------------------------- |
+| `GET`   | `/work-orders/:workOrderId/warranties` | List warranties for a work order |
+| `GET`   | `/customer-assets/:assetId/warranties` | List warranties for an asset     |
+| `GET`   | `/warranties/:id`                      | Get a single warranty            |
+| `PATCH` | `/warranties/:id/void`                 | Void a warranty (Owner/Manager)  |
+
+Also exposes `WarrantyService.validateClaim()` — used internally by `WorkOrdersService` when creating a `WARRANTY_CLAIM` type work order.
+
+### Invoices (`src/invoices/`)
+
+Per-branch folio generation via `InvoiceCounter` table. Folio format: `INV-{YYYY}-{NNNN}`, monotonic counter per branch. CFDI fields stored but timbrado is a future PAC integration.
+
+| Method  | Path                                | Description                                 |
+| ------- | ----------------------------------- | ------------------------------------------- |
+| `POST`  | `/invoices`                         | Create invoice for a completed WO           |
+| `GET`   | `/invoices`                         | List invoices (paginated, filter by status) |
+| `GET`   | `/invoices/:id`                     | Get invoice detail                          |
+| `PATCH` | `/invoices/:id`                     | Update fiscal data (DRAFT only)             |
+| `PATCH` | `/invoices/:id/status`              | Transition status                           |
+| `GET`   | `/work-orders/:workOrderId/invoice` | Get the invoice for a work order            |
+
+Status machine: `DRAFT → ISSUED → PAID`, any → `CANCELLED`. `DRAFT → ISSUED` requires the work order to be `COMPLETED`.
+
+Pending for a future iteration: CFDI timbrado (PAC integration), PDF generation, email delivery, `OrganizationFiscalProfile` endpoints.
 
 ---
 
