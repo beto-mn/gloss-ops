@@ -204,6 +204,7 @@ model Branch {
   members        OrganizationMember[]
   workOrders     WorkOrder[]
   invoices       Invoice[]
+  invoiceCounter InvoiceCounter?
   inventory      Inventory[]
   purchaseOrders PurchaseOrder[]
   activityLogs   ActivityLog[]
@@ -432,6 +433,15 @@ model Invoice {
   workOrder WorkOrder @relation(fields: [workOrderId], references: [id])
 
   @@map("invoice")
+}
+
+model InvoiceCounter {
+  branchId String @id @map("branch_id") @db.Uuid
+  lastSeq  Int    @default(0) @map("last_seq")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("invoice_counter")
 }
 
 model Warranty {
