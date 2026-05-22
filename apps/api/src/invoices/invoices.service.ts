@@ -16,9 +16,9 @@ import type {
   InvoicePage,
 } from '@invoices/interfaces'
 
+import type { CreateInvoiceDto, ListInvoicesDto, UpdateInvoiceDto } from './dto'
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
 import { WorkOrdersService } from '../work-orders/work-orders.service'
-import type { CreateInvoiceDto, ListInvoicesDto, UpdateInvoiceDto } from './dto'
 import { INVOICE_REPOSITORY } from './invoices.tokens'
 
 const TAX_RATE = 0.16

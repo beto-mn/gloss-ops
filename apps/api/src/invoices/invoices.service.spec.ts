@@ -19,14 +19,14 @@ const ACCOUNT_ID = 'acc-1'
 const WO_ID = 'wo-1'
 const ASSET_ID = 'asset-1'
 
-const makeWoEmbed = (status = WorkOrderStatus.COMPLETED) => ({
+const makeWoEmbed = (status: WorkOrderStatus = WorkOrderStatus.COMPLETED) => ({
   id: WO_ID,
   status,
   totalAmount: 1000,
   asset: { id: ASSET_ID, assetType: 'VEHICLE', model: 'Civic', year: 2020 },
 })
 
-const makeWoRecord = (status = WorkOrderStatus.COMPLETED) => ({
+const makeWoRecord = (status: WorkOrderStatus = WorkOrderStatus.COMPLETED) => ({
   id: WO_ID,
   branchId: BRANCH_ID,
   status,
@@ -36,7 +36,7 @@ const makeWoRecord = (status = WorkOrderStatus.COMPLETED) => ({
 
 const seedInvoice = (
   repo: InMemoryInvoiceRepository,
-  status = InvoiceStatus.DRAFT
+  status: InvoiceStatus = InvoiceStatus.DRAFT
 ): InvoiceRecord => {
   const id = 'inv-1'
   const record: InvoiceRecord = {
