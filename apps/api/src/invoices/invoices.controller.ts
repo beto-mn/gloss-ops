@@ -1,3 +1,4 @@
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   Body,
   Controller,
@@ -8,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common'
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+
 import { Role } from '@glossops/database'
 
 import { CurrentAccount, Roles } from '@auth/decorators'
