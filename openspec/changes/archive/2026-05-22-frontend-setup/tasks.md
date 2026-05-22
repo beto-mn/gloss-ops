@@ -41,8 +41,8 @@
 
 ## 7. Verificación
 
-- [ ] 7.1 Ejecutar `pnpm dev` en `apps/web` — confirmar que levanta en puerto 3001 sin errores
+- [x] 7.1 Ejecutar `pnpm dev` en `apps/web` — confirmar que levanta en puerto 3001 sin errores
 - [x] 7.2 Ejecutar `pnpm build` en `apps/web` — confirmar que el build TypeScript pasa limpio
-- [ ] 7.3 Ejecutar `pnpm storybook` en `apps/web` — confirmar que Storybook abre sin errores y los estilos Tailwind se aplican
-- [ ] 7.4 Inspeccionar en el navegador que los tokens CSS Gulf Racing (`--primary`, `--background`, etc.) estén presentes en el `:root` y en `.dark`
-- [ ] 7.5 Verificar toggle de tema: activar dark mode y confirmar que la paleta dark mode se aplica correctamente
+- [x] 7.3 Ejecutar `pnpm storybook` en `apps/web` — confirmar que Storybook abre sin errores y los estilos Tailwind se aplican
+- [x] 7.4 Inspeccionar en el navegador que los tokens CSS Gulf Racing (`--primary`, `--background`, etc.) estén presentes en el `:root` y en `.dark`
+- [x] 7.5 Verificar toggle de tema: activar dark mode y confirmar que la paleta dark mode se aplica correctamente
