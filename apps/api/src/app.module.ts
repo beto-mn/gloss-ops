@@ -7,19 +7,20 @@ import { PrismaModule } from '@prisma'
 import { AuthModule } from '@auth'
 
 import { WorkOrderAssignmentsModule } from './work-order-assignments/work-order-assignments.module'
+import { AssetCheckpointsModule } from './asset-checkpoints/asset-checkpoints.module'
 import { CustomerAssetsModule } from './customer-assets/customer-assets.module'
+import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { ActivityLogsModule } from './activity-logs/activity-logs.module'
-import { CustomersModule } from './customers/customers.module'
-import { BranchesModule } from './branches/branches.module'
-import { SuppliersModule } from './suppliers/suppliers.module'
-import { ServicesModule } from './services/services.module'
-import { AssetCheckpointsModule } from './asset-checkpoints/asset-checkpoints.module'
 import { WorkOrdersModule } from './work-orders/work-orders.module'
 import { WarrantiesModule } from './warranties/warranties.module'
-import { BrandsModule } from './brands/brands.module'
-import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module'
+import { CustomersModule } from './customers/customers.module'
+import { SuppliersModule } from './suppliers/suppliers.module'
 import { InventoryModule } from './inventory/inventory.module'
+import { BranchesModule } from './branches/branches.module'
+import { ServicesModule } from './services/services.module'
+import { InvoicesModule } from './invoices/invoices.module'
+import { BrandsModule } from './brands/brands.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 
@@ -42,6 +43,7 @@ import { AppService } from './app.service'
     InventoryModule,
     PurchaseOrdersModule,
     WarrantiesModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [
