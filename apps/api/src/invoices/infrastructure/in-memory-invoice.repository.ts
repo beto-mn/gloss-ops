@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 
 import { Injectable } from '@nestjs/common'
+
 import { InvoiceStatus } from '@glossops/database'
 
 import type {
