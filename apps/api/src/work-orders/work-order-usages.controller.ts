@@ -29,7 +29,7 @@ export class WorkOrderUsagesController {
     @Param('usageId') usageId: string,
     @Body() dto: UpdateInventoryUsageDto
   ) {
-    await this.workOrdersService.findOne(workOrderId, account.organizationId)
+    await this.workOrdersService.findOne(workOrderId, account.organizationId!)
     return this.inventoryService.updateUsage(
       workOrderId,
       usageId,

@@ -15,6 +15,6 @@ export class ActivityLogsController {
     @CurrentAccount() account: AuthContext,
     @Query() dto: ListActivityLogsDto
   ) {
-    return this.service.findAll(account.organizationId, dto)
+    return this.service.findAll(account.organizationId!, dto)
   }
 }

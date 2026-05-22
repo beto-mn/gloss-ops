@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 
+import type { Prisma } from '@glossops/database'
 import { PrismaService } from '@prisma'
 import type {
   ActivityLogPage,
@@ -40,7 +41,9 @@ export class PrismaActivityLogRepository implements ActivityLogRepositoryInterfa
         action: data.action,
         entity: data.entity,
         entityId: data.entityId,
-        metadata: data.metadata ?? undefined,
+        metadata: (data.metadata ?? undefined) as
+          | Prisma.InputJsonValue
+          | undefined,
       },
     })
     return this.toRecord(row)

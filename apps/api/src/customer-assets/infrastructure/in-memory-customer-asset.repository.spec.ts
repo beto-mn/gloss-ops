@@ -66,7 +66,7 @@ describe('InMemoryCustomerAssetRepository', () => {
   })
 
   describe('findAllByCustomer', () => {
-    const query = { status: ResourceStatus.ACTIVE as const, page: 1, limit: 20 }
+    const query = { status: ResourceStatus.ACTIVE, page: 1, limit: 20 }
 
     it('returns assets for the customer', async () => {
       await repo.create(CUSTOMER_ID, makeData())

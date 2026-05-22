@@ -27,11 +27,11 @@ import {
 } from './purchase-orders.tokens'
 import { InventoryService } from '../inventory/inventory.service'
 
-const RECEIVABLE_STATUSES = [
+const RECEIVABLE_STATUSES: PurchaseOrderStatus[] = [
   PurchaseOrderStatus.DRAFT,
   PurchaseOrderStatus.PARTIALLY_RECEIVED,
 ]
-const CANCELLABLE_STATUSES = [
+const CANCELLABLE_STATUSES: PurchaseOrderStatus[] = [
   PurchaseOrderStatus.DRAFT,
   PurchaseOrderStatus.PARTIALLY_RECEIVED,
 ]
