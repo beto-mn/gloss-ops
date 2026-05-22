@@ -1,26 +1,88 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
+@custom-variant dark (&:is(.dark *));
+
+/* Gulf Racing — Light mode */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F5F8FA;
+  --foreground: #1A2730;
+  --card: #FFFFFF;
+  --card-foreground: #1A2730;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A2730;
+  --primary: #F06432;
+  --primary-foreground: #FFFFFF;
+  --secondary: #6FA8C8;
+  --secondary-foreground: #1A2730;
+  --muted: #E2EDF4;
+  --muted-foreground: #45586C;
+  --accent: #B0CEE2;
+  --accent-foreground: #1A2730;
+  --destructive: #B8471A;
+  --destructive-foreground: #FFFFFF;
+  --border: #C8DAE8;
+  --input: #C8DAE8;
+  --ring: #F06432;
+  --radius: 0.5rem;
+}
+
+/* Gulf Racing — Dark mode */
+.dark {
+  --background: #0F1C23;
+  --foreground: #B0CEE2;
+  --card: #1A2730;
+  --card-foreground: #B0CEE2;
+  --popover: #1A2730;
+  --popover-foreground: #B0CEE2;
+  --primary: #F06432;
+  --primary-foreground: #FFFFFF;
+  --secondary: #424048;
+  --secondary-foreground: #B0CEE2;
+  --muted: #424048;
+  --muted-foreground: #6FA8C8;
+  --accent: #B0CEE2;
+  --accent-foreground: #1A2730;
+  --destructive: #B8471A;
+  --destructive-foreground: #FFFFFF;
+  --border: #424048;
+  --input: #424048;
+  --ring: #6FA8C8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
 }
