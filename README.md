@@ -31,31 +31,33 @@ The platform is designed for vinyl wrap shops, detailing studios, PPF installers
 
 ## 🏗️ Build Status
 
-> Last updated: May 2026
+> Last updated: 2026-05-21
 
-| Component                | Status     | Details                                                  |
-| ------------------------ | ---------- | -------------------------------------------------------- |
-| Database schema          | ✅ Done    | Full Prisma schema, migrations, seed                     |
-| API — Config             | ✅ Done    | Zod-validated env vars                                   |
-| API — Auth module        | ✅ Done    | JWT + Redis refresh tokens, RBAC                         |
-| API — Organizations      | ✅ Done    | CRUD, invitations with `branchId`, soft/hard delete      |
-| API — Customers          | ✅ Done    | CRUD, soft/hard delete, status filters                   |
-| API — Branches           | ✅ Done    | CRUD, peer branches, no `isMain`                         |
-| API — Customer Assets    | ✅ Done    | CRUD nested under customer + flat read/update/delete     |
-| API — Services           | ✅ Done    | CRUD with activate/deactivate                            |
-| API — Suppliers          | ✅ Done    | CRUD                                                     |
-| API — Brands             | ✅ Done    | CRUD with seeded-brand protection                        |
-| API — Work Orders        | ✅ Done    | CRUD, status transitions                                 |
-| API — Work Order Assign. | ✅ Done    | Assign/unassign technicians with `LEAD`/`ASSISTANT` role |
-| API — Asset Checkpoints  | ✅ Done    | Reception/delivery checkpoints per work order            |
-| API — Activity Logs      | ✅ Done    | Append-only audit trail, read-only list endpoint         |
-| API — Inventory          | ✅ Done    | List inventory, usage history per item                   |
-| API — Purchase Orders    | ✅ Done    | CRUD, receive/cancel flow                                |
-| API — Swagger UI         | ✅ Done    | Neon dark theme, OpenAPI decorators on all endpoints     |
-| API — Tests              | ✅ Done    | 543 passing — 47 suites, all repositories use in-memory  |
-| Web — Auth + layout      | ⏳ Pending | —                                                        |
-| Web — Core pages         | ⏳ Pending | —                                                        |
-| Infrastructure           | ⏳ Pending | Dockerfiles, CI                                          |
+| Component                | Status     | Details                                                               |
+| ------------------------ | ---------- | --------------------------------------------------------------------- |
+| Database schema          | ✅ Done    | Full Prisma schema, migrations, seed                                  |
+| API — Config             | ✅ Done    | Zod-validated env vars                                                |
+| API — Auth module        | ✅ Done    | JWT + Redis refresh tokens, RBAC                                      |
+| API — Organizations      | ✅ Done    | CRUD, invitations with `branchId`, soft/hard delete                   |
+| API — Customers          | ✅ Done    | CRUD, soft/hard delete, status filters                                |
+| API — Branches           | ✅ Done    | CRUD, peer branches, no `isMain`                                      |
+| API — Customer Assets    | ✅ Done    | CRUD nested under customer + flat read/update/delete                  |
+| API — Services           | ✅ Done    | CRUD with activate/deactivate                                         |
+| API — Suppliers          | ✅ Done    | CRUD                                                                  |
+| API — Brands             | ✅ Done    | CRUD with seeded-brand protection                                     |
+| API — Work Orders        | ✅ Done    | CRUD, status transitions, warranty generation on COMPLETED            |
+| API — Work Order Assign. | ✅ Done    | Assign/unassign technicians with `LEAD`/`ASSISTANT` role              |
+| API — Asset Checkpoints  | ✅ Done    | Reception/delivery checkpoints per work order                         |
+| API — Activity Logs      | ✅ Done    | Append-only audit trail, read-only list endpoint                      |
+| API — Inventory          | ✅ Done    | List inventory, usage history per item                                |
+| API — Purchase Orders    | ✅ Done    | CRUD, receive/cancel flow                                             |
+| API — Warranties         | ✅ Done    | Auto-generated on WO completion, validate/void, find by asset/WO      |
+| API — Invoices           | ✅ Done    | CRUD, per-branch folio `INV-YYYY-NNNN`, DRAFT→ISSUED→PAID transitions |
+| API — Swagger UI         | ✅ Done    | Neon dark theme, OpenAPI decorators on all endpoints                  |
+| API — Tests              | ✅ Done    | 596 passing — 54 suites, all repositories use in-memory               |
+| Web — Auth + layout      | ⏳ Pending | —                                                                     |
+| Web — Core pages         | ⏳ Pending | —                                                                     |
+| Infrastructure           | ⏳ Pending | Dockerfiles, CI                                                       |
 
 Full roadmap: [`docs/next-steps.md`](docs/next-steps.md)
 
@@ -334,6 +336,8 @@ glossops/
 │           ├── activity-logs/         # Append-only audit trail
 │           ├── inventory/             # Inventory list + usage history
 │           ├── purchase-orders/       # Purchase order CRUD + receive/cancel
+│           ├── warranties/            # Auto-generated warranties, validate/void
+│           ├── invoices/              # Invoice CRUD + folio generation + transitions
 │           ├── config/                # Zod env validation
 │           └── prisma/                # PrismaService
 ├── packages/

@@ -38,26 +38,28 @@ pnpm test          # all unit tests
 pnpm test:cov      # with coverage report
 ```
 
-**543 tests, 47 suites.** All repositories use in-memory implementations — no Prisma or Redis mocks.
+**596 tests, 54 suites.** All repositories use in-memory implementations — no Prisma or Redis mocks.
 
 ## Modules
 
-| Module                   | Controller prefix                           | Description                                 |
-| ------------------------ | ------------------------------------------- | ------------------------------------------- |
-| `auth`                   | `/auth`                                     | Register, login, refresh, logout            |
-| `organizations`          | `/organizations`                            | Org CRUD, members, invitations              |
-| `branches`               | `/branches`                                 | Branch CRUD (peer branches, no hierarchy)   |
-| `customers`              | `/customers`                                | Customer CRUD with soft/hard delete         |
-| `customer-assets`        | `/customers/:id/assets`, `/customer-assets` | Asset CRUD nested under customer            |
-| `services`               | `/services`                                 | Service catalog with activate/deactivate    |
-| `suppliers`              | `/suppliers`                                | Supplier CRUD                               |
-| `brands`                 | `/brands`                                   | Brand catalog (seeded brands protected)     |
-| `work-orders`            | `/work-orders`                              | Work order CRUD + status transitions        |
-| `work-order-assignments` | `/work-orders/:id/assignments`              | Technician assignments (`LEAD`/`ASSISTANT`) |
-| `asset-checkpoints`      | `/work-orders/:id/checkpoints`              | Reception/delivery checkpoints              |
-| `activity-logs`          | `/activity-logs`                            | Append-only audit trail (read-only)         |
-| `inventory`              | `/inventory`                                | Inventory list + usage history per item     |
-| `purchase-orders`        | `/purchase-orders`                          | Purchase order CRUD + receive/cancel        |
+| Module                   | Controller prefix                                                               | Description                                               |
+| ------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `auth`                   | `/auth`                                                                         | Register, login, refresh, logout                          |
+| `organizations`          | `/organizations`                                                                | Org CRUD, members, invitations                            |
+| `branches`               | `/branches`                                                                     | Branch CRUD (peer branches, no hierarchy)                 |
+| `customers`              | `/customers`                                                                    | Customer CRUD with soft/hard delete                       |
+| `customer-assets`        | `/customers/:id/assets`, `/customer-assets`                                     | Asset CRUD nested under customer                          |
+| `services`               | `/services`                                                                     | Service catalog with activate/deactivate                  |
+| `suppliers`              | `/suppliers`                                                                    | Supplier CRUD                                             |
+| `brands`                 | `/brands`                                                                       | Brand catalog (seeded brands protected)                   |
+| `work-orders`            | `/work-orders`                                                                  | Work order CRUD + status transitions                      |
+| `work-order-assignments` | `/work-orders/:id/assignments`                                                  | Technician assignments (`LEAD`/`ASSISTANT`)               |
+| `asset-checkpoints`      | `/work-orders/:id/checkpoints`                                                  | Reception/delivery checkpoints                            |
+| `activity-logs`          | `/activity-logs`                                                                | Append-only audit trail (read-only)                       |
+| `inventory`              | `/inventory`                                                                    | Inventory list + usage history per item                   |
+| `purchase-orders`        | `/purchase-orders`                                                              | Purchase order CRUD + receive/cancel                      |
+| `warranties`             | `/work-orders/:id/warranties`, `/customer-assets/:id/warranties`, `/warranties` | Auto-generated on WO completion, validate/void            |
+| `invoices`               | `/invoices`, `/work-orders/:id/invoice`                                         | Invoice CRUD + folio `INV-YYYY-NNNN` + status transitions |
 
 ## Architecture Patterns
 
