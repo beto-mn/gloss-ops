@@ -1,4 +1,4 @@
-import type { PurchaseOrderStatus, type Prisma } from '@glossops/database'
+import type { PurchaseOrderStatus, Prisma } from '@glossops/database'
 
 export interface PurchaseOrderItemRecord {
   id: string
