@@ -6,10 +6,15 @@ COMMIT_SOURCE="$2"
 # Only act on merge commits
 [ "$COMMIT_SOURCE" = "merge" ] || exit 0
 
-TARGET=$(git branch --show-current)
-SOURCE=$(git rev-parse --abbrev-ref MERGE_HEAD 2>/dev/null)
+# Don't overwrite if the message already follows the format
+grep -qE '^🔀 merge\(' "$COMMIT_MSG_FILE" && exit 0
 
-# Fall back to branch name from the auto-generated message if MERGE_HEAD is ambiguous
+TARGET=$(git branch --show-current)
+
+# Resolve branch name from the merge ref decorations (works for local branches)
+SOURCE=$(git log -1 --format='%D' MERGE_HEAD 2>/dev/null | tr ',' '\n' | grep -v 'HEAD' | grep -v 'origin/' | sed 's/^ *//' | head -1)
+
+# Fall back to branch name from the auto-generated message
 if [ -z "$SOURCE" ]; then
   SOURCE=$(grep -oE "'[^']+'" "$COMMIT_MSG_FILE" | head -1 | tr -d "'")
 fi
