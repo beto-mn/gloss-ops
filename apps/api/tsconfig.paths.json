@@ -59,7 +59,10 @@
       ],
       "@warranties": ["./src/warranties/index.ts"],
       "@warranties/dto": ["./src/warranties/dto/index.ts"],
-      "@warranties/interfaces": ["./src/warranties/interfaces/index.ts"]
+      "@warranties/interfaces": ["./src/warranties/interfaces/index.ts"],
+      "@invoices": ["./src/invoices/index.ts"],
+      "@invoices/dto": ["./src/invoices/dto/index.ts"],
+      "@invoices/interfaces": ["./src/invoices/interfaces/index.ts"]
     }
   }
 }
