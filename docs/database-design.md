@@ -245,7 +245,7 @@ Reading full inventory (`inventory` + `inventory_item` or `material_roll`) alway
 
 ### 7.4 `invoice` folio sequence
 
-`invoice.folio` is sequential per organization (e.g. `A-0001`). Generating the next folio requires a `SELECT MAX(folio)` + increment under a lock. At high concurrency this becomes a bottleneck. Mitigation: use a PostgreSQL sequence per organization created at org setup time.
+`invoice.folio` is sequential per **branch**, format `INV-{YYYY}-{NNNN}` (e.g. `INV-2026-0001`). The sequence is tracked by the `invoice_counter` table (`branchId PK`, `lastSeq INT`). Each invoice creation upserts the counter row with `lastSeq = lastSeq + 1` inside a `$transaction`, which acquires a row-level lock and prevents duplicate folios under concurrent requests. The counter is monotonic — it never resets annually.
 
 ### 7.5 CFDI XML storage
 

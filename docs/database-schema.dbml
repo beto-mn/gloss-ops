@@ -425,7 +425,7 @@ Table invoice {
   branch_id     String              [not null, ref: > branch.id]
   work_order_id String              [not null, ref: > work_order.id]
   status        invoice_status      [not null, default: 'DRAFT']
-  folio         String              [not null, note: 'Sequential number per org — e.g. A-0001']
+  folio         String              [not null, note: 'Sequential per branch — format INV-YYYY-NNNN, e.g. INV-2026-0001. Managed by invoice_counter table.']
 
   // Amounts
   subtotal   Decimal [not null, default: 0]
