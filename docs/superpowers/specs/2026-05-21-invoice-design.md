@@ -57,7 +57,7 @@ The `Branch` model gains a `invoiceCounter InvoiceCounter?` relation.
 
 ### Folio generation
 
-Format: `INV-{YYYY}-{NNNN}` where `YYYY` is the current year and `NNNN` is zero-padded to 4 digits, scoped per branch.
+Format: `INV-{YYYY}-{NNNN}` where `YYYY` is the calendar year at creation time (not the work order year) and `NNNN` is zero-padded to 4 digits, scoped per branch. The sequence counter is not reset annually — it grows monotonically per branch.
 
 The Prisma repository increments the counter and inserts the invoice inside a single `$transaction`. The `UPDATE … SET last_seq = last_seq + 1` acquires a row-level lock, preventing duplicate folios under concurrent requests. If no counter row exists for the branch yet, one is upserted with `lastSeq = 1`.
 
