@@ -1,0 +1,17 @@
+#!/bin/sh
+
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+
+# Only act on merge commits
+[ "$COMMIT_SOURCE" = "merge" ] || exit 0
+
+TARGET=$(git branch --show-current)
+SOURCE=$(git rev-parse --abbrev-ref MERGE_HEAD 2>/dev/null)
+
+# Fall back to branch name from the auto-generated message if MERGE_HEAD is ambiguous
+if [ -z "$SOURCE" ]; then
+  SOURCE=$(grep -oE "'[^']+'" "$COMMIT_MSG_FILE" | head -1 | tr -d "'")
+fi
+
+printf '🔀 merge(%s): into %s\n' "$SOURCE" "$TARGET" > "$COMMIT_MSG_FILE"

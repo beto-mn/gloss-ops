@@ -2,7 +2,7 @@
 
 BRANCH=$(git branch --show-current)
 COMMIT_MSG=$(cat "$1")
-TYPES="feat|fix|hotfix|chore|docs|refactor|test|release|ci"
+TYPES="feat|fix|hotfix|chore|docs|refactor|test|release|ci|merge"
 
 # Hotfix — skip everything
 if echo "$BRANCH" | grep -qE "^hotfix/"; then
@@ -22,6 +22,7 @@ expected_emoji() {
     test)     echo "🧪" ;;
     release)  echo "🚀" ;;
     ci)       echo "👷" ;;
+    merge)    echo "🔀" ;;
     *)        echo "" ;;
   esac
 }
@@ -41,11 +42,13 @@ print_help() {
   echo "  🧪  test      → tests"
   echo "  🚀  release   → release"
   echo "  👷  ci        → CI/CD changes"
+  echo "  🔀  merge     → branch merge"
   echo ""
   echo "  Examples:"
   echo "  feat: add customer module"
   echo "  ✨ feat: add customer module"
   echo "  🐛 fix(auth): correct token expiration"
+  echo "  🔀 merge(feat/login): into master"
   echo ""
 }
 

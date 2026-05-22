@@ -5,7 +5,8 @@ schema: spec-driven
 context: |
   GlossOps is a multi-tenant SaaS platform for automotive wrap, detailing, and restyling shops.
 
-  Tech stack: NestJS, TypeScript, PostgreSQL, Prisma ORM, Redis, Next.js
+  ## Backend (apps/api)
+  Tech stack: NestJS, TypeScript, PostgreSQL, Prisma ORM, Redis
   Auth: JWT access tokens + Redis-backed refresh token rotation
   RBAC: four roles — OWNER, MANAGER, TECHNICIAN, FRONT_DESK (stored in OrganizationMember.role)
   Multi-tenancy: every query scoped by organizationId (or derived via branchId → branch.organizationId)
@@ -13,3 +14,27 @@ context: |
   Imports: 6 tiers (external npm → company libs → @glossops/* → path aliases → relative → side-effects)
   Barrel exports: sorted longest → shortest line
   Tests: in-memory repositories only — no Prisma or Redis mocks
+
+  ## Frontend (apps/web)
+  Framework: Next.js (App Router), TypeScript, Tailwind CSS v4
+  UI components: shadcn/ui (Radix UI primitives + Tailwind)
+  Server state: TanStack Query (useQuery, useMutation)
+  Forms: React Hook Form + Zod validation
+  Icons: Lucide React (stroke-width 1.5, outline style — no emojis as icons)
+  Font: Plus Jakarta Sans (300/400/500/600/700)
+  Component docs: Storybook — every reusable UI component must have a .stories.tsx file
+
+  ## Frontend — Design System
+  Source of truth: design-system/glossops/MASTER.md (Gulf Racing palette, light + dark tokens)
+  Themes: light and dark — both required, toggle available for the user
+  Primary CTA color: #F06432 (orange vivid) with white text
+  Dark mode background: #0F1C23 / card: #1A2730 / foreground: #B0CEE2 (steel blue light)
+  Light mode background: #F5F8FA / card: #FFFFFF / foreground: #1A2730
+  Page-specific overrides: design-system/glossops/pages/<page-name>.md (takes precedence over MASTER)
+
+  ## Frontend — Conventions
+  App Router structure: src/app/ for routes, src/components/ for shared UI, src/lib/ for utilities
+  Path aliases: @/* → src/* (configured in tsconfig.json)
+  Storybook stories: colocated with components as <Component>.stories.tsx
+  No direct fetch calls — all API communication via TanStack Query hooks in src/hooks/
+  Form schemas defined with Zod, colocated with the form component or in src/lib/schemas/
