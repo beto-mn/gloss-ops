@@ -1,23 +1,23 @@
 'use client'
 
-import { startTransition, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { getAccessToken } from '@/lib/api-client'
 
 export function RequireGuest({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [ready, setReady] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
     if (getAccessToken()) {
-      router.replace('/dashboard')
-    } else {
-      startTransition(() => setReady(true))
+      router.replace('/')
     }
   }, [router])
 
-  if (!ready) return null
+  if (mounted && getAccessToken()) return null
 
   return <>{children}</>
 }
