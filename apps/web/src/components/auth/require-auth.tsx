@@ -1,23 +1,25 @@
 'use client'
 
-import { startTransition, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { getAccessToken } from '@/lib/api-client'
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [ready, setReady] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
     if (!getAccessToken()) {
       router.replace('/login')
-    } else {
-      startTransition(() => setReady(true))
     }
   }, [router])
 
-  if (!ready) return null
+  // Before mount: render on both server and first client paint — no hydration mismatch.
+  // After mount: hide content if no token (effect handles redirect).
+  if (mounted && !getAccessToken()) return null
 
   return <>{children}</>
 }
