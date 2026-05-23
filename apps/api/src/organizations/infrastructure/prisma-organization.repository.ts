@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { ConflictException, Injectable } from '@nestjs/common'
 
-import { ResourceStatus, Role } from '@glossops/database'
-import type { Prisma } from '@glossops/database'
+import { Prisma, ResourceStatus, Role } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
@@ -59,19 +58,29 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     organization: Prisma.OrganizationModel
     member: Prisma.OrganizationMemberModel
   }> {
-    const organization = await this.prisma.organization.create({
-      data: { name: data.name, slug: data.slug },
-    })
+    try {
+      const organization = await this.prisma.organization.create({
+        data: { name: data.name, slug: data.slug },
+      })
 
-    const branch = await this.prisma.branch.create({
-      data: { organizationId: organization.id, name: data.name },
-    })
+      const branch = await this.prisma.branch.create({
+        data: { organizationId: organization.id, name: data.name },
+      })
 
-    const member = await this.prisma.organizationMember.create({
-      data: { branchId: branch.id, accountId, role: Role.OWNER },
-    })
+      const member = await this.prisma.organizationMember.create({
+        data: { branchId: branch.id, accountId, role: Role.OWNER },
+      })
 
-    return { organization, member }
+      return { organization, member }
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException({ error: 'organization_name_taken' })
+      }
+      throw e
+    }
   }
 
   listMembers(organizationId: string): Promise<MemberWithAccount[]> {

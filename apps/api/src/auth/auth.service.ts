@@ -1,10 +1,5 @@
 import * as bcrypt from 'bcrypt'
-import {
-  UnauthorizedException,
-  ConflictException,
-  Injectable,
-  Inject,
-} from '@nestjs/common'
+import { UnauthorizedException, Injectable, Inject } from '@nestjs/common'
 
 import type { OrganizationRepositoryInterface } from '@organizations/interfaces'
 import { RegisterDto, LoginDto } from '@auth/dto'
@@ -30,20 +25,28 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<TokenPair> {
-    const existing = await this.accounts.findByEmail(dto.email)
-    if (existing)
-      throw new ConflictException({ error: 'email_already_registered' })
+    const spaceIdx = dto.name.indexOf(' ')
+    const firstName =
+      spaceIdx === -1 ? dto.name : dto.name.slice(0, spaceIdx).trim()
+    const lastName = spaceIdx === -1 ? '' : dto.name.slice(spaceIdx + 1).trim()
 
     const passwordHash = await bcrypt.hash(dto.password, 12)
     const account = await this.accounts.create({
       email: dto.email,
       passwordHash,
-      firstName: dto.firstName,
-      lastName: dto.lastName,
+      firstName,
+      lastName,
     })
 
+    const slug = dto.orgName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
     await this.organizations.createWithBranch(
-      { name: dto.organizationName, slug: dto.organizationSlug },
+      { name: dto.orgName, slug },
       account.id
     )
 

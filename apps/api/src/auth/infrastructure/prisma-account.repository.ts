@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { ConflictException, Injectable } from '@nestjs/common'
 
-import type { Prisma } from '@glossops/database'
+import { Prisma } from '@glossops/database'
 
 import type {
   AccountRepositoryInterface,
@@ -20,7 +20,17 @@ export class PrismaAccountRepository implements AccountRepositoryInterface {
     return this.prisma.account.findUnique({ where: { id } })
   }
 
-  create(data: CreateAccountData): Promise<Prisma.AccountModel> {
-    return this.prisma.account.create({ data })
+  async create(data: CreateAccountData): Promise<Prisma.AccountModel> {
+    try {
+      return await this.prisma.account.create({ data })
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException({ error: 'email_already_registered' })
+      }
+      throw e
+    }
   }
 }

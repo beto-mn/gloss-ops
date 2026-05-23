@@ -135,6 +135,23 @@ Every domain module MUST follow this structure:
 
 See `apps/api/src/auth/` for the reference implementation.
 
+## Storybook (apps/web)
+
+Every new UI component gets a colocated `*.stories.tsx` file. Infrastructure is already configured — do not re-run setup steps.
+
+**Rules:**
+
+- Story files live next to the component: `foo.tsx` → `foo.stories.tsx`
+- Use `satisfies Meta<typeof Component>` (not `Meta<typeof Component>` annotation)
+- Import `expect` from `'storybook/test'`; `canvas`, `userEvent`, `canvasElement` come from play arguments — do not import them
+- Start every meta with `tags: ['ai-generated']`
+- Global MSW handlers live in `.storybook/msw-handlers.ts`; per-story overrides go in `parameters.msw.handlers`
+- Add a `play` only when it proves something non-trivial (interaction, async data, MSW response, CSS-driven state). Skip `play` on variant-only stories
+- Exactly one `CssCheck` story exists across the whole project (currently in `button.stories.tsx`) — do not add another
+- After writing stories, verify with: `npx vitest --project storybook run`
+- Strip `'needs-work'` from files whose tests pass; leave it on files that still fail
+- For story conventions, run `npx storybook ai setup` and follow its output
+
 ## Tech Stack
 
 | Layer    | Technology                                                              |

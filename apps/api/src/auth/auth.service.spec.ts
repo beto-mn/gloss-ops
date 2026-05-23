@@ -62,10 +62,8 @@ describe('AuthService', () => {
     const dto = {
       email: 'new@example.com',
       password: 'password123',
-      firstName: 'Ana',
-      lastName: 'García',
-      organizationName: 'Taller Test',
-      organizationSlug: 'taller-test',
+      name: 'Ana García',
+      orgName: 'Taller Test',
     }
 
     it('throws ConflictException when email is already registered', async () => {
@@ -86,7 +84,7 @@ describe('AuthService', () => {
       expect(stored?.passwordHash).toBe('hashed-pw')
     })
 
-    it('creates organization with the given name and slug', async () => {
+    it('creates organization with name and slug derived from orgName', async () => {
       jest.mocked(bcrypt.hash).mockResolvedValue('hashed-pw' as never)
       await service.register(dto)
       const stored = await accounts.findByEmail(dto.email)
