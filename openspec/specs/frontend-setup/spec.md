@@ -61,17 +61,36 @@ El sistema SHALL tener `lucide-react` instalado. Todos los íconos de la UI DEBE
 
 ### Requirement: Storybook configurado y funcional
 
-El sistema SHALL tener Storybook 8 con framework `@storybook/nextjs` configurado, capaz de renderizar componentes que usen Tailwind CSS y los tokens del design system.
+El sistema SHALL tener Storybook 10 con framework `@storybook/nextjs-vite` y el addon `@storybook/addon-vitest` configurado, capaz de renderizar componentes que usen Tailwind CSS y los tokens del design system, y ejecutar story tests vía Vitest con Playwright/Chromium.
 
 #### Scenario: Storybook levanta sin errores
 
 - **WHEN** se ejecuta `pnpm storybook` en `apps/web`
-- **THEN** Storybook abre en el navegador y muestra al menos la story de ejemplo sin errores de consola
+- **THEN** Storybook abre en el navegador sin errores de consola
 
 #### Scenario: Tokens CSS disponibles en stories
 
 - **WHEN** una story renderiza un componente que usa `bg-primary` o `text-foreground`
-- **THEN** los colores correctos de la paleta Gulf Racing se aplican visualmente
+- **THEN** los colores correctos de la paleta Gulf Racing se aplican visualmente, verificado por el `CssCheck` story en `button.stories.tsx`
+
+#### Scenario: Story tests corren con Vitest
+
+- **WHEN** se ejecuta `npx vitest --project storybook run` en `apps/web`
+- **THEN** todos los tests de stories pasan sin errores
+
+#### Scenario: MSW intercepta llamadas API en stories
+
+- **WHEN** una story con handlers MSW en `parameters.msw.handlers` renderiza un componente que hace fetch
+- **THEN** MSW intercepta la llamada y retorna el mock definido, sin llegar al servidor real
+
+### Requirement: Cobertura de stories por componente
+
+El sistema SHALL tener un archivo `*.stories.tsx` colocado junto a cada componente de UI nuevo que se agregue a `apps/web/src/components/`.
+
+#### Scenario: Nuevo componente incluye stories
+
+- **WHEN** se agrega un nuevo componente en `src/components/`
+- **THEN** existe un archivo `<component>.stories.tsx` en el mismo directorio con al menos una story que pasa `npx vitest --project storybook run`
 
 ### Requirement: Theme toggle dark/light funcional
 
