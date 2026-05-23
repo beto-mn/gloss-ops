@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import {
-  MinLength,
-  MaxLength,
-  IsString,
-  Matches,
-  IsEmail,
-} from 'class-validator'
+import { MinLength, MaxLength, IsString, IsEmail } from 'class-validator'
 
 export class RegisterDto {
   @ApiProperty({ example: 'owner@glossops.com' })
@@ -18,30 +12,15 @@ export class RegisterDto {
   @MaxLength(72)
   password: string
 
-  @ApiProperty({ example: 'John', maxLength: 100 })
+  @ApiProperty({ example: 'John Doe', maxLength: 100 })
   @IsString()
-  @MinLength(1)
+  @MinLength(2)
   @MaxLength(100)
-  firstName: string
-
-  @ApiProperty({ example: 'Doe', maxLength: 100 })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  lastName: string
+  name: string
 
   @ApiProperty({ example: 'GlossOps Taller', maxLength: 100 })
   @IsString()
-  @MinLength(1)
+  @MinLength(2)
   @MaxLength(100)
-  organizationName: string
-
-  @ApiProperty({ example: 'glossops-taller', maxLength: 63 })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(63)
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'slug must be lowercase alphanumeric with hyphens',
-  })
-  organizationSlug: string
+  orgName: string
 }

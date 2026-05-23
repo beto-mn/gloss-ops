@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto'
 
+import { ConflictException } from '@nestjs/common'
+
 import type { Prisma } from '@glossops/database'
 
 import type {
@@ -23,6 +25,11 @@ export class InMemoryAccountRepository implements AccountRepositoryInterface {
   }
 
   create(data: CreateAccountData): Promise<Prisma.AccountModel> {
+    if (this.accounts.some(a => a.email === data.email)) {
+      return Promise.reject(
+        new ConflictException({ error: 'email_already_registered' })
+      )
+    }
     const account: Prisma.AccountModel = {
       id: randomUUID(),
       avatarUrl: null,
