@@ -1,16 +1,23 @@
 import { ConflictException } from '@nestjs/common'
 
-import { Prisma } from '@glossops/database'
+import { AssetType, Prisma } from '@glossops/database'
 
 import { InMemoryBrandRepository } from './in-memory-brand.repository'
 
 const ORG = 'org-1'
 const OTHER_ORG = 'org-2'
 
-const makeData = (overrides: Record<string, unknown> = {}) => ({
+const makeData = (
+  overrides: Partial<{
+    name: string
+    slug: string
+    category: AssetType
+    logoUrl: string
+  }> = {}
+) => ({
   name: 'Avery Dennison',
   slug: 'avery-dennison',
-  category: 'vinyl',
+  category: AssetType.VEHICLE,
   ...overrides,
 })
 
@@ -21,7 +28,7 @@ const makeGlobal = (
   organizationId: null,
   name: '3M',
   slug: '3m',
-  category: 'vinyl',
+  category: AssetType.VEHICLE,
   logoUrl: null,
   isSeeded: true,
   createdAt: new Date(),
@@ -133,7 +140,7 @@ describe('InMemoryBrandRepository', () => {
       await repo.create(ORG, makeData())
       await repo.create(
         ORG,
-        makeData({ name: 'XPEL', slug: 'xpel', category: 'ppf' })
+        makeData({ name: 'XPEL', slug: 'xpel', category: AssetType.OTHER })
       )
       const page = await repo.findAll(ORG, { ...query, search: 'avery' })
       expect(page.data).toHaveLength(1)
@@ -141,12 +148,15 @@ describe('InMemoryBrandRepository', () => {
     })
 
     it('filters by category', async () => {
-      await repo.create(ORG, makeData({ category: 'vinyl' }))
+      await repo.create(ORG, makeData({ category: AssetType.VEHICLE }))
       await repo.create(
         ORG,
-        makeData({ name: 'XPEL', slug: 'xpel', category: 'ppf' })
+        makeData({ name: 'XPEL', slug: 'xpel', category: AssetType.OTHER })
       )
-      const page = await repo.findAll(ORG, { ...query, category: 'ppf' })
+      const page = await repo.findAll(ORG, {
+        ...query,
+        category: AssetType.OTHER,
+      })
       expect(page.data).toHaveLength(1)
       expect(page.data[0].name).toBe('XPEL')
     })

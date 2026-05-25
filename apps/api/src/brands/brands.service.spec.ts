@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 
-import { Prisma } from '@glossops/database'
+import { AssetType, Prisma } from '@glossops/database'
 
 import { InMemoryBrandRepository } from './infrastructure/in-memory-brand.repository'
 import { BrandsService } from './brands.service'
@@ -13,10 +13,12 @@ import { BRAND_REPOSITORY } from './brands.tokens'
 
 const ORG = 'org-1'
 
-const makeData = (overrides: Record<string, unknown> = {}) => ({
+const makeData = (
+  overrides: Partial<{ name: string; slug: string; category: AssetType }> = {}
+) => ({
   name: 'Avery Dennison',
   slug: 'avery-dennison',
-  category: 'vinyl',
+  category: AssetType.VEHICLE,
   ...overrides,
 })
 
@@ -27,7 +29,7 @@ const makeSeeded = (
   organizationId: null,
   name: '3M',
   slug: '3m',
-  category: 'vinyl',
+  category: AssetType.VEHICLE,
   logoUrl: null,
   isSeeded: true,
   createdAt: new Date(),

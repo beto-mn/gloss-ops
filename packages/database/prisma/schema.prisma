@@ -111,6 +111,8 @@ enum AssetType {
   BOAT
   JET_SKI
   TRUCK
+  ATV_UTV
+  AIRCRAFT
   OTHER
 }
 
@@ -126,7 +128,7 @@ model Brand {
   name           String
   slug           String
   logoUrl        String?  @map("logo_url")
-  category       String
+  category       AssetType
   isSeeded       Boolean  @default(false) @map("is_seeded")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
