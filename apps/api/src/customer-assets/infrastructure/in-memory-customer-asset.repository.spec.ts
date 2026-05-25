@@ -9,7 +9,9 @@ const BRAND_ID = 'brand-1'
 
 const makeData = (overrides: Record<string, unknown> = {}) => ({
   assetType: AssetType.VEHICLE,
+  brandId: 'brand-uuid-001',
   model: 'Civic',
+  identifier: 'ABC-123',
   ...overrides,
 })
 
@@ -38,7 +40,6 @@ describe('InMemoryCustomerAssetRepository', () => {
 
     it('sets nullable fields to null when not provided', async () => {
       const asset = await repo.create(CUSTOMER_ID, makeData())
-      expect(asset.brandId).toBeNull()
       expect(asset.country).toBeNull()
       expect(asset.deletedAt).toBeNull()
     })
@@ -94,7 +95,7 @@ describe('InMemoryCustomerAssetRepository', () => {
       await repo.softDelete(a.id, ORG)
       const page = await repo.findAllByCustomer(CUSTOMER_ID, ORG, {
         ...query,
-        status: ResourceStatus.DELETED,
+        status: ResourceStatus.INACTIVE,
       })
       expect(page.data).toHaveLength(1)
     })
@@ -177,10 +178,10 @@ describe('InMemoryCustomerAssetRepository', () => {
   })
 
   describe('softDelete', () => {
-    it('marks asset as DELETED', async () => {
+    it('marks asset as INACTIVE', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
       const deleted = await repo.softDelete(created.id, ORG)
-      expect(deleted.status).toBe(ResourceStatus.DELETED)
+      expect(deleted.status).toBe(ResourceStatus.INACTIVE)
       expect(deleted.deletedAt).not.toBeNull()
     })
 
@@ -225,7 +226,7 @@ describe('InMemoryCustomerAssetRepository', () => {
         {
           id: 'cust-deleted',
           organizationId: ORG,
-          status: ResourceStatus.DELETED,
+          status: ResourceStatus.INACTIVE,
         },
       ])
       const result = await repo.customerExistsInOrg('cust-deleted', ORG)

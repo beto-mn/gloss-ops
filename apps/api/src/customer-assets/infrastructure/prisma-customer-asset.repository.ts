@@ -130,7 +130,7 @@ export class PrismaCustomerAssetRepository implements CustomerAssetRepositoryInt
   ): Promise<Prisma.CustomerAssetModel> {
     await this.prisma.customerAsset.updateMany({
       where: { id, customer: { organizationId } },
-      data: { status: ResourceStatus.DELETED, deletedAt: new Date() },
+      data: { status: ResourceStatus.INACTIVE, deletedAt: new Date() },
     })
     const record = await this.prisma.customerAsset.findFirst({
       where: { id },

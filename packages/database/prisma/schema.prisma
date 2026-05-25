@@ -280,9 +280,9 @@ model CustomerAsset {
   brandId         String?        @map("brand_id") @db.Uuid
   assetType       AssetType      @map("asset_type")
   customAssetType String?        @map("custom_asset_type")
-  model           String?
+  model           String
   year            Int?
-  identifier      String?
+  identifier      String
   country         String?        @db.VarChar(2)
   color           String?
   metadata        Json?

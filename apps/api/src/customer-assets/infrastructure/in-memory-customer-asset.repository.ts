@@ -46,9 +46,9 @@ export class InMemoryCustomerAssetRepository implements CustomerAssetRepositoryI
       brandId: data.brandId ?? null,
       assetType: data.assetType,
       customAssetType: data.customAssetType ?? null,
-      model: data.model ?? null,
+      model: data.model,
       year: data.year ?? null,
-      identifier: data.identifier ?? null,
+      identifier: data.identifier,
       country: data.country ?? null,
       color: data.color ?? null,
       metadata: data.metadata ?? null,
@@ -191,7 +191,7 @@ export class InMemoryCustomerAssetRepository implements CustomerAssetRepositoryI
     }
     const updated: Prisma.CustomerAssetModel = {
       ...asset,
-      status: ResourceStatus.DELETED,
+      status: ResourceStatus.INACTIVE,
       deletedAt: new Date(),
       updatedAt: new Date(),
     }

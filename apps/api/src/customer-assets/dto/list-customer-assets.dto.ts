@@ -7,7 +7,7 @@ import { AssetType } from '@glossops/database'
 export class ListCustomerAssetsDto {
   @ApiPropertyOptional({
     example: 'ACTIVE',
-    enum: ['ACTIVE', 'DELETED', 'ALL'],
+    enum: ['ACTIVE', 'INACTIVE', 'ALL'],
   })
   @IsOptional()
   @IsString()

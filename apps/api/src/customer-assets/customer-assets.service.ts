@@ -87,8 +87,8 @@ export class CustomerAssetsService {
     }
 
     const statusFilter =
-      dto.status === 'DELETED'
-        ? ('DELETED' as const)
+      dto.status === 'INACTIVE'
+        ? ('INACTIVE' as const)
         : dto.status === 'ALL'
           ? 'ALL'
           : ('ACTIVE' as const)
