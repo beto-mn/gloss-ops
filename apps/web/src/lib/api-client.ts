@@ -2,6 +2,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 const ACCESS_TOKEN_KEY = 'gloss_access_token'
 const REFRESH_TOKEN_KEY = 'gloss_refresh_token'
+const ORG_ID_KEY = 'gloss_organization_id'
+const USER_ROLE_KEY = 'gloss_user_role'
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -13,6 +15,24 @@ export function getRefreshToken(): string | null {
   return localStorage.getItem(REFRESH_TOKEN_KEY)
 }
 
+export function getOrganizationId(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(ORG_ID_KEY)
+}
+
+export function setOrganizationId(id: string): void {
+  localStorage.setItem(ORG_ID_KEY, id)
+}
+
+export function getUserRole(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(USER_ROLE_KEY)
+}
+
+export function setUserRole(role: string): void {
+  localStorage.setItem(USER_ROLE_KEY, role)
+}
+
 export function setTokens(accessToken: string, refreshToken: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
@@ -21,11 +41,13 @@ export function setTokens(accessToken: string, refreshToken: string): void {
 export function clearTokens(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
+  localStorage.removeItem(ORG_ID_KEY)
+  localStorage.removeItem(USER_ROLE_KEY)
 }
 
 function redirectToLogin(): void {
   clearTokens()
-  window.location.href = '/login'
+  window.location.replace('/login')
 }
 
 let isRefreshing = false
@@ -65,6 +87,10 @@ export async function apiFetch<T>(
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`)
   }
+  const orgId = getOrganizationId()
+  if (orgId) {
+    headers.set('x-organization-id', orgId)
+  }
 
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
 
@@ -73,6 +99,9 @@ export async function apiFetch<T>(
       const body = await res.json().catch(() => ({}))
       const typed = body as { message?: string; error?: string }
       throw new ApiError(res.status, typed.error ?? typed.message)
+    }
+    if (res.status === 204 || res.headers.get('content-length') === '0') {
+      return undefined as T
     }
     return res.json() as Promise<T>
   }
@@ -101,6 +130,8 @@ export async function apiFetch<T>(
   // Retry original request with new token
   const newToken = getAccessToken()
   headers.set('Authorization', `Bearer ${newToken}`)
+  const retryOrgId = getOrganizationId()
+  if (retryOrgId) headers.set('x-organization-id', retryOrgId)
   const retryRes = await fetch(`${API_BASE}${path}`, { ...init, headers })
 
   if (!retryRes.ok) {

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import {
   apiFetch,
   setTokens,
+  setOrganizationId,
+  setUserRole,
   clearTokens,
   getRefreshToken,
 } from '@/lib/api-client'
@@ -20,6 +22,25 @@ interface AuthResponse {
   expiresIn: number
 }
 
+interface OrganizationWithRole {
+  id: string
+  name: string
+  role: string
+}
+
+async function storeOrgAfterAuth(tokens: AuthResponse): Promise<void> {
+  setTokens(tokens.accessToken, tokens.refreshToken)
+  try {
+    const orgs = await apiFetch<OrganizationWithRole[]>('/organizations')
+    if (orgs.length > 0) {
+      setOrganizationId(orgs[0].id)
+      setUserRole(orgs[0].role)
+    }
+  } catch {
+    // non-blocking — org ID and role can be retried on next load
+  }
+}
+
 export function useLogin() {
   const router = useRouter()
 
@@ -29,9 +50,9 @@ export function useLogin() {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    onSuccess(data) {
-      setTokens(data.accessToken, data.refreshToken)
-      router.push('/')
+    async onSuccess(data) {
+      await storeOrgAfterAuth(data)
+      router.replace('/')
     },
   })
 }
@@ -45,9 +66,9 @@ export function useRegister() {
         method: 'POST',
         body: JSON.stringify(data),
       }),
-    onSuccess(data) {
-      setTokens(data.accessToken, data.refreshToken)
-      router.push('/')
+    async onSuccess(data) {
+      await storeOrgAfterAuth(data)
+      router.replace('/')
     },
   })
 }
@@ -69,7 +90,7 @@ export function useLogout() {
     },
     onSettled() {
       clearTokens()
-      router.push('/login')
+      router.replace('/login')
     },
   })
 }
