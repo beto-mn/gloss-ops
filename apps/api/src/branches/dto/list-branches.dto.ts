@@ -6,11 +6,11 @@ import type { BranchStatusFilter } from '@branches/interfaces'
 
 export class ListBranchesDto {
   @ApiPropertyOptional({
-    enum: ['ACTIVE', 'DELETED', 'ALL'],
+    enum: ['ACTIVE', 'INACTIVE', 'ALL'],
     default: 'ACTIVE',
   })
   @IsOptional()
-  @IsIn(['ACTIVE', 'DELETED', 'ALL'])
+  @IsIn(['ACTIVE', 'INACTIVE', 'ALL'])
   status?: BranchStatusFilter
 
   @ApiPropertyOptional({ example: 'CDMX' })

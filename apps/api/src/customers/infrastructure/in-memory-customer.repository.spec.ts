@@ -41,7 +41,7 @@ describe('InMemoryCustomerRepository', () => {
       expect(await repo.findById('unknown', 'org-1')).toBeNull()
     })
 
-    it('returns null for a DELETED customer', async () => {
+    it('returns null for a INACTIVE customer', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       expect(await repo.findById(created.id, 'org-1')).toBeNull()
@@ -155,7 +155,65 @@ describe('InMemoryCustomerRepository', () => {
       })
     })
 
-    it('excludes DELETED customers', async () => {
+    it('sorts by firstName asc', async () => {
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'Carlos', email: 'c@t.com', phone: '333' })
+      )
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'Ana', email: 'a@t.com', phone: '111' })
+      )
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'Beto', email: 'b@t.com', phone: '222' })
+      )
+      const result = await repo.findAll('org-1', {
+        sortBy: 'firstName',
+        sortOrder: 'asc',
+        page: 1,
+        limit: 20,
+      })
+      expect(result.data.map(c => c.firstName)).toEqual([
+        'Ana',
+        'Beto',
+        'Carlos',
+      ])
+    })
+
+    it('sorts by firstName desc', async () => {
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'Carlos', email: 'c@t.com', phone: '333' })
+      )
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'Ana', email: 'a@t.com', phone: '111' })
+      )
+      await repo.create(
+        'org-1',
+        makeData({ firstName: 'Beto', email: 'b@t.com', phone: '222' })
+      )
+      const result = await repo.findAll('org-1', {
+        sortBy: 'firstName',
+        sortOrder: 'desc',
+        page: 1,
+        limit: 20,
+      })
+      expect(result.data.map(c => c.firstName)).toEqual([
+        'Carlos',
+        'Beto',
+        'Ana',
+      ])
+    })
+
+    it('includes activeWorkOrderCount field (always 0 in-memory)', async () => {
+      await repo.create('org-1', makeData({ email: 'x@t.com', phone: '999' }))
+      const result = await repo.findAll('org-1', { page: 1, limit: 20 })
+      expect(result.data[0]).toHaveProperty('activeWorkOrderCount', 0)
+    })
+
+    it('excludes INACTIVE customers', async () => {
       const active = await repo.create(
         'org-1',
         makeData({ firstName: 'Active', email: 'active@t.com', phone: '111' })
@@ -188,7 +246,7 @@ describe('InMemoryCustomerRepository', () => {
       expect(await repo.findByEmail('nobody@test.com', 'org-1')).toBeNull()
     })
 
-    it('returns null for a DELETED customer', async () => {
+    it('returns null for a INACTIVE customer', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       expect(await repo.findByEmail('ana@test.com', 'org-1')).toBeNull()
@@ -212,7 +270,7 @@ describe('InMemoryCustomerRepository', () => {
       expect(await repo.findByPhone('9999999999', 'org-1')).toBeNull()
     })
 
-    it('returns null for a DELETED customer', async () => {
+    it('returns null for a INACTIVE customer', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       expect(await repo.findByPhone('5551234567', 'org-1')).toBeNull()
@@ -249,11 +307,11 @@ describe('InMemoryCustomerRepository', () => {
       )
     })
 
-    it('removes a DELETED customer (hard delete regardless of status)', async () => {
+    it('removes a INACTIVE customer (hard delete regardless of status)', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       await repo.delete(created.id, 'org-1')
-      // If the record were still in the map as DELETED, a second delete would succeed.
+      // If the record were still in the map as INACTIVE, a second delete would succeed.
       // The rejection here proves the map entry is truly gone.
       await expect(repo.delete(created.id, 'org-1')).rejects.toThrow(
         'customer not found'
@@ -262,7 +320,7 @@ describe('InMemoryCustomerRepository', () => {
   })
 
   describe('softDelete', () => {
-    it('marks the customer as DELETED', async () => {
+    it('marks the customer as INACTIVE', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       expect(await repo.findById(created.id, 'org-1')).toBeNull()

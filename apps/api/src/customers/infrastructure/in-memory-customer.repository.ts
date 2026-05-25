@@ -5,6 +5,7 @@ import type { Prisma } from '@glossops/database'
 
 import type {
   CustomerRepositoryInterface,
+  CustomerWithCount,
   CreateCustomerData,
   UpdateCustomerData,
   CustomerQuery,
@@ -55,11 +56,12 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
   }
 
   findAll(organizationId: string, query: CustomerQuery): Promise<CustomerPage> {
-    let list = [...this.customers.values()].filter(
-      c =>
-        c.organizationId === organizationId &&
-        c.status === ResourceStatus.ACTIVE
-    )
+    const statusFilter = query.status ?? 'ACTIVE'
+    let list = [...this.customers.values()].filter(c => {
+      if (c.organizationId !== organizationId) return false
+      if (statusFilter !== 'ALL') return c.status === statusFilter
+      return true
+    })
 
     if (query.search) {
       const term = query.search.toLowerCase()
@@ -73,10 +75,28 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
       })
     }
 
+    const sortBy = query.sortBy ?? 'createdAt'
+    const sortOrder = query.sortOrder ?? 'desc'
+    list.sort((a, b) => {
+      const av =
+        sortBy === 'createdAt'
+          ? a.createdAt.getTime()
+          : (a[sortBy] ?? '').toString()
+      const bv =
+        sortBy === 'createdAt'
+          ? b.createdAt.getTime()
+          : (b[sortBy] ?? '').toString()
+      if (av < bv) return sortOrder === 'asc' ? -1 : 1
+      if (av > bv) return sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+
     const total = list.length
     const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit)
     const offset = (query.page - 1) * query.limit
-    const data = list.slice(offset, offset + query.limit)
+    const data: CustomerWithCount[] = list
+      .slice(offset, offset + query.limit)
+      .map(c => ({ ...c, activeWorkOrderCount: 0 }))
 
     return Promise.resolve({
       data,
@@ -151,7 +171,25 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     }
     const updated: Prisma.CustomerModel = {
       ...customer,
-      status: ResourceStatus.DELETED,
+      status: ResourceStatus.INACTIVE,
+      updatedAt: new Date(),
+    }
+    this.customers.set(id, updated)
+    return Promise.resolve(updated)
+  }
+
+  restore(id: string, organizationId: string): Promise<Prisma.CustomerModel> {
+    const customer = this.customers.get(id)
+    if (
+      !customer ||
+      customer.organizationId !== organizationId ||
+      customer.status !== ResourceStatus.INACTIVE
+    ) {
+      return Promise.reject(new Error('customer not found'))
+    }
+    const updated: Prisma.CustomerModel = {
+      ...customer,
+      status: ResourceStatus.ACTIVE,
       updatedAt: new Date(),
     }
     this.customers.set(id, updated)

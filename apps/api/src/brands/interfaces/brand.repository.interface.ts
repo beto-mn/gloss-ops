@@ -1,22 +1,22 @@
-import type { Prisma } from '@glossops/database'
+import type { AssetType, Prisma } from '@glossops/database'
 
 export interface CreateBrandData {
   name: string
   slug: string
-  category: string
+  category: AssetType
   logoUrl?: string
 }
 
 export interface UpdateBrandData {
   name?: string
   slug?: string
-  category?: string
+  category?: AssetType
   logoUrl?: string | null
 }
 
 export interface BrandQuery {
   search?: string
-  category?: string
+  category?: AssetType
   page: number
   limit: number
 }

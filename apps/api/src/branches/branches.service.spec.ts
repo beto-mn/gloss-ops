@@ -56,11 +56,11 @@ describe('BranchesService', () => {
       expect(page.data.map(x => x.id)).toEqual([a.id])
     })
 
-    it('honors explicit status=DELETED', async () => {
+    it('honors explicit status=INACTIVE', async () => {
       const a = await service.create('org-1', { name: 'A' })
       await repo.softDelete(a.id, 'org-1')
       const page = await service.findAll('org-1', {
-        status: ResourceStatus.DELETED,
+        status: ResourceStatus.INACTIVE,
       })
       expect(page.data).toHaveLength(1)
     })

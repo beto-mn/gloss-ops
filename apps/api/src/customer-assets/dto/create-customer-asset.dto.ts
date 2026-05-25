@@ -11,7 +11,7 @@ import {
   Max,
   Min,
 } from 'class-validator'
-import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 import { AssetType } from '@glossops/database'
 
@@ -31,16 +31,15 @@ export class CreateCustomerAssetDto {
   @MaxLength(50)
   customAssetType?: string
 
-  @ApiPropertyOptional({ example: 'd3f5...uuid' })
-  @IsOptional()
+  @ApiProperty({ example: 'd3f5...uuid' })
   @IsUUID()
-  brandId?: string
+  brandId: string
 
-  @ApiPropertyOptional({ example: 'Civic', maxLength: 100 })
-  @IsOptional()
+  @ApiProperty({ example: 'Civic', maxLength: 100 })
   @IsString()
+  @MinLength(1)
   @MaxLength(100)
-  model?: string
+  model: string
 
   @ApiPropertyOptional({ example: 2023, minimum: 1900, maximum: 2100 })
   @IsOptional()
@@ -49,11 +48,11 @@ export class CreateCustomerAssetDto {
   @Max(2100)
   year?: number
 
-  @ApiPropertyOptional({ example: '3VWFE21C04M000001', maxLength: 50 })
-  @IsOptional()
+  @ApiProperty({ example: '3VWFE21C04M000001', maxLength: 50 })
   @IsString()
+  @MinLength(1)
   @MaxLength(50)
-  identifier?: string
+  identifier: string
 
   @ApiPropertyOptional({ example: 'MX', minLength: 2, maxLength: 2 })
   @IsOptional()

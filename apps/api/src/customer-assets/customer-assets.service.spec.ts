@@ -18,7 +18,9 @@ const BRAND_ID = 'brand-1'
 
 const makeData = (overrides: Record<string, unknown> = {}) => ({
   assetType: AssetType.VEHICLE,
+  brandId: BRAND_ID,
   model: 'Civic',
+  identifier: 'ABC-123',
   ...overrides,
 })
 
@@ -165,11 +167,11 @@ describe('CustomerAssetsService', () => {
       expect(result.meta.limit).toBe(20)
     })
 
-    it('returns DELETED assets when status=DELETED', async () => {
+    it('returns INACTIVE assets when status=INACTIVE', async () => {
       const a = await repo.create(CUSTOMER_ID, makeData())
       await repo.softDelete(a.id, ORG)
       const result = await service.findAllByCustomer(ORG, CUSTOMER_ID, {
-        status: 'DELETED',
+        status: 'INACTIVE',
       })
       expect(result.data).toHaveLength(1)
     })
@@ -205,7 +207,7 @@ describe('CustomerAssetsService', () => {
       )
     })
 
-    it('throws NotFoundException for DELETED asset', async () => {
+    it('throws NotFoundException for INACTIVE asset', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
       await repo.softDelete(created.id, ORG)
       await expect(service.findOne(created.id, ORG)).rejects.toThrow(
@@ -291,7 +293,7 @@ describe('CustomerAssetsService', () => {
       )
     })
 
-    it('throws NotFoundException when soft-deleting an already-DELETED asset', async () => {
+    it('throws NotFoundException when soft-deleting an already-INACTIVE asset', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
       await repo.softDelete(created.id, ORG)
       await expect(service.remove(created.id, ORG, false)).rejects.toThrow(
@@ -307,7 +309,7 @@ describe('CustomerAssetsService', () => {
       )
     })
 
-    it('permanently deletes a DELETED asset (Owner cleaning up)', async () => {
+    it('permanently deletes an INACTIVE asset (Owner cleaning up)', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
       await repo.softDelete(created.id, ORG)
       await expect(

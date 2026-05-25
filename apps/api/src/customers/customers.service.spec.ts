@@ -73,7 +73,14 @@ describe('CustomersService', () => {
       expect(result.meta.limit).toBe(20)
     })
 
-    it('does not include DELETED customers', async () => {
+    it('includes activeWorkOrderCount on each record', async () => {
+      await repo.create('org-1', makeData({ firstName: 'A' }))
+      const result = await service.findAll('org-1', {})
+      expect(result.data[0]).toHaveProperty('activeWorkOrderCount')
+      expect(typeof result.data[0].activeWorkOrderCount).toBe('number')
+    })
+
+    it('does not include INACTIVE customers', async () => {
       const active = await repo.create(
         'org-1',
         makeData({ firstName: 'Active' })
@@ -102,7 +109,7 @@ describe('CustomersService', () => {
       )
     })
 
-    it('throws NotFoundException for a DELETED customer', async () => {
+    it('throws NotFoundException for a INACTIVE customer', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       await expect(service.findOne(created.id, 'org-1')).rejects.toThrow(
@@ -174,7 +181,7 @@ describe('CustomersService', () => {
       )
     })
 
-    it('throws NotFoundException when soft-deleting an already-DELETED customer', async () => {
+    it('throws NotFoundException when soft-deleting an already-INACTIVE customer', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       await expect(service.remove(created.id, 'org-1', false)).rejects.toThrow(
@@ -196,7 +203,7 @@ describe('CustomersService', () => {
       )
     })
 
-    it('permanently deletes a DELETED customer (Owner cleaning up)', async () => {
+    it('permanently deletes a INACTIVE customer (Owner cleaning up)', async () => {
       const created = await repo.create('org-1', makeData())
       await repo.softDelete(created.id, 'org-1')
       await expect(

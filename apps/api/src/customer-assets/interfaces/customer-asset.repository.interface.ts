@@ -3,10 +3,10 @@ import type { AssetType, ResourceStatus, Prisma } from '@glossops/database'
 export interface CreateCustomerAssetData {
   assetType: AssetType
   customAssetType?: string
-  brandId?: string
-  model?: string
+  brandId: string
+  model: string
   year?: number
-  identifier?: string
+  identifier: string
   country?: string
   color?: string
   metadata?: Prisma.JsonValue
@@ -17,9 +17,9 @@ export interface UpdateCustomerAssetData {
   assetType?: AssetType
   customAssetType?: string | null
   brandId?: string | null
-  model?: string | null
+  model?: string
   year?: number | null
-  identifier?: string | null
+  identifier?: string
   country?: string | null
   color?: string | null
   metadata?: Prisma.JsonValue | null

@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsString,
   IsOptional,
   IsUrl,
@@ -8,15 +9,17 @@ import {
 } from 'class-validator'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 
+import { AssetType } from '@glossops/database'
+
 export class UpdateBrandDto {
-  @ApiPropertyOptional({ example: 'Avery Dennison', maxLength: 100 })
+  @ApiPropertyOptional({ example: 'Toyota', maxLength: 100 })
   @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
   name?: string
 
-  @ApiPropertyOptional({ example: 'avery-dennison', maxLength: 100 })
+  @ApiPropertyOptional({ example: 'toyota', maxLength: 100 })
   @IsOptional()
   @IsString()
   @MinLength(1)
@@ -24,12 +27,10 @@ export class UpdateBrandDto {
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   slug?: string
 
-  @ApiPropertyOptional({ example: 'vinyl', maxLength: 100 })
+  @ApiPropertyOptional({ enum: AssetType })
   @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  category?: string
+  @IsEnum(AssetType)
+  category?: AssetType
 
   @ApiPropertyOptional({
     example: 'https://cdn.example.com/avery.png',

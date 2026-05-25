@@ -69,7 +69,7 @@ describe('InMemoryOrganizationRepository', () => {
       expect(await repo.findAllByAccountId('nobody')).toEqual([])
     })
 
-    it('excludes DELETED organizations', async () => {
+    it('excludes INACTIVE organizations', async () => {
       const { organization: active } = await repo.createWithBranch(
         { name: 'Active', slug: 'active' },
         'acc-1'
@@ -195,7 +195,7 @@ describe('InMemoryOrganizationRepository', () => {
   })
 
   describe('softDelete', () => {
-    it('marks the organization as DELETED and hides it from findById', async () => {
+    it('marks the organization as INACTIVE and hides it from findById', async () => {
       const { organization } = await repo.createWithBranch(
         { name: 'T', slug: 't' },
         'acc-1'
@@ -224,7 +224,7 @@ describe('InMemoryOrganizationRepository', () => {
       )
     })
 
-    it('removes a DELETED organization from the store (hard delete any status)', async () => {
+    it('removes an INACTIVE organization from the store (hard delete any status)', async () => {
       const { organization } = await repo.createWithBranch(
         { name: 'T', slug: 't' },
         'acc-1'
