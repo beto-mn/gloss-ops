@@ -353,7 +353,7 @@ describe('OrganizationService', () => {
       )
     })
 
-    it('permanently deletes a DELETED organization (Owner cleaning up)', async () => {
+    it('permanently deletes an INACTIVE organization (Owner cleaning up)', async () => {
       const { organization } = await organizations.createWithBranch(
         { name: 'T', slug: 't' },
         'acc-1'

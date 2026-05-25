@@ -29,7 +29,7 @@ describe('BranchCleanupService', () => {
 
     // Backdate "stale" by 31 days.
     const all = await repo.findAll('org-1', {
-      status: ResourceStatus.DELETED,
+      status: ResourceStatus.INACTIVE,
       page: 1,
       limit: 10,
     })
@@ -54,7 +54,7 @@ describe('BranchCleanupService', () => {
     await repo.softDelete(branch.id, 'org-1')
 
     const page = await repo.findAll('org-1', {
-      status: ResourceStatus.DELETED,
+      status: ResourceStatus.INACTIVE,
       page: 1,
       limit: 10,
     })

@@ -73,7 +73,7 @@ describe('InMemoryBranchRepository', () => {
       const b = await repo.create('org-1', { name: 'B' })
       await repo.softDelete(b.id, 'org-1')
       const page = await repo.findAll('org-1', {
-        status: ResourceStatus.DELETED,
+        status: ResourceStatus.INACTIVE,
         page: 1,
         limit: 10,
       })
@@ -136,7 +136,7 @@ describe('InMemoryBranchRepository', () => {
     it('flips status to DELETED and sets deletedAt', async () => {
       const branch = await repo.create('org-1', { name: 'A' })
       const deleted = await repo.softDelete(branch.id, 'org-1')
-      expect(deleted.status).toBe(ResourceStatus.DELETED)
+      expect(deleted.status).toBe(ResourceStatus.INACTIVE)
       expect(deleted.deletedAt).toBeInstanceOf(Date)
     })
   })
@@ -150,7 +150,7 @@ describe('InMemoryBranchRepository', () => {
 
       // Backdate "stale" by 31 days.
       const staleNow = await repo.findAll('org-1', {
-        status: ResourceStatus.DELETED,
+        status: ResourceStatus.INACTIVE,
         page: 1,
         limit: 10,
       })

@@ -150,7 +150,7 @@ export class InMemoryBranchRepository implements BranchRepositoryInterface {
     const now = new Date()
     const updated: Prisma.BranchModel = {
       ...branch,
-      status: ResourceStatus.DELETED,
+      status: ResourceStatus.INACTIVE,
       deletedAt: now,
       updatedAt: now,
     }
@@ -162,7 +162,7 @@ export class InMemoryBranchRepository implements BranchRepositoryInterface {
     const result: Prisma.BranchModel[] = []
     for (const branch of this.branches.values()) {
       if (
-        branch.status === ResourceStatus.DELETED &&
+        branch.status === ResourceStatus.INACTIVE &&
         branch.deletedAt !== null &&
         branch.deletedAt < olderThan
       ) {

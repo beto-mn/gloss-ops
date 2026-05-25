@@ -65,7 +65,7 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
     if (!org) return Promise.reject(new Error('organization not found'))
     const updated = {
       ...org,
-      status: ResourceStatus.DELETED,
+      status: ResourceStatus.INACTIVE,
       updatedAt: new Date(),
     }
     this.organizations.set(id, updated)

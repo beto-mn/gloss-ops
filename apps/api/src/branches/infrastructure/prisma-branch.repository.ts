@@ -107,7 +107,7 @@ export class PrismaBranchRepository implements BranchRepositoryInterface {
   ): Promise<Prisma.BranchModel> {
     const result = await this.prisma.branch.updateMany({
       where: { id, organizationId },
-      data: { status: ResourceStatus.DELETED, deletedAt: new Date() },
+      data: { status: ResourceStatus.INACTIVE, deletedAt: new Date() },
     })
     if (result.count === 0) throw new Error('branch not found')
     const record = await this.prisma.branch.findFirst({
@@ -118,7 +118,7 @@ export class PrismaBranchRepository implements BranchRepositoryInterface {
 
   findExpiredDeleted(olderThan: Date): Promise<Prisma.BranchModel[]> {
     return this.prisma.branch.findMany({
-      where: { status: ResourceStatus.DELETED, deletedAt: { lt: olderThan } },
+      where: { status: ResourceStatus.INACTIVE, deletedAt: { lt: olderThan } },
     })
   }
 
