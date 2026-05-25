@@ -1,4 +1,6 @@
-import type { Prisma } from '@glossops/database'
+import type { Prisma, ResourceStatus } from '@glossops/database'
+
+export type CustomerStatusFilter = ResourceStatus | 'ALL'
 
 export interface CreateCustomerData {
   firstName: string
@@ -28,8 +30,15 @@ export interface UpdateCustomerData {
 
 export interface CustomerQuery {
   search?: string
+  sortBy?: 'firstName' | 'lastName' | 'createdAt'
+  sortOrder?: 'asc' | 'desc'
+  status?: CustomerStatusFilter
   page: number
   limit: number
+}
+
+export interface CustomerWithCount extends Prisma.CustomerModel {
+  activeWorkOrderCount: number
 }
 
 export interface CustomerPageMeta {
@@ -42,7 +51,7 @@ export interface CustomerPageMeta {
 }
 
 export interface CustomerPage {
-  data: Prisma.CustomerModel[]
+  data: CustomerWithCount[]
   meta: CustomerPageMeta
 }
 
@@ -70,5 +79,6 @@ export interface CustomerRepositoryInterface {
     data: UpdateCustomerData
   ): Promise<Prisma.CustomerModel>
   softDelete(id: string, organizationId: string): Promise<Prisma.CustomerModel>
+  restore(id: string, organizationId: string): Promise<Prisma.CustomerModel>
   delete(id: string, organizationId: string): Promise<void>
 }

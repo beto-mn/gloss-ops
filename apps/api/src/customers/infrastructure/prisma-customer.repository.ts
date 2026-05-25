@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common'
 
-import { ResourceStatus } from '@glossops/database'
+import { ResourceStatus, WorkOrderStatus } from '@glossops/database'
 import type { Prisma } from '@glossops/database'
 
 import { PrismaService } from '@prisma'
 import type {
   CustomerRepositoryInterface,
+  CustomerWithCount,
   CreateCustomerData,
   UpdateCustomerData,
   CustomerQuery,
@@ -36,9 +37,10 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     organizationId: string,
     query: CustomerQuery
   ): Promise<CustomerPage> {
-    const where: Prisma.CustomerWhereInput = {
-      organizationId,
-      status: ResourceStatus.ACTIVE,
+    const statusFilter = query.status ?? 'ACTIVE'
+    const where: Prisma.CustomerWhereInput = { organizationId }
+    if (statusFilter !== 'ALL') {
+      where.status = statusFilter
     }
 
     if (query.search) {
@@ -51,17 +53,48 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
       ]
     }
 
-    const [total, data] = await Promise.all([
+    const sortBy = query.sortBy ?? 'createdAt'
+    const sortOrder = query.sortOrder ?? 'desc'
+    const orderBy: Prisma.CustomerOrderByWithRelationInput = {
+      [sortBy]: sortOrder,
+    }
+
+    const activeStatuses = [
+      WorkOrderStatus.DRAFT,
+      WorkOrderStatus.CONFIRMED,
+      WorkOrderStatus.IN_PROGRESS,
+    ]
+
+    const [total, rows] = await Promise.all([
       this.prisma.customer.count({ where }),
       this.prisma.customer.findMany({
         where,
         skip: (query.page - 1) * query.limit,
         take: query.limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
+        include: {
+          assets: {
+            select: {
+              _count: {
+                select: {
+                  workOrders: { where: { status: { in: activeStatuses } } },
+                },
+              },
+            },
+          },
+        },
       }),
     ])
 
     const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit)
+
+    const data: CustomerWithCount[] = rows.map(({ assets, ...customer }) => ({
+      ...customer,
+      activeWorkOrderCount: assets.reduce(
+        (sum, a) => sum + a._count.workOrders,
+        0
+      ),
+    }))
 
     return {
       data,
@@ -115,7 +148,22 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
   ): Promise<Prisma.CustomerModel> {
     const result = await this.prisma.customer.updateMany({
       where: { id, organizationId },
-      data: { status: ResourceStatus.DELETED },
+      data: { status: ResourceStatus.INACTIVE },
+    })
+    if (result.count === 0) throw new Error('customer not found')
+    const record = await this.prisma.customer.findFirst({
+      where: { id, organizationId },
+    })
+    return record!
+  }
+
+  async restore(
+    id: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel> {
+    const result = await this.prisma.customer.updateMany({
+      where: { id, organizationId, status: ResourceStatus.INACTIVE },
+      data: { status: ResourceStatus.ACTIVE },
     })
     if (result.count === 0) throw new Error('customer not found')
     const record = await this.prisma.customer.findFirst({

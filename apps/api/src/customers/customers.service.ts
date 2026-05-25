@@ -53,6 +53,9 @@ export class CustomersService {
   ): Promise<CustomerPage> {
     return this.customers.findAll(organizationId, {
       search: dto.search,
+      sortBy: dto.sortBy,
+      sortOrder: dto.sortOrder,
+      status: dto.status ?? 'ACTIVE',
       page: dto.page ?? 1,
       limit: dto.limit ?? 20,
     })
@@ -94,6 +97,17 @@ export class CustomersService {
     }
 
     return this.customers.update(id, organizationId, data)
+  }
+
+  async restore(
+    id: string,
+    organizationId: string
+  ): Promise<Prisma.CustomerModel> {
+    try {
+      return await this.customers.restore(id, organizationId)
+    } catch {
+      throw new NotFoundException({ error: 'customer_not_found' })
+    }
   }
 
   async remove(

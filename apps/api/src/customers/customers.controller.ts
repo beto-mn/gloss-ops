@@ -69,6 +69,16 @@ export class CustomersController {
     return this.customersService.update(id, account.organizationId!, dto)
   }
 
+  @Patch(':id/restore')
+  @Roles(Role.OWNER, Role.MANAGER)
+  @ApiOperation({ summary: 'Restore an inactive customer' })
+  restore(
+    @CurrentAccount() account: AuthContext,
+    @Param('id') id: string
+  ): Promise<Prisma.CustomerModel> {
+    return this.customersService.restore(id, account.organizationId!)
+  }
+
   @Delete(':id')
   @HttpCode(204)
   @Roles(Role.OWNER, Role.MANAGER)
