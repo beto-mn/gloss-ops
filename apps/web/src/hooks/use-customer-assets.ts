@@ -12,6 +12,14 @@ import type {
 
 const ASSETS_KEY = 'customer-assets'
 
+export function useAsset(id: string) {
+  return useQuery({
+    queryKey: [ASSETS_KEY, id],
+    queryFn: () => apiFetch<CustomerAsset>(`/customer-assets/${id}`),
+    enabled: !!id,
+  })
+}
+
 export function useCustomerAssets(customerId: string) {
   return useQuery({
     queryKey: [ASSETS_KEY, customerId],
@@ -41,7 +49,7 @@ export function useUpdateAsset(customerId: string) {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateVehicleValues }) =>
-      apiFetch<CustomerAsset>(`/customers/${customerId}/assets/${id}`, {
+      apiFetch<CustomerAsset>(`/customer-assets/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
@@ -56,11 +64,12 @@ export function useDeleteAsset(customerId: string) {
 
   return useMutation({
     mutationFn: (id: string) =>
-      apiFetch<void>(`/customers/${customerId}/assets/${id}`, {
+      apiFetch<void>(`/customer-assets/${id}`, {
         method: 'DELETE',
       }),
-    onSuccess() {
+    onSuccess(_, id) {
       qc.invalidateQueries({ queryKey: [ASSETS_KEY, customerId] })
+      qc.removeQueries({ queryKey: [ASSETS_KEY, id] })
     },
   })
 }
