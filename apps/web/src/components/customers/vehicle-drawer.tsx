@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 
@@ -113,7 +113,10 @@ export function VehicleDrawer({
     defaultValues,
   })
 
-  const watchedType = form.watch('assetType') as AssetType
+  const watchedType = useWatch({
+    control: form.control,
+    name: 'assetType',
+  }) as AssetType
   const brandCategory = watchedType
 
   const { data: brands = [] } = useBrands(brandCategory, open)
