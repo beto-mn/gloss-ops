@@ -10,28 +10,28 @@ Defines the requirements for the `soft-delete` capability in GlossOps.
 
 All read operations (list, find-by-id, find-by-email, find-by-phone) SHALL return only records with `status = ACTIVE`.
 
-#### Scenario: Find by ID excludes deleted records
+#### Scenario: Find by ID excludes inactive records
 
 - **WHEN** a `findById` is called for a record that has been soft-deleted
 - **THEN** the repository returns `null`
 
-#### Scenario: List excludes deleted records
+#### Scenario: List excludes inactive records
 
 - **WHEN** `findAll` is called for an organization
-- **THEN** records with `status = DELETED` are not included in the results
+- **THEN** records with `status = INACTIVE` are not included in the results
 
 ### Requirement: Soft delete via DELETE endpoint
 
-A `DELETE /:id` request without `?permanent=true` SHALL set the record's `status` to `DELETED` and return 204. The record MUST exist and be `ACTIVE`; otherwise the endpoint returns 404.
+A `DELETE /:id` request without `?permanent=true` SHALL set the record's `status` to `INACTIVE` and return 204. The record MUST exist and be `ACTIVE`; otherwise the endpoint returns 404.
 
 #### Scenario: Soft delete an active record
 
 - **WHEN** `DELETE /:id` is called on an `ACTIVE` record by an Owner or Manager
-- **THEN** the record's status becomes `DELETED` and the response is 204
+- **THEN** the record's status becomes `INACTIVE` and the response is 204
 
-#### Scenario: Soft delete an already-deleted record
+#### Scenario: Soft delete an already-inactive record
 
-- **WHEN** `DELETE /:id` is called on a `DELETED` record
+- **WHEN** `DELETE /:id` is called on an `INACTIVE` record
 - **THEN** the endpoint returns 404
 
 ### Requirement: Hard delete requires Owner role
@@ -50,11 +50,11 @@ A `DELETE /:id?permanent=true` request SHALL permanently remove the row. Only us
 
 ### Requirement: Hard delete operates regardless of status
 
-A hard delete SHALL succeed whether the target record is `ACTIVE` or `DELETED`. It MUST return 404 only if the record does not exist in the organization at all.
+A hard delete SHALL succeed whether the target record is `ACTIVE` or `INACTIVE`. It MUST return 404 only if the record does not exist in the organization at all.
 
 #### Scenario: Hard delete a previously soft-deleted record
 
-- **WHEN** an `OWNER` calls `DELETE /:id?permanent=true` on a `DELETED` record
+- **WHEN** an `OWNER` calls `DELETE /:id?permanent=true` on an `INACTIVE` record
 - **THEN** the row is permanently removed and the response is 204
 
 #### Scenario: Hard delete a non-existent record
@@ -78,7 +78,7 @@ Every new record created for `Customer` and `Organization` SHALL have `status = 
 #### Scenario: Owner soft-deletes organization
 
 - **WHEN** an `OWNER` calls `DELETE /organizations/me`
-- **THEN** the organization's status becomes `DELETED`
+- **THEN** the organization's status becomes `INACTIVE`
 
 #### Scenario: Non-Owner attempts to delete organization
 
