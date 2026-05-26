@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { ChevronDown, Search, X } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -165,9 +166,11 @@ function BrandInitial({
 }) {
   if (brand.logoUrl) {
     return (
-      <img
+      <Image
         src={brand.logoUrl}
         alt={brand.label}
+        width={size === 'sm' ? 20 : 32}
+        height={size === 'sm' ? 20 : 32}
         className={cn(
           'rounded object-contain shrink-0',
           size === 'sm' ? 'w-5 h-5' : 'w-8 h-8'
