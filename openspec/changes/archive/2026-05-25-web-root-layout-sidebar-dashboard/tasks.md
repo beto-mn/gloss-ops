@@ -56,7 +56,7 @@
 
 - [x] 11.1 Run `pnpm typecheck --filter web` — zero errors
 - [x] 11.2 Run `npx vitest --project storybook run` — stories pass (7 files, 31 tests)
-- [ ] 11.3 Start dev server (`pnpm dev --filter web`) and verify at 375px: no horizontal scroll, hamburger visible, Sheet opens, single-column stat cards
-- [ ] 11.4 Verify at 768px: stat cards in 2-column grid, Sheet still active
-- [ ] 11.5 Verify at 1024px+: persistent sidebar visible, hamburger hidden, 3-column stat cards
-- [ ] 11.6 Verify dark mode at each breakpoint: sidebar, header, and cards apply correct tokens
+- [x] 11.3 Start dev server (`pnpm dev --filter web`) and verify at 375px: no horizontal scroll, hamburger visible, Sheet opens, single-column stat cards
+- [x] 11.4 Verify at 768px: stat cards in 2-column grid, Sheet still active
+- [x] 11.5 Verify at 1024px+: persistent sidebar visible, hamburger hidden, 3-column stat cards
+- [x] 11.6 Verify dark mode at each breakpoint: sidebar, header, and cards apply correct tokens
