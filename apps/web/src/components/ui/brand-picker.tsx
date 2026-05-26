@@ -88,7 +88,10 @@ export function BrandPicker({
       </button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className='sm:max-w-md max-h-[80vh] flex flex-col gap-0 p-0'>
+        <DialogContent
+          className='sm:max-w-md max-h-[80vh] flex flex-col gap-0 p-0'
+          aria-describedby={undefined}
+        >
           <DialogHeader className='px-4 pt-4 pb-3 border-b'>
             <DialogTitle>Seleccionar marca</DialogTitle>
           </DialogHeader>

@@ -3,7 +3,11 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { getAccessToken } from '@/lib/api-client'
+import {
+  getAccessToken,
+  getOrganizationId,
+  clearTokens,
+} from '@/lib/api-client'
 
 // useLayoutEffect fires before the browser paints so the redirect happens
 // without a visible flash. On the server useLayoutEffect is not available,
@@ -20,14 +24,15 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   useIsomorphicLayoutEffect(() => {
     setMounted(true)
-    if (!getAccessToken()) {
+    if (!getAccessToken() || !getOrganizationId()) {
+      clearTokens()
       router.replace('/login')
     }
   }, [])
 
   // Only hide content after mount confirms there is no token.
   // Before mount (SSR + first client frame) always render to avoid mismatch.
-  if (mounted && !getAccessToken()) return null
+  if (mounted && (!getAccessToken() || !getOrganizationId())) return null
 
   return <>{children}</>
 }

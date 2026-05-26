@@ -231,7 +231,10 @@ export default function CustomerDetailPage() {
                 assets.data.map(asset => (
                   <tr
                     key={asset.id}
-                    className='hover:bg-muted/30 transition-colors'
+                    className='hover:bg-muted/30 transition-colors cursor-pointer'
+                    onClick={() =>
+                      router.push(`/customers/${id}/vehicles/${asset.id}`)
+                    }
                   >
                     <td className='px-4 py-3'>
                       {ASSET_TYPE_LABELS[asset.assetType] ??

@@ -41,7 +41,10 @@ export function Combobox({
 
   function handleFocus() {
     setInputValue('')
-    setOpen(true)
+  }
+
+  function handleClick() {
+    if (!disabled && !open) setOpen(true)
   }
 
   function handleBlur() {
@@ -74,7 +77,11 @@ export function Combobox({
           placeholder={placeholder}
           disabled={disabled}
           className='flex-1 h-10 text-sm bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50'
-          onChange={e => setInputValue(e.target.value)}
+          onChange={e => {
+            setInputValue(e.target.value)
+            if (!open) setOpen(true)
+          }}
+          onClick={handleClick}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />
