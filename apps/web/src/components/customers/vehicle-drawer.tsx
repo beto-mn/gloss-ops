@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
@@ -85,12 +85,12 @@ interface VehicleDrawerProps {
   asset?: CustomerAsset
 }
 
-const defaultValues: CreateVehicleValues = {
-  assetType: 'VEHICLE',
+const defaultValues = {
+  assetType: '' as AssetType,
   customAssetType: '',
   brandId: '',
   model: '',
-  year: undefined,
+  year: undefined as number | undefined,
   identifier: '',
   country: '',
   color: '',
@@ -123,8 +123,11 @@ export function VehicleDrawer({
     [brands]
   )
 
+  const skipBrandResetRef = useRef(false)
+
   useEffect(() => {
     if (open) {
+      skipBrandResetRef.current = true
       form.reset(
         asset
           ? {
@@ -138,13 +141,17 @@ export function VehicleDrawer({
               color: asset.color ?? '',
               note: asset.note ?? '',
             }
-          : defaultValues
+          : { ...defaultValues, year: new Date().getFullYear() }
       )
     }
   }, [open, asset, form])
 
-  // Reset brandId when asset type changes (incompatible category)
+  // Reset brandId when type changes, but skip on initial form open
   useEffect(() => {
+    if (skipBrandResetRef.current) {
+      skipBrandResetRef.current = false
+      return
+    }
     form.setValue('brandId', '')
   }, [watchedType, form])
 
@@ -240,7 +247,7 @@ export function VehicleDrawer({
                       value={field.value ?? ''}
                       onChange={field.onChange}
                       placeholder='Seleccionar marca…'
-                      disabled={isPending}
+                      disabled={!watchedType || isPending}
                     />
                   </FormControl>
                   <FormMessage />
