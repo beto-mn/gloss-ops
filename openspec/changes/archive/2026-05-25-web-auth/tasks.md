@@ -70,19 +70,19 @@
 
 - [x] 10.1 Crear `src/components/auth/login-form.stories.tsx` con stories: `Default`, `Loading`, `WithError`
 - [x] 10.2 Crear `src/components/auth/register-form.stories.tsx` con stories: `Default`, `Loading`, `WithError`
-- [ ] 10.3 Verificar que las stories rendericen correctamente en Storybook con los tokens CSS aplicados (verificación manual)
+- [x] 10.3 Verificar que las stories rendericen correctamente en Storybook con los tokens CSS aplicados (verificación manual)
 
 ## 11. Verificación
 
 - [x] 11.1 Ejecutar `pnpm build` — confirmar que el build TypeScript pasa limpio
 - [x] 11.2 Navegar a `http://localhost:3001/login` — confirmar que la página renderiza
 - [x] 11.3 Navegar a `http://localhost:3001/register` — confirmar que la página renderiza
-- [ ] 11.4 Probar validación cliente en login: email inválido y password corto — confirmar errores inline (manual)
-- [ ] 11.5 Probar validación cliente en register: confirmPassword no coincide — confirmar error inline (manual)
-- [ ] 11.6 Probar login con credenciales incorrectas — confirmar mensaje de error y password limpio (manual)
-- [ ] 11.7 Probar login exitoso — confirmar ambos tokens en `localStorage` y redirect a `/dashboard` (manual)
-- [ ] 11.8 Probar register exitoso — confirmar ambos tokens en `localStorage` y redirect a `/dashboard` (manual)
-- [ ] 11.9 Probar sign out — confirmar que llama a `POST /auth/logout`, limpia tokens y redirige a `/login` (manual)
-- [ ] 11.10 Simular access token expirado — confirmar que el interceptor llama al refresh y reintenta (manual)
-- [ ] 11.11 Simular refresh token expirado — confirmar redirect a `/login` y tokens limpiados (manual)
-- [ ] 11.12 Verificar en dark mode que la paleta Gulf Racing se aplica correctamente (manual)
+- [x] 11.4 Probar validación cliente en login: email inválido y password corto — confirmar errores inline (manual)
+- [x] 11.5 Probar validación cliente en register: confirmPassword no coincide — confirmar error inline (manual)
+- [x] 11.6 Probar login con credenciales incorrectas — confirmar mensaje de error y password limpio (manual)
+- [x] 11.7 Probar login exitoso — confirmar ambos tokens en `localStorage` y redirect a `/dashboard` (manual)
+- [x] 11.8 Probar register exitoso — confirmar ambos tokens en `localStorage` y redirect a `/dashboard` (manual)
+- [x] 11.9 Probar sign out — confirmar que llama a `POST /auth/logout`, limpia tokens y redirige a `/login` (manual)
+- [x] 11.10 Simular access token expirado — confirmar que el interceptor llama al refresh y reintenta (manual)
+- [x] 11.11 Simular refresh token expirado — confirmar redirect a `/login` y tokens limpiados (manual)
+- [x] 11.12 Verificar en dark mode que la paleta Gulf Racing se aplica correctamente (manual)
