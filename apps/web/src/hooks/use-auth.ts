@@ -30,14 +30,10 @@ interface OrganizationWithRole {
 
 async function storeOrgAfterAuth(tokens: AuthResponse): Promise<void> {
   setTokens(tokens.accessToken, tokens.refreshToken)
-  try {
-    const orgs = await apiFetch<OrganizationWithRole[]>('/organizations')
-    if (orgs.length > 0) {
-      setOrganizationId(orgs[0].id)
-      setUserRole(orgs[0].role)
-    }
-  } catch {
-    // non-blocking — org ID and role can be retried on next load
+  const orgs = await apiFetch<OrganizationWithRole[]>('/organizations')
+  if (orgs.length > 0) {
+    setOrganizationId(orgs[0].id)
+    setUserRole(orgs[0].role)
   }
 }
 
