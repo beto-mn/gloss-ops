@@ -5,6 +5,7 @@ import type { AuthContext } from '@auth/interfaces'
 
 import { InvoicesController } from './invoices.controller'
 import { InvoicesService } from './invoices.service'
+import type { CreateInvoiceDto, ListInvoicesDto, UpdateInvoiceDto } from './dto'
 
 const makeAccount = (role: Role): AuthContext => ({
   sub: 'acc-1',
@@ -45,8 +46,8 @@ describe('InvoicesController', () => {
 
   describe('create', () => {
     it('calls service.create with branchId, organizationId, dto, and accountId', async () => {
-      const dto = { workOrderId: 'wo-1' }
-      await controller.create(OWNER, dto as any)
+      const dto: CreateInvoiceDto = { workOrderId: 'wo-1' }
+      await controller.create(OWNER, dto)
       expect(service.create).toHaveBeenCalledWith(
         'branch-1',
         'org-1',
@@ -58,8 +59,8 @@ describe('InvoicesController', () => {
 
   describe('findAll', () => {
     it('calls service.findAll with branchId and dto', async () => {
-      const dto = { page: 1, limit: 20 }
-      await controller.findAll(OWNER, dto as any)
+      const dto: ListInvoicesDto = { page: 1, limit: 20 }
+      await controller.findAll(OWNER, dto)
       expect(service.findAll).toHaveBeenCalledWith('branch-1', dto)
     })
   })
@@ -73,8 +74,8 @@ describe('InvoicesController', () => {
 
   describe('update', () => {
     it('calls service.update with id, branchId, and dto', async () => {
-      const dto = { customerName: 'Empresa SA' }
-      await controller.update('inv-1', OWNER, dto as any)
+      const dto: UpdateInvoiceDto = { customerName: 'Empresa SA' }
+      await controller.update('inv-1', OWNER, dto)
       expect(service.update).toHaveBeenCalledWith('inv-1', 'branch-1', dto)
     })
   })

@@ -9,6 +9,7 @@ import {
 import { InMemoryInvoiceRepository } from './infrastructure/in-memory-invoice.repository'
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
 import { WorkOrdersService } from '../work-orders/work-orders.service'
+import type { WorkOrderWithItems } from '../work-orders/interfaces'
 import { INVOICE_REPOSITORY } from './invoices.tokens'
 import { InvoicesService } from './invoices.service'
 import type { InvoiceRecord } from './interfaces'
@@ -106,7 +107,9 @@ describe('InvoicesService', () => {
 
   describe('create', () => {
     it('creates invoice in DRAFT with correct folio and computed totals', async () => {
-      workOrdersService.findOne.mockResolvedValue(makeWoRecord() as any)
+      workOrdersService.findOne.mockResolvedValue(
+        makeWoRecord() as unknown as WorkOrderWithItems
+      )
       repo.seedWorkOrder(WO_ID, makeWoEmbed())
 
       const result = await service.create(
@@ -125,7 +128,9 @@ describe('InvoicesService', () => {
     })
 
     it('records activity log on creation', async () => {
-      workOrdersService.findOne.mockResolvedValue(makeWoRecord() as any)
+      workOrdersService.findOne.mockResolvedValue(
+        makeWoRecord() as unknown as WorkOrderWithItems
+      )
       repo.seedWorkOrder(WO_ID, makeWoEmbed())
       activityLogs.record.mockResolvedValue(undefined)
 
@@ -150,7 +155,7 @@ describe('InvoicesService', () => {
       workOrdersService.findOne.mockResolvedValue({
         ...makeWoRecord(),
         branchId: 'other-branch',
-      } as any)
+      } as unknown as WorkOrderWithItems)
 
       await expect(
         service.create(BRANCH_ID, ORG_ID, { workOrderId: WO_ID }, ACCOUNT_ID)
@@ -168,7 +173,9 @@ describe('InvoicesService', () => {
     })
 
     it('throws 409 invoice_already_exists when WO already has an invoice', async () => {
-      workOrdersService.findOne.mockResolvedValue(makeWoRecord() as any)
+      workOrdersService.findOne.mockResolvedValue(
+        makeWoRecord() as unknown as WorkOrderWithItems
+      )
       seedInvoice(repo)
 
       await expect(
