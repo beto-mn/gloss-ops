@@ -174,7 +174,10 @@ export function VehicleDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='w-full sm:max-w-lg overflow-y-auto'>
+      <SheetContent
+        className='w-full sm:max-w-lg overflow-y-auto'
+        aria-describedby={undefined}
+      >
         <SheetHeader className='mb-6'>
           <SheetTitle>
             {isEdit ? 'Editar vehículo' : 'Agregar vehículo'}

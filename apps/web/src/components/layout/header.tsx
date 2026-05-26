@@ -7,7 +7,7 @@ import { Menu, Sun, Moon, LogOut } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Sidebar } from '@/components/layout/sidebar'
 import { useLogout } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
@@ -126,7 +126,12 @@ export function Header() {
 
       {/* Mobile sidebar Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side='left' className='p-0 w-64'>
+        <SheetContent
+          side='left'
+          className='p-0 w-64'
+          aria-describedby={undefined}
+        >
+          <SheetTitle className='sr-only'>Navegación</SheetTitle>
           <Sidebar forceExpanded onNavClick={() => setSheetOpen(false)} />
         </SheetContent>
       </Sheet>
