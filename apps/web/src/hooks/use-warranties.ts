@@ -13,3 +13,12 @@ export function useAssetWarranties(assetId: string) {
     enabled: !!assetId,
   })
 }
+
+export function useWorkOrderWarranties(workOrderId: string) {
+  return useQuery({
+    queryKey: ['warranties', 'work-order', workOrderId],
+    queryFn: () =>
+      apiFetch<Warranty[]>(`/work-orders/${workOrderId}/warranties`),
+    enabled: !!workOrderId,
+  })
+}

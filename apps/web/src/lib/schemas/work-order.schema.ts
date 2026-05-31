@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 export type WorkOrderStatus =
   | 'DRAFT'
   | 'CONFIRMED'
@@ -12,12 +14,80 @@ export interface WorkOrder {
   folio: string
   status: WorkOrderStatus
   type: WorkOrderType
+  scheduledAt: string | null
   createdAt: string
   completedAt: string | null
 }
 
+export interface WorkOrderListItem extends WorkOrder {
+  customer: {
+    id: string
+    firstName: string
+    lastName: string
+  }
+  asset: {
+    id: string
+    assetType: string
+    customAssetType: string | null
+    model: string | null
+    identifier: string | null
+  }
+}
+
+export interface WorkOrderItem {
+  id: string
+  serviceId: string
+  serviceName: string
+  quantity: number
+  unitPrice: number
+  subtotal: number
+  note: string | null
+}
+
+export interface WorkOrderAssignment {
+  id: string
+  accountId: string
+  role: 'LEAD' | 'ASSISTANT'
+  account: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
+  assignedAt: string
+}
+
+export interface WorkOrderCheckpoint {
+  id: string
+  type: 'RECEPTION' | 'DELIVERY'
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkOrderDetail extends WorkOrder {
+  note: string | null
+  customerId: string
+  assetId: string
+  customer: {
+    id: string
+    firstName: string
+    lastName: string
+  }
+  asset: {
+    id: string
+    assetType: string
+    customAssetType: string | null
+    model: string | null
+    identifier: string | null
+    brandName: string | null
+  }
+  items: WorkOrderItem[]
+  total: number
+}
+
 export interface WorkOrderPage {
-  data: WorkOrder[]
+  data: WorkOrderListItem[]
   meta: {
     page: number
     limit: number
@@ -27,3 +97,41 @@ export interface WorkOrderPage {
     hasPrev: boolean
   }
 }
+
+export interface WorkOrderListParams {
+  status?: WorkOrderStatus | 'ALL'
+  assetId?: string
+  customerId?: string
+  search?: string
+  page?: number
+  limit?: number
+}
+
+export const createWorkOrderItemSchema = z.object({
+  serviceId: z.string().min(1, 'Selecciona un servicio'),
+  quantity: z.coerce.number().int().min(1, 'Mínimo 1'),
+  unitPrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
+  note: z.string().optional().or(z.literal('')),
+})
+
+export const createWorkOrderSchema = z.object({
+  customerId: z.string().min(1, 'Selecciona un cliente'),
+  assetId: z.string().min(1, 'Selecciona un activo'),
+  type: z.enum(['STANDARD', 'WARRANTY_CLAIM']),
+  scheduledAt: z.string().optional().or(z.literal('')),
+  note: z.string().optional().or(z.literal('')),
+  items: z
+    .array(createWorkOrderItemSchema)
+    .min(1, 'Agrega al menos un servicio'),
+})
+
+export const updateWorkOrderSchema = z.object({
+  scheduledAt: z.string().optional().or(z.literal('')),
+  note: z.string().optional().or(z.literal('')),
+})
+
+export type CreateWorkOrderValues = z.infer<typeof createWorkOrderSchema>
+export type UpdateWorkOrderValues = z.infer<typeof updateWorkOrderSchema>
+export type CreateWorkOrderItemValues = z.infer<
+  typeof createWorkOrderItemSchema
+>

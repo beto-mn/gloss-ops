@@ -2,6 +2,7 @@ export interface Warranty {
   id: string
   workOrderItemId: string
   serviceId: string
+  serviceName?: string
   description: string
   term: string | null
   validFrom: string
