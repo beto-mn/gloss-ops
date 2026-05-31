@@ -14,6 +14,7 @@ interface ComboboxProps {
   options: ComboboxOption[]
   value: string
   onChange: (value: string) => void
+  onSearch?: (value: string) => void
   placeholder?: string
   disabled?: boolean
   className?: string
@@ -23,6 +24,7 @@ export function Combobox({
   options,
   value,
   onChange,
+  onSearch,
   placeholder = 'Buscar…',
   disabled = false,
   className,
@@ -79,6 +81,7 @@ export function Combobox({
           className='flex-1 h-10 text-sm bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50'
           onChange={e => {
             setInputValue(e.target.value)
+            onSearch?.(e.target.value)
             if (!open) setOpen(true)
           }}
           onClick={handleClick}
