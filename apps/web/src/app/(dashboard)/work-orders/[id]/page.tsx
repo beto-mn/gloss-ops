@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import {
@@ -198,7 +198,7 @@ function CheckpointDrawer({
     },
   })
 
-  const watchedType = form.watch('type')
+  const watchedType = useWatch({ control: form.control, name: 'type' })
 
   const [photos, setPhotos] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -206,6 +206,7 @@ function CheckpointDrawer({
 
   useEffect(() => {
     const urls = photos.map(f => URL.createObjectURL(f))
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreviews(urls)
     return () => urls.forEach(u => URL.revokeObjectURL(u))
   }, [photos])
@@ -218,7 +219,9 @@ function CheckpointDrawer({
         generalCondition: checkpoint?.generalCondition ?? 'GOOD',
         note: checkpoint?.note ?? '',
       })
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhotos([])
+
       setCheckpointError(null)
     }
   }, [open, checkpoint, form])
@@ -350,6 +353,7 @@ function CheckpointDrawer({
               <div className='grid grid-cols-3 gap-2 mt-1'>
                 {previews.map((url, i) => (
                   <div key={i} className='relative group aspect-square'>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={url}
                       alt=''
