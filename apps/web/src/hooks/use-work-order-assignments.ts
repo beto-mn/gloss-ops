@@ -20,7 +20,7 @@ export function useAssignTechnician(workOrderId: string) {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { accountId: string; role: 'LEAD' | 'ASSISTANT' }) =>
+    mutationFn: (data: { memberId: string; role: 'LEAD' | 'ASSISTANT' }) =>
       apiFetch<WorkOrderAssignment>(`/work-orders/${workOrderId}/assignments`, {
         method: 'POST',
         body: JSON.stringify(data),

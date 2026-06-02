@@ -64,6 +64,14 @@ export default function NewWorkOrderPage() {
     return () => clearTimeout(t)
   }, [customerSearch])
 
+  const [serviceSearch, setServiceSearch] = useState('')
+  const [debouncedServiceSearch, setDebouncedServiceSearch] = useState('')
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedServiceSearch(serviceSearch), 300)
+    return () => clearTimeout(t)
+  }, [serviceSearch])
+
   const form = useForm<CreateWorkOrderValues>({
     resolver: zodResolver(createWorkOrderSchema),
     defaultValues: {
@@ -105,8 +113,11 @@ export default function NewWorkOrderPage() {
   // If prefilled asset, load for display
   const { data: prefillAsset } = useAsset(prefillAssetId)
 
-  // Services list
-  const { data: services } = useServices()
+  // Services list — server-side search, same pattern as customers
+  const { data: services, isLoading: servicesLoading } = useServices({
+    search: debouncedServiceSearch || undefined,
+    limit: 20,
+  })
 
   const customerOptions = prefillCustomerId
     ? prefillCustomer
@@ -297,6 +308,10 @@ export default function NewWorkOrderPage() {
                     <FormControl>
                       <Input
                         type='date'
+                        min={(() => {
+                          const d = new Date()
+                          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                        })()}
                         disabled={createWO.isPending}
                         {...field}
                       />
@@ -396,11 +411,16 @@ export default function NewWorkOrderPage() {
                                       if (svc) {
                                         form.setValue(
                                           `items.${index}.unitPrice`,
-                                          svc.price
+                                          Number(svc.basePrice)
                                         )
                                       }
                                     }}
-                                    placeholder='Seleccionar servicio…'
+                                    onSearch={setServiceSearch}
+                                    placeholder={
+                                      servicesLoading
+                                        ? 'Cargando servicios…'
+                                        : 'Seleccionar servicio…'
+                                    }
                                     disabled={createWO.isPending}
                                   />
                                 </FormControl>
