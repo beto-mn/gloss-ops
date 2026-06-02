@@ -4,8 +4,15 @@ export interface WorkOrderAssignmentRecord {
   id: string
   workOrderId: string
   memberId: string
+  accountId: string
   role: AssignmentRole
   assignedAt: Date
+  account: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
 }
 
 export interface CreateWorkOrderAssignmentData {
