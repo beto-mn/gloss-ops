@@ -140,6 +140,12 @@ export async function apiFetch<T>(
     throw new ApiError(retryRes.status, typed.error ?? typed.message)
   }
 
+  if (
+    retryRes.status === 204 ||
+    retryRes.headers.get('content-length') === '0'
+  ) {
+    return undefined as T
+  }
   return retryRes.json() as Promise<T>
 }
 

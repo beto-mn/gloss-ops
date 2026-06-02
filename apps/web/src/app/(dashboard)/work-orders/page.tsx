@@ -94,8 +94,11 @@ function StatusBadge({ status }: { status: WorkOrderStatus }) {
 
 export default function WorkOrdersPage() {
   const router = useRouter()
-  const role = getUserRole() ?? ''
-  const canManage = ['OWNER', 'MANAGER'].includes(role)
+  const [role, setRole] = useState<string | null>(null)
+  useEffect(() => {
+    setRole(getUserRole())
+  }, [])
+  const canManage = ['OWNER', 'MANAGER'].includes(role ?? '')
   const isOwner = role === 'OWNER'
 
   const [tab, setTab] = useState<TabValue>('ALL')

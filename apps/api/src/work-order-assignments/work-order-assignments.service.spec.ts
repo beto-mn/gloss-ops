@@ -5,7 +5,7 @@ import {
   WorkOrderStatus,
 } from '@glossops/database'
 
-import type { WorkOrderWithItems } from '@work-orders/interfaces'
+import type { WorkOrderDetail } from '@work-orders/interfaces'
 
 import { InMemoryWorkOrderAssignmentRepository } from './infrastructure/in-memory-work-order-assignment.repository'
 import { WORK_ORDER_ASSIGNMENT_REPOSITORY } from './work-order-assignments.tokens'
@@ -23,17 +23,17 @@ const activeWo = {
   id: WO_ID,
   status: WorkOrderStatus.IN_PROGRESS,
   branchId: BRANCH_ID,
-} as unknown as WorkOrderWithItems
+} as unknown as WorkOrderDetail
 const completedWo = {
   id: WO_ID,
   status: WorkOrderStatus.COMPLETED,
   branchId: BRANCH_ID,
-} as unknown as WorkOrderWithItems
+} as unknown as WorkOrderDetail
 const cancelledWo = {
   id: WO_ID,
   status: WorkOrderStatus.CANCELLED,
   branchId: BRANCH_ID,
-} as unknown as WorkOrderWithItems
+} as unknown as WorkOrderDetail
 
 const baseDto = { memberId: MEMBER_ID }
 

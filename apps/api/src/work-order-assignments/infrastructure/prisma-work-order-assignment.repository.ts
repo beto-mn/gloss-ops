@@ -7,23 +7,17 @@ import type {
   WorkOrderAssignmentRecord,
 } from '@work-order-assignments/interfaces'
 
-type PrismaAssignmentRow = Awaited<
-  ReturnType<PrismaService['workOrderAssignment']['findUniqueOrThrow']>
->
+const accountSelect = {
+  select: { id: true, firstName: true, lastName: true, email: true },
+} as const
+
+const memberInclude = {
+  include: { account: accountSelect },
+} as const
 
 @Injectable()
 export class PrismaWorkOrderAssignmentRepository implements WorkOrderAssignmentRepositoryInterface {
   constructor(private readonly prisma: PrismaService) {}
-
-  private toRecord(row: PrismaAssignmentRow): WorkOrderAssignmentRecord {
-    return {
-      id: row.id,
-      workOrderId: row.workOrderId,
-      memberId: row.memberId,
-      role: row.role,
-      assignedAt: row.assignedAt,
-    }
-  }
 
   async create(
     data: CreateWorkOrderAssignmentData
@@ -34,8 +28,22 @@ export class PrismaWorkOrderAssignmentRepository implements WorkOrderAssignmentR
         memberId: data.memberId,
         role: data.role,
       },
+      include: { member: memberInclude },
     })
-    return this.toRecord(row)
+    return {
+      id: row.id,
+      workOrderId: row.workOrderId,
+      memberId: row.memberId,
+      accountId: row.member.account.id,
+      role: row.role,
+      assignedAt: row.assignedAt,
+      account: {
+        id: row.member.account.id,
+        firstName: row.member.account.firstName,
+        lastName: row.member.account.lastName,
+        email: row.member.account.email,
+      },
+    }
   }
 
   async findAllByWorkOrder(
@@ -44,15 +52,44 @@ export class PrismaWorkOrderAssignmentRepository implements WorkOrderAssignmentR
     const rows = await this.prisma.workOrderAssignment.findMany({
       where: { workOrderId },
       orderBy: { assignedAt: 'asc' },
+      include: { member: memberInclude },
     })
-    return rows.map(r => this.toRecord(r))
+    return rows.map(r => ({
+      id: r.id,
+      workOrderId: r.workOrderId,
+      memberId: r.memberId,
+      accountId: r.member.account.id,
+      role: r.role,
+      assignedAt: r.assignedAt,
+      account: {
+        id: r.member.account.id,
+        firstName: r.member.account.firstName,
+        lastName: r.member.account.lastName,
+        email: r.member.account.email,
+      },
+    }))
   }
 
   async findById(id: string): Promise<WorkOrderAssignmentRecord | null> {
     const row = await this.prisma.workOrderAssignment.findUnique({
       where: { id },
+      include: { member: memberInclude },
     })
-    return row ? this.toRecord(row) : null
+    if (!row) return null
+    return {
+      id: row.id,
+      workOrderId: row.workOrderId,
+      memberId: row.memberId,
+      accountId: row.member.account.id,
+      role: row.role,
+      assignedAt: row.assignedAt,
+      account: {
+        id: row.member.account.id,
+        firstName: row.member.account.firstName,
+        lastName: row.member.account.lastName,
+        email: row.member.account.email,
+      },
+    }
   }
 
   async existsByWorkOrderAndMember(

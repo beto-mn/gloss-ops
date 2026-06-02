@@ -8,11 +8,15 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import {
   ChevronRight,
+  ChevronDown,
   Pencil,
   Trash2,
   Plus,
   Loader2,
   UserPlus,
+  Camera,
+  X,
+  AlertCircle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -104,6 +108,7 @@ const ASSIGNMENT_ROLE_LABELS: Record<string, string> = {
 
 const CHECKPOINT_TYPE_LABELS: Record<string, string> = {
   RECEPTION: 'Recepción',
+  PROCESS: 'Proceso',
   DELIVERY: 'Entrega',
 }
 
@@ -179,30 +184,80 @@ function CheckpointDrawer({
   const update = useUpdateCheckpoint(workOrderId)
   const isPending = create.isPending || update.isPending
 
-  const form = useForm<{ type: 'RECEPTION' | 'DELIVERY'; notes: string }>({
-    defaultValues: { type: 'RECEPTION', notes: '' },
+  const form = useForm<{
+    type: 'RECEPTION' | 'PROCESS' | 'DELIVERY'
+    processType: string
+    generalCondition: string
+    note: string
+  }>({
+    defaultValues: {
+      type: 'RECEPTION',
+      processType: '',
+      generalCondition: 'GOOD',
+      note: '',
+    },
   })
+
+  const watchedType = form.watch('type')
+
+  const [photos, setPhotos] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [checkpointError, setCheckpointError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const urls = photos.map(f => URL.createObjectURL(f))
+    setPreviews(urls)
+    return () => urls.forEach(u => URL.revokeObjectURL(u))
+  }, [photos])
 
   useEffect(() => {
     if (open) {
       form.reset({
         type: checkpoint?.type ?? 'RECEPTION',
-        notes: checkpoint?.notes ?? '',
+        processType: checkpoint?.processType ?? '',
+        generalCondition: checkpoint?.generalCondition ?? 'GOOD',
+        note: checkpoint?.note ?? '',
       })
+      setPhotos([])
+      setCheckpointError(null)
     }
   }, [open, checkpoint, form])
 
   async function handleSave() {
-    const { type, notes } = form.getValues()
+    const { type, processType, generalCondition, note } = form.getValues()
+    if (type === 'PROCESS' && !processType.trim()) return
+    setCheckpointError(null)
     try {
       if (isEdit && checkpoint) {
-        await update.mutateAsync({ id: checkpoint.id, data: { notes } })
+        await update.mutateAsync({
+          id: checkpoint.id,
+          data: { note: note || undefined },
+        })
       } else {
-        await create.mutateAsync({ type, notes: notes || undefined })
+        await create.mutateAsync({
+          type,
+          processType: type === 'PROCESS' ? processType : undefined,
+          generalCondition,
+          note: note || undefined,
+        })
       }
       onOpenChange(false)
     } catch (err) {
-      if (!(err instanceof ApiError)) console.error(err)
+      if (err instanceof ApiError) {
+        if (err.message === 'checkpoint_already_exists') {
+          setCheckpointError(
+            'Ya existe un checkpoint de este tipo para esta orden.'
+          )
+        } else if (err.message === 'delivery_requires_reception') {
+          setCheckpointError(
+            'No se puede registrar la entrega sin haber registrado la recepción primero.'
+          )
+        } else {
+          setCheckpointError('Ocurrió un error al guardar el checkpoint.')
+        }
+      } else {
+        console.error(err)
+      }
     }
   }
 
@@ -228,21 +283,99 @@ function CheckpointDrawer({
                 className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
               >
                 <option value='RECEPTION'>Recepción</option>
+                <option value='PROCESS'>Proceso</option>
                 <option value='DELIVERY'>Entrega</option>
               </select>
             </div>
           )}
 
+          {!isEdit && watchedType === 'PROCESS' && (
+            <div className='flex flex-col gap-1.5'>
+              <label className='text-sm font-medium'>¿Qué proceso? *</label>
+              <input
+                {...form.register('processType')}
+                disabled={isPending}
+                placeholder='Ej: Lavado, Aplicación de vinil, Pulido…'
+                className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+              />
+            </div>
+          )}
+
+          <div className='flex flex-col gap-1.5'>
+            <label className='text-sm font-medium'>Condición general *</label>
+            <select
+              {...form.register('generalCondition')}
+              disabled={isPending}
+              className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+            >
+              <option value='EXCELLENT'>Excelente</option>
+              <option value='GOOD'>Bueno</option>
+              <option value='FAIR'>Regular</option>
+              <option value='POOR'>Malo</option>
+            </select>
+          </div>
+
           <div className='flex flex-col gap-1.5'>
             <label className='text-sm font-medium'>Notas</label>
             <textarea
               rows={4}
-              {...form.register('notes')}
+              {...form.register('note')}
               disabled={isPending}
               placeholder='Observaciones del checkpoint…'
               className='flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 resize-none'
             />
           </div>
+
+          <div className='flex flex-col gap-1.5'>
+            <label className='text-sm font-medium'>Fotos</label>
+            <label className='flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border px-4 py-5 cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors'>
+              <Camera size={20} className='text-muted-foreground' />
+              <span className='text-xs text-muted-foreground'>
+                Haz clic para agregar fotos
+              </span>
+              <input
+                type='file'
+                accept='image/*'
+                multiple
+                className='sr-only'
+                disabled={isPending}
+                onChange={e => {
+                  const files = Array.from(e.target.files ?? [])
+                  if (files.length) setPhotos(prev => [...prev, ...files])
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            {previews.length > 0 && (
+              <div className='grid grid-cols-3 gap-2 mt-1'>
+                {previews.map((url, i) => (
+                  <div key={i} className='relative group aspect-square'>
+                    <img
+                      src={url}
+                      alt=''
+                      className='w-full h-full object-cover rounded-md border border-border'
+                    />
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setPhotos(prev => prev.filter((_, j) => j !== i))
+                      }
+                      className='absolute top-1 right-1 rounded-full bg-background/80 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity'
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {checkpointError && (
+            <p className='text-sm text-destructive flex items-center gap-1.5'>
+              <AlertCircle size={14} />
+              {checkpointError}
+            </p>
+          )}
 
           <div className='flex justify-end gap-3 pt-2'>
             <Button
@@ -409,9 +542,12 @@ export default function WorkOrderDetailPage() {
   const params = useParams()
   const id = params.id as string
 
-  const role = getUserRole() ?? ''
-  const canManage = ['OWNER', 'MANAGER'].includes(role)
-  const canStart = ['OWNER', 'MANAGER', 'TECHNICIAN'].includes(role)
+  const [role, setRole] = useState<string | null>(null)
+  useEffect(() => {
+    setRole(getUserRole())
+  }, [])
+  const canManage = ['OWNER', 'MANAGER'].includes(role ?? '')
+  const canStart = ['OWNER', 'MANAGER', 'TECHNICIAN'].includes(role ?? '')
 
   const { data: wo, isLoading } = useWorkOrder(id)
   const { data: assignments } = useWorkOrderAssignments(id)
@@ -437,6 +573,7 @@ export default function WorkOrderDetailPage() {
   const [invoiceDrawerOpen, setInvoiceDrawerOpen] = useState(false)
 
   // Assignment form state
+  const [assignFormOpen, setAssignFormOpen] = useState(false)
   const [assignAccountId, setAssignAccountId] = useState('')
   const [assignRole, setAssignRole] = useState<'LEAD' | 'ASSISTANT'>('LEAD')
 
@@ -459,10 +596,12 @@ export default function WorkOrderDetailPage() {
     if (!assignAccountId) return
     try {
       await assignTech.mutateAsync({
-        accountId: assignAccountId,
+        memberId: assignAccountId,
         role: assignRole,
       })
       setAssignAccountId('')
+      setAssignRole('LEAD')
+      setAssignFormOpen(false)
     } catch (err) {
       if (!(err instanceof ApiError)) console.error(err)
     }
@@ -490,12 +629,22 @@ export default function WorkOrderDetailPage() {
     }
   }
 
+  // Confirm guard: need at least one assignment + RECEPTION checkpoint
+  const hasAssignment = (assignments ?? []).length > 0
+  const hasReceptionCheckpoint = (checkpoints ?? []).some(
+    cp => cp.type === 'RECEPTION'
+  )
+  const canConfirmOrder = hasAssignment && hasReceptionCheckpoint
+
+  // Complete guard: need at least 2 checkpoints
+  const canCompleteOrder = (checkpoints ?? []).length >= 2
+
   // Members that are not already assigned
   const assignedIds = new Set((assignments ?? []).map(a => a.accountId))
   const memberOptions = (members ?? [])
     .filter(m => !assignedIds.has(m.account.id))
     .map(m => ({
-      value: m.account.id,
+      value: m.id,
       label: `${m.account.firstName} ${m.account.lastName}`,
     }))
 
@@ -562,7 +711,17 @@ export default function WorkOrderDetailPage() {
               <Button
                 size='sm'
                 onClick={() => doTransition('CONFIRMED')}
-                disabled={transition.isPending}
+                disabled={transition.isPending || !canConfirmOrder}
+                title={
+                  !canConfirmOrder
+                    ? [
+                        !hasAssignment && 'asigna un técnico',
+                        !hasReceptionCheckpoint && 'registra la recepción',
+                      ]
+                        .filter(Boolean)
+                        .join(' y ')
+                    : undefined
+                }
               >
                 {transition.isPending ? (
                   <Loader2 size={14} className='animate-spin' />
@@ -577,6 +736,19 @@ export default function WorkOrderDetailPage() {
               >
                 Cancelar orden
               </Button>
+              {!canConfirmOrder && (
+                <p className='text-xs text-muted-foreground flex items-center gap-1 w-full mt-1'>
+                  <AlertCircle size={12} />
+                  Para confirmar:{' '}
+                  {[
+                    !hasAssignment && 'asigna un técnico',
+                    !hasReceptionCheckpoint &&
+                      'registra la recepción del vehículo',
+                  ]
+                    .filter(Boolean)
+                    .join(' y ')}
+                </p>
+              )}
             </>
           )}
 
@@ -612,13 +784,19 @@ export default function WorkOrderDetailPage() {
               <Button
                 size='sm'
                 onClick={() => doTransition('COMPLETED')}
-                disabled={transition.isPending}
+                disabled={transition.isPending || !canCompleteOrder}
               >
                 {transition.isPending ? (
                   <Loader2 size={14} className='animate-spin' />
                 ) : null}
                 Completar orden
               </Button>
+              {!canCompleteOrder && (
+                <p className='text-xs text-muted-foreground flex items-center gap-1 w-full mt-1'>
+                  <AlertCircle size={12} />
+                  Registra al menos 2 checkpoints para completar la orden
+                </p>
+              )}
               <Button
                 size='sm'
                 variant='outline'
@@ -769,50 +947,94 @@ export default function WorkOrderDetailPage() {
       {/* Assignments section */}
       {!isCancelled && (
         <section className='flex flex-col gap-4'>
-          <h3 className='text-base font-semibold'>Técnicos asignados</h3>
-
-          {canManage && memberOptions.length > 0 && (
-            <div className='flex items-end gap-3 flex-wrap'>
-              <div className='flex-1 min-w-48'>
-                <label className='text-xs font-medium text-muted-foreground mb-1.5 block'>
-                  Técnico
-                </label>
-                <Combobox
-                  options={memberOptions}
-                  value={assignAccountId}
-                  onChange={setAssignAccountId}
-                  placeholder='Seleccionar técnico…'
-                  disabled={assignTech.isPending}
-                />
-              </div>
-              <div>
-                <label className='text-xs font-medium text-muted-foreground mb-1.5 block'>
-                  Rol
-                </label>
-                <select
-                  value={assignRole}
-                  onChange={e =>
-                    setAssignRole(e.target.value as 'LEAD' | 'ASSISTANT')
-                  }
-                  disabled={assignTech.isPending}
-                  className='h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+          <div className='flex items-center justify-between'>
+            <h3 className='text-base font-semibold'>Técnicos asignados</h3>
+            {canManage &&
+              memberOptions.length > 0 &&
+              (assignments ?? []).length < 5 &&
+              !assignFormOpen && (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setAssignFormOpen(true)}
                 >
-                  <option value='LEAD'>Principal</option>
-                  <option value='ASSISTANT'>Asistente</option>
-                </select>
-              </div>
-              <Button
-                size='sm'
-                onClick={doAssign}
-                disabled={!assignAccountId || assignTech.isPending}
-              >
-                {assignTech.isPending ? (
-                  <Loader2 size={14} className='animate-spin' />
-                ) : (
                   <UserPlus size={14} />
-                )}
-                Asignar
-              </Button>
+                  Agregar técnico
+                </Button>
+              )}
+          </div>
+
+          {canManage && assignFormOpen && (
+            <div className='rounded-md border border-border p-4 flex flex-col gap-3'>
+              <p className='text-sm font-medium'>Asignar técnico</p>
+              {memberOptions.length === 0 ? (
+                <p className='text-sm text-muted-foreground'>
+                  Todos los miembros ya están asignados a esta orden.
+                </p>
+              ) : (
+                <div className='flex items-end gap-3 flex-wrap'>
+                  <div className='flex-1 min-w-48'>
+                    <label className='text-xs font-medium text-muted-foreground mb-1.5 block'>
+                      Técnico
+                    </label>
+                    <Combobox
+                      options={memberOptions}
+                      value={assignAccountId}
+                      onChange={setAssignAccountId}
+                      placeholder='Seleccionar técnico…'
+                      disabled={assignTech.isPending}
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-1.5 block'>
+                      Rol
+                    </label>
+                    <div className='relative'>
+                      <select
+                        value={assignRole}
+                        onChange={e =>
+                          setAssignRole(e.target.value as 'LEAD' | 'ASSISTANT')
+                        }
+                        disabled={assignTech.isPending}
+                        className='h-10 cursor-pointer appearance-none rounded-md border border-input bg-background pl-3 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+                      >
+                        <option value='LEAD'>Principal</option>
+                        <option value='ASSISTANT'>Asistente</option>
+                      </select>
+                      <ChevronDown
+                        size={14}
+                        className='absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground'
+                      />
+                    </div>
+                  </div>
+                  <div className='flex gap-2'>
+                    <Button
+                      size='sm'
+                      onClick={doAssign}
+                      disabled={!assignAccountId || assignTech.isPending}
+                    >
+                      {assignTech.isPending ? (
+                        <Loader2 size={14} className='animate-spin' />
+                      ) : (
+                        <UserPlus size={14} />
+                      )}
+                      Asignar
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => {
+                        setAssignFormOpen(false)
+                        setAssignAccountId('')
+                        setAssignRole('LEAD')
+                      }}
+                      disabled={assignTech.isPending}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -887,13 +1109,18 @@ export default function WorkOrderDetailPage() {
                   className='flex items-start justify-between rounded-md border border-border px-4 py-3 gap-4'
                 >
                   <div className='flex flex-col gap-1'>
-                    <span className='text-xs rounded-full bg-muted px-2 py-0.5 font-medium w-fit'>
-                      {CHECKPOINT_TYPE_LABELS[cp.type] ?? cp.type}
-                    </span>
-                    {cp.notes && (
-                      <p className='text-sm text-muted-foreground'>
-                        {cp.notes}
-                      </p>
+                    <div className='flex items-center gap-2 flex-wrap'>
+                      <span className='text-xs rounded-full bg-muted px-2 py-0.5 font-medium w-fit'>
+                        {CHECKPOINT_TYPE_LABELS[cp.type] ?? cp.type}
+                      </span>
+                      {cp.type === 'PROCESS' && cp.processType && (
+                        <span className='text-xs text-foreground font-medium'>
+                          {cp.processType}
+                        </span>
+                      )}
+                    </div>
+                    {cp.note && (
+                      <p className='text-sm text-muted-foreground'>{cp.note}</p>
                     )}
                     <p className='text-xs text-muted-foreground'>
                       {formatDate(cp.createdAt)}

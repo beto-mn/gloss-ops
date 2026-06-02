@@ -18,7 +18,7 @@ export interface OrgMember {
 export function useMembers() {
   return useQuery({
     queryKey: ['members'],
-    queryFn: () => apiFetch<OrgMember[]>('/organizations/members'),
+    queryFn: () => apiFetch<OrgMember[]>('/organizations/me/members'),
     staleTime: 5 * 60 * 1000,
   })
 }

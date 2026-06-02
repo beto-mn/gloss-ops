@@ -31,12 +31,57 @@ export interface WorkOrderPageMeta {
   hasPrev: boolean
 }
 
+export type WorkOrderItemWithService = Prisma.WorkOrderItemModel & {
+  service: { id: string; name: string }
+}
+
 export type WorkOrderWithItems = Prisma.WorkOrderModel & {
-  items: Prisma.WorkOrderItemModel[]
+  items: WorkOrderItemWithService[]
+  asset: Prisma.CustomerAssetModel & {
+    customer: Pick<Prisma.CustomerModel, 'id' | 'firstName' | 'lastName'>
+    brand: Pick<Prisma.BrandModel, 'id' | 'name'> | null
+  }
+}
+
+export interface WorkOrderDetailItem {
+  id: string
+  serviceId: string
+  serviceName: string
+  quantity: number
+  unitPrice: number
+  subtotal: number
+  note: string | null
+}
+
+export interface WorkOrderDetail extends Prisma.WorkOrderModel {
+  customerId: string
+  total: number
+  customer: Pick<Prisma.CustomerModel, 'id' | 'firstName' | 'lastName'>
+  asset: {
+    id: string
+    assetType: string
+    customAssetType: string | null
+    model: string | null
+    identifier: string
+    brandName: string | null
+  }
+  items: WorkOrderDetailItem[]
+}
+
+export interface WorkOrderListItem extends Prisma.WorkOrderModel {
+  customerId: string
+  customer: Pick<Prisma.CustomerModel, 'id' | 'firstName' | 'lastName'>
+  asset: {
+    id: string
+    assetType: string
+    customAssetType: string | null
+    model: string | null
+    identifier: string
+  }
 }
 
 export interface WorkOrderPage {
-  data: Prisma.WorkOrderModel[]
+  data: WorkOrderListItem[]
   meta: WorkOrderPageMeta
 }
 

@@ -20,7 +20,12 @@ export function useCreateCheckpoint(workOrderId: string) {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { type: 'RECEPTION' | 'DELIVERY'; notes?: string }) =>
+    mutationFn: (data: {
+      type: 'RECEPTION' | 'PROCESS' | 'DELIVERY'
+      processType?: string
+      generalCondition: string
+      note?: string
+    }) =>
       apiFetch<WorkOrderCheckpoint>(`/work-orders/${workOrderId}/checkpoints`, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -35,7 +40,7 @@ export function useUpdateCheckpoint(workOrderId: string) {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { notes?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { note?: string } }) =>
       apiFetch<WorkOrderCheckpoint>(
         `/work-orders/${workOrderId}/checkpoints/${id}`,
         { method: 'PATCH', body: JSON.stringify(data) }

@@ -22,6 +22,7 @@ export class PrismaAssetCheckpointRepository implements AssetCheckpointRepositor
       id: row.id,
       workOrderId: row.workOrderId,
       type: row.type,
+      processType: row.processType,
       mileage: row.mileage,
       fuelLevel: row.fuelLevel,
       generalCondition: row.generalCondition,
@@ -40,6 +41,7 @@ export class PrismaAssetCheckpointRepository implements AssetCheckpointRepositor
       data: {
         workOrderId: data.workOrderId,
         type: data.type,
+        processType: data.processType ?? null,
         mileage: data.mileage ?? null,
         fuelLevel: data.fuelLevel ?? null,
         generalCondition: data.generalCondition,

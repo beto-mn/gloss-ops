@@ -46,6 +46,7 @@ export interface WorkOrderItem {
 
 export interface WorkOrderAssignment {
   id: string
+  memberId: string
   accountId: string
   role: 'LEAD' | 'ASSISTANT'
   account: {
@@ -57,10 +58,14 @@ export interface WorkOrderAssignment {
   assignedAt: string
 }
 
+export type AssetCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR'
+
 export interface WorkOrderCheckpoint {
   id: string
-  type: 'RECEPTION' | 'DELIVERY'
-  notes: string | null
+  type: 'RECEPTION' | 'PROCESS' | 'DELIVERY'
+  processType: string | null
+  generalCondition: AssetCondition
+  note: string | null
   createdAt: string
   updatedAt: string
 }

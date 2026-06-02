@@ -24,8 +24,10 @@ export class InMemoryWorkOrderAssignmentRepository implements WorkOrderAssignmen
       id: randomUUID(),
       workOrderId: data.workOrderId,
       memberId: data.memberId,
+      accountId: data.memberId,
       role: data.role,
       assignedAt: new Date(),
+      account: { id: data.memberId, firstName: '', lastName: '', email: '' },
     }
     this.store.set(record.id, record)
     return Promise.resolve(record)

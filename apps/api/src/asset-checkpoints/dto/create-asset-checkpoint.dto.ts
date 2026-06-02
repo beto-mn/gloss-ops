@@ -2,6 +2,7 @@ import {
   IsArray,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
@@ -13,6 +14,11 @@ import { AssetCondition, CheckpointType, FuelLevel } from '@glossops/database'
 export class CreateAssetCheckpointDto {
   @IsEnum(CheckpointType)
   type: CheckpointType
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  processType?: string
 
   @IsOptional()
   @IsInt()

@@ -40,16 +40,28 @@ export class AssetCheckpointsService {
       throw new ConflictException({ error: 'work_order_completed' })
     }
 
-    const exists = await this.repo.existsByWorkOrderAndType(
-      workOrderId,
-      dto.type
-    )
-    if (exists)
-      throw new ConflictException({ error: 'checkpoint_already_exists' })
+    if (dto.type !== CheckpointType.PROCESS) {
+      const exists = await this.repo.existsByWorkOrderAndType(
+        workOrderId,
+        dto.type
+      )
+      if (exists)
+        throw new ConflictException({ error: 'checkpoint_already_exists' })
+    }
+
+    if (dto.type === CheckpointType.DELIVERY) {
+      const receptionExists = await this.repo.existsByWorkOrderAndType(
+        workOrderId,
+        CheckpointType.RECEPTION
+      )
+      if (!receptionExists)
+        throw new ConflictException({ error: 'delivery_requires_reception' })
+    }
 
     return this.repo.create({
       workOrderId,
       type: dto.type,
+      processType: dto.processType,
       mileage: dto.mileage,
       fuelLevel: dto.fuelLevel,
       generalCondition: dto.generalCondition,

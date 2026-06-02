@@ -55,6 +55,7 @@ enum CfdiPaymentMethod {
 
 enum CheckpointType {
   RECEPTION
+  PROCESS
   DELIVERY
 }
 
@@ -470,6 +471,7 @@ model AssetCheckpoint {
   id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   workOrderId          String         @map("work_order_id") @db.Uuid
   type                 CheckpointType
+  processType          String?        @map("process_type")
   mileage              Int?
   fuelLevel            FuelLevel?     @map("fuel_level")
   generalCondition     AssetCondition @map("general_condition")
@@ -482,7 +484,7 @@ model AssetCheckpoint {
   workOrder  WorkOrder @relation(fields: [workOrderId], references: [id])
   recordedBy Account   @relation(fields: [recordedById], references: [id])
 
-  @@unique([workOrderId, type])
+  @@index([workOrderId, type])
   @@map("asset_checkpoint")
 }
 
