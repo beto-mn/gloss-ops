@@ -100,13 +100,14 @@ export function Combobox({
       </div>
 
       {open && filtered.length > 0 && (
-        <ul className='absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-md border border-border bg-popover shadow-md text-sm'>
+        <ul className='absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-md text-sm'>
           {filtered.slice(0, 60).map(option => (
             <li
               key={option.value}
               className={cn(
-                'px-3 py-2 cursor-pointer hover:bg-accent',
-                option.value === value && 'bg-accent/50 font-medium'
+                'px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground',
+                option.value === value &&
+                  'bg-accent/50 text-accent-foreground font-medium'
               )}
               onMouseDown={() => handleSelect(option)}
             >
