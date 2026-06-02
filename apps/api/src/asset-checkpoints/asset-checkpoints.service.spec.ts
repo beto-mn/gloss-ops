@@ -5,7 +5,7 @@ import {
   WorkOrderStatus,
 } from '@glossops/database'
 
-import type { WorkOrderWithItems } from '@work-orders/interfaces'
+import type { WorkOrderDetail } from '@work-orders/interfaces'
 
 import { ASSET_CHECKPOINT_REPOSITORY } from './asset-checkpoints.tokens'
 import { AssetCheckpointsService } from './asset-checkpoints.service'
@@ -16,18 +16,33 @@ const WO_ID = 'wo-1'
 const ORG_ID = 'org-1'
 const ACCOUNT_ID = 'acc-1'
 
+const woBase = {
+  customerId: 'cust-1',
+  customer: { id: 'cust-1', firstName: 'Test', lastName: 'User' },
+  asset: {
+    id: 'asset-1',
+    assetType: 'VEHICLE',
+    customAssetType: null,
+    model: null,
+    identifier: '',
+    brandName: null,
+  },
+}
 const activeWo = {
+  ...woBase,
   id: WO_ID,
   status: WorkOrderStatus.IN_PROGRESS,
-} as unknown as WorkOrderWithItems
+} as unknown as WorkOrderDetail
 const completedWo = {
+  ...woBase,
   id: WO_ID,
   status: WorkOrderStatus.COMPLETED,
-} as unknown as WorkOrderWithItems
+} as unknown as WorkOrderDetail
 const cancelledWo = {
+  ...woBase,
   id: WO_ID,
   status: WorkOrderStatus.CANCELLED,
-} as unknown as WorkOrderWithItems
+} as unknown as WorkOrderDetail
 
 const baseDto = {
   type: CheckpointType.RECEPTION,
@@ -80,6 +95,7 @@ describe('AssetCheckpointsService', () => {
 
     it('creates a DELIVERY checkpoint on an active WO', async () => {
       workOrdersService.findOne.mockResolvedValue(activeWo)
+      await service.create(WO_ID, baseDto, ACCOUNT_ID, ORG_ID)
 
       const result = await service.create(
         WO_ID,
@@ -92,6 +108,8 @@ describe('AssetCheckpointsService', () => {
     })
 
     it('creates a DELIVERY checkpoint on a COMPLETED WO', async () => {
+      workOrdersService.findOne.mockResolvedValue(activeWo)
+      await service.create(WO_ID, baseDto, ACCOUNT_ID, ORG_ID)
       workOrdersService.findOne.mockResolvedValue(completedWo)
 
       const result = await service.create(
@@ -132,6 +150,21 @@ describe('AssetCheckpointsService', () => {
         service.create(WO_ID, baseDto, ACCOUNT_ID, ORG_ID)
       ).rejects.toMatchObject({
         response: { error: 'checkpoint_already_exists' },
+      })
+    })
+
+    it('throws 409 delivery_requires_reception when no RECEPTION exists', async () => {
+      workOrdersService.findOne.mockResolvedValue(activeWo)
+
+      await expect(
+        service.create(
+          WO_ID,
+          { ...baseDto, type: CheckpointType.DELIVERY },
+          ACCOUNT_ID,
+          ORG_ID
+        )
+      ).rejects.toMatchObject({
+        response: { error: 'delivery_requires_reception' },
       })
     })
   })

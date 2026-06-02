@@ -19,6 +19,7 @@ export class InMemoryAssetCheckpointRepository implements AssetCheckpointReposit
       id: randomUUID(),
       workOrderId: data.workOrderId,
       type: data.type,
+      processType: data.processType ?? null,
       mileage: data.mileage ?? null,
       fuelLevel: data.fuelLevel ?? null,
       generalCondition: data.generalCondition,

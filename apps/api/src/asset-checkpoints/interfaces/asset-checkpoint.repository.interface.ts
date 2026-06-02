@@ -8,6 +8,7 @@ export interface AssetCheckpointRecord {
   id: string
   workOrderId: string
   type: CheckpointType
+  processType: string | null
   mileage: number | null
   fuelLevel: FuelLevel | null
   generalCondition: AssetCondition
@@ -21,6 +22,7 @@ export interface AssetCheckpointRecord {
 export interface CreateAssetCheckpointData {
   workOrderId: string
   type: CheckpointType
+  processType?: string
   mileage?: number
   fuelLevel?: FuelLevel
   generalCondition: AssetCondition
