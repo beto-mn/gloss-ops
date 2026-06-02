@@ -8,6 +8,7 @@ import type {
   UpdateWorkOrderData,
   WorkOrderQuery,
   WorkOrderPage,
+  WorkOrderListItem,
   WorkOrderWithItems,
 } from '@work-orders/interfaces'
 
@@ -64,8 +65,33 @@ export class InMemoryWorkOrderRepository implements WorkOrderRepositoryInterface
   ): Promise<WorkOrderWithItems | null> {
     const wo = this.store.get(id)
     if (!wo || !this.belongsToOrg(wo, organizationId)) return null
-    const items = await this.getItems(id)
-    return { ...wo, items }
+    const rawItems = await this.getItems(id)
+    const items = rawItems.map(i => ({
+      ...i,
+      service: { id: i.serviceId, name: 'Stub Service' },
+    }))
+    const stub = { id: '', firstName: '', lastName: '' }
+    const assetStub = {
+      id: '',
+      assetType: 'VEHICLE' as const,
+      customAssetType: null,
+      model: '',
+      year: null,
+      identifier: '',
+      country: null,
+      color: null,
+      metadata: null,
+      note: null,
+      status: 'ACTIVE' as const,
+      customerId: '',
+      brandId: null,
+      deletedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      customer: stub,
+      brand: null,
+    }
+    return { ...wo, items, asset: assetStub }
   }
 
   findAll(
@@ -83,10 +109,22 @@ export class InMemoryWorkOrderRepository implements WorkOrderRepositoryInterface
 
     const total = items.length
     const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit)
-    const data = items.slice(
-      (query.page - 1) * query.limit,
-      query.page * query.limit
-    )
+    const stub = { id: '', firstName: '', lastName: '' }
+    const assetStub = {
+      id: '',
+      assetType: 'VEHICLE' as const,
+      customAssetType: null,
+      model: null,
+      identifier: '',
+    }
+    const data: WorkOrderListItem[] = items
+      .slice((query.page - 1) * query.limit, query.page * query.limit)
+      .map(wo => ({
+        ...wo,
+        customerId: stub.id,
+        customer: stub,
+        asset: assetStub,
+      }))
 
     return Promise.resolve({
       data,

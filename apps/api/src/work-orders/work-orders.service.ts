@@ -13,10 +13,10 @@ import {
 } from '@glossops/database'
 
 import type {
+  WorkOrderDetail,
   WorkOrderItemRepositoryInterface,
   WorkOrderPage,
   WorkOrderRepositoryInterface,
-  WorkOrderWithItems,
 } from '@work-orders/interfaces'
 
 import { ActivityLogsService } from '../activity-logs/activity-logs.service'
@@ -85,6 +85,20 @@ export class WorkOrdersService {
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
       note: dto.note,
     })
+    if (dto.items?.length) {
+      for (const item of dto.items) {
+        await this.workOrderItems.create({
+          workOrderId: wo.id,
+          serviceId: item.serviceId,
+          quantity: item.quantity ?? 1,
+          unitPrice: item.unitPrice,
+          discount: 0,
+          isBillable: true,
+          description: item.note,
+        })
+      }
+      await this.syncTotal(wo.id, organizationId)
+    }
     await this.activityLogs.record({
       organizationId,
       branchId,
@@ -108,13 +122,32 @@ export class WorkOrdersService {
     })
   }
 
-  async findOne(
-    id: string,
-    organizationId: string
-  ): Promise<WorkOrderWithItems> {
+  async findOne(id: string, organizationId: string): Promise<WorkOrderDetail> {
     const wo = await this.workOrders.findById(id, organizationId)
     if (!wo) throw new NotFoundException({ error: 'work_order_not_found' })
-    return wo
+    return {
+      ...wo,
+      customerId: wo.asset.customer.id,
+      customer: wo.asset.customer,
+      total: Number(wo.totalAmount),
+      asset: {
+        id: wo.asset.id,
+        assetType: wo.asset.assetType,
+        customAssetType: wo.asset.customAssetType,
+        model: wo.asset.model,
+        identifier: wo.asset.identifier,
+        brandName: wo.asset.brand?.name ?? null,
+      },
+      items: wo.items.map(item => ({
+        id: item.id,
+        serviceId: item.serviceId,
+        serviceName: item.service.name,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        subtotal: Number(item.subtotal),
+        note: item.description,
+      })),
+    }
   }
 
   async update(

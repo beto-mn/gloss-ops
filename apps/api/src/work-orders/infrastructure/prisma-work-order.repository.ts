@@ -9,6 +9,7 @@ import type {
   UpdateWorkOrderData,
   WorkOrderQuery,
   WorkOrderPage,
+  WorkOrderListItem,
   WorkOrderWithItems,
 } from '@work-orders/interfaces'
 
@@ -35,7 +36,15 @@ export class PrismaWorkOrderRepository implements WorkOrderRepositoryInterface {
   ): Promise<WorkOrderWithItems | null> {
     return this.prisma.workOrder.findFirst({
       where: { id, branch: { organizationId } },
-      include: { items: true },
+      include: {
+        items: { include: { service: { select: { id: true, name: true } } } },
+        asset: {
+          include: {
+            customer: { select: { id: true, firstName: true, lastName: true } },
+            brand: { select: { id: true, name: true } },
+          },
+        },
+      },
     }) as Promise<WorkOrderWithItems | null>
   }
 
@@ -49,15 +58,37 @@ export class PrismaWorkOrderRepository implements WorkOrderRepositoryInterface {
       ...(query.assetId && { assetId: query.assetId }),
     }
 
-    const [data, total] = await this.prisma.$transaction([
+    const [rows, total] = await this.prisma.$transaction([
       this.prisma.workOrder.findMany({
         where,
         skip: (query.page - 1) * query.limit,
         take: query.limit,
         orderBy: { createdAt: 'desc' },
+        include: {
+          asset: {
+            include: {
+              customer: {
+                select: { id: true, firstName: true, lastName: true },
+              },
+            },
+          },
+        },
       }),
       this.prisma.workOrder.count({ where }),
     ])
+
+    const data: WorkOrderListItem[] = rows.map(wo => ({
+      ...wo,
+      customerId: wo.asset.customer.id,
+      customer: wo.asset.customer,
+      asset: {
+        id: wo.asset.id,
+        assetType: wo.asset.assetType,
+        customAssetType: wo.asset.customAssetType,
+        model: wo.asset.model,
+        identifier: wo.asset.identifier,
+      },
+    }))
 
     const totalPages = total === 0 ? 0 : Math.ceil(total / query.limit)
     return {
