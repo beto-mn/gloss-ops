@@ -71,3 +71,24 @@ export enum Role {
   MANAGER = 'MANAGER',
   OWNER = 'OWNER',
 }
+
+export enum ResourceStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
+export enum AssignmentRole {
+  LEAD = 'LEAD',
+  ASSISTANT = 'ASSISTANT',
+}
+
+export enum AssetType {
+  VEHICLE = 'VEHICLE',
+  MOTORCYCLE = 'MOTORCYCLE',
+  BOAT = 'BOAT',
+  JET_SKI = 'JET_SKI',
+  TRUCK = 'TRUCK',
+  ATV_UTV = 'ATV_UTV',
+  AIRCRAFT = 'AIRCRAFT',
+  OTHER = 'OTHER',
+}
