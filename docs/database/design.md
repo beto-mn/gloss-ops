@@ -135,7 +135,7 @@ A supplier relationship is a commercial agreement at the business level — all 
 
 ## 5. 🔒 Constraints and Enforcement
 
-All cross-table constraints are documented in `docs/database-constraints.md`. The general strategy is two-layer enforcement:
+All cross-table constraints are documented in `docs/database/constraints.md`. The general strategy is two-layer enforcement:
 
 1. **Application layer (NestJS):** Validate before writing. Returns a human-readable error to the client.
 2. **Database layer (PostgreSQL trigger):** Last line of defense. Rejects any write that bypasses the application — direct SQL, migrations, scripts.

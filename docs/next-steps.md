@@ -40,7 +40,7 @@ Full schema implemented with all domain entities, migrations applied, and seed s
 
 Implemented models: `Account`, `Organization`, `OrganizationFiscalProfile`, `Branch`, `OrganizationMember`, `Customer`, `CustomerAsset`, `Service`, `Supplier`, `Brand`, `WorkOrder`, `WorkOrderItem`, `WorkOrderAssignment`, `Invoice`, `Warranty`, `Inventory`, `InventoryItem`, `MaterialRoll`, `InventoryUsage`, `PurchaseOrder`, `PurchaseOrderItem`, `AssetCheckpoint`, `ActivityLog`.
 
-Key design decisions documented in [`docs/database-design.md`](database-design.md).
+Key design decisions documented in [`docs/database/design.md`](database/design.md).
 
 ---
 
