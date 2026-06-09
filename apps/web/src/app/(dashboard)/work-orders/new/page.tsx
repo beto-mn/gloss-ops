@@ -24,6 +24,7 @@ import { useCustomerAssets, useAsset } from '@/hooks/use-customer-assets'
 import { useServices } from '@/hooks/use-services'
 import { ApiError } from '@/lib/api-client'
 import {
+  WorkOrderType,
   createWorkOrderSchema,
   type CreateWorkOrderValues,
 } from '@/lib/schemas/work-order.schema'
@@ -77,7 +78,7 @@ export default function NewWorkOrderPage() {
     defaultValues: {
       customerId: prefillCustomerId,
       assetId: prefillAssetId,
-      type: 'STANDARD',
+      type: WorkOrderType.STANDARD,
       scheduledAt: '',
       note: '',
       items: [{ serviceId: '', quantity: 1, unitPrice: 0, note: '' }],

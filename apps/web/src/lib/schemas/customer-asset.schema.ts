@@ -1,20 +1,13 @@
 import { z } from 'zod'
 
-export const ASSET_TYPES = [
-  'VEHICLE',
-  'MOTORCYCLE',
-  'BOAT',
-  'JET_SKI',
-  'TRUCK',
-  'ATV_UTV',
-  'AIRCRAFT',
-  'OTHER',
-] as const
+import { AssetType, ResourceStatus } from '@glossops/shared'
 
-export type AssetType = (typeof ASSET_TYPES)[number]
+export { AssetType }
+
+export const ASSET_TYPES = Object.values(AssetType) as AssetType[]
 
 export const createVehicleSchema = z.object({
-  assetType: z.enum(ASSET_TYPES),
+  assetType: z.nativeEnum(AssetType),
   customAssetType: z.string().max(50).optional().or(z.literal('')),
   brandId: z.string().uuid('Selecciona una marca válida'),
   model: z.string().min(1, 'El modelo es requerido').max(100),
@@ -63,7 +56,7 @@ export interface CustomerAsset {
   country: string | null
   color: string | null
   note: string | null
-  status: string
+  status: ResourceStatus
   createdAt: string
   updatedAt: string
 }

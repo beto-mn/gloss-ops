@@ -1,13 +1,8 @@
 import { z } from 'zod'
 
-export type WorkOrderStatus =
-  | 'DRAFT'
-  | 'CONFIRMED'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'CANCELLED'
+import { WorkOrderStatus, WorkOrderType } from '@glossops/shared'
 
-export type WorkOrderType = 'STANDARD' | 'WARRANTY_CLAIM'
+export { WorkOrderStatus, WorkOrderType }
 
 export interface WorkOrder {
   id: string
@@ -122,7 +117,7 @@ export const createWorkOrderItemSchema = z.object({
 export const createWorkOrderSchema = z.object({
   customerId: z.string().min(1, 'Selecciona un cliente'),
   assetId: z.string().min(1, 'Selecciona un activo'),
-  type: z.enum(['STANDARD', 'WARRANTY_CLAIM']),
+  type: z.nativeEnum(WorkOrderType),
   scheduledAt: z.string().optional().or(z.literal('')),
   note: z.string().optional().or(z.literal('')),
   items: z
