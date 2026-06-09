@@ -302,6 +302,51 @@
       "status": "done"
     },
     {
+      "id": 30,
+      "name": "testing_unit_frontend",
+      "title": "Testing: Frontend Unit Tests",
+      "description": "Vitest unit test project in apps/web alongside existing Storybook project. Covers hooks (with mocked apiFetch), utility functions, and Zod schemas. Deeper play() interaction functions in existing Storybook stories covering full user flows (fill form, submit, verify result).",
+      "acceptance": [
+        "vitest.config.ts has a 'unit' project running in happy-dom environment",
+        "pnpm --filter web test script added and runs unit project",
+        "Existing stories upgraded with play() functions that simulate full interactions (fill, submit, verify outcome)",
+        "Stories cover: happy path, validation error, server error, loading state for all major drawers and forms"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 31,
+      "name": "testing_integration_api",
+      "title": "Testing: API Integration Tests with Testcontainers",
+      "description": "Replace apps/api .env.test dependency with Testcontainers (PostgreSQL + Redis). Add integration test suites per domain module that validate API responses against @glossops/shared Zod schemas.",
+      "acceptance": [
+        "globalSetup spins up PostgreSQLContainer and RedisContainer automatically",
+        "globalTeardown stops all containers after test run",
+        "No .env.test file required to run e2e tests",
+        "Integration test suites cover all domain modules: auth, customers, work-orders, services, inventory, invoices",
+        "Every GET endpoint response is validated against its @glossops/shared Zod schema",
+        "pnpm --filter api test:e2e passes in a clean environment with only Docker available"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 32,
+      "name": "testing_e2e_playwright",
+      "title": "Testing: E2E with Playwright",
+      "description": "Playwright E2E test suite at the monorepo root. Orchestrates Next.js + NestJS + Testcontainers. Covers critical user journeys end-to-end in a real browser (headless Chromium).",
+      "acceptance": [
+        "playwright.config.ts at repo root with webServer config for both apps",
+        "globalSetup starts Testcontainers (Postgres + Redis) and seeds base data",
+        "E2E suites cover critical flows: login, create customer, create work order, complete work order",
+        "Tests run with a single command: pnpm test:e2e from repo root",
+        "Tests run headless in CI without requiring a deployed environment"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
       "id": 26,
       "name": "web_inventory",
       "title": "Web: Inventory Page (Step 6c)",
