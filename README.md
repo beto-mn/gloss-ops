@@ -344,11 +344,12 @@ glossops/
 │   ├── database/                      # Prisma schema, migrations, seed
 │   └── shared/                        # Shared types (pending)
 ├── docs/
-│   ├── database-design.md
-│   ├── database-constraints.md
-│   ├── database-schema.dbml
-│   ├── decisions/                     # Architectural decision records
-│   ├── superpowers/                   # Specs and implementation plans
+│   ├── database/                      # Schema, design, constraints
+│   ├── decisions/                     # Architectural decision records (ADRs)
+│   ├── domain/                        # Business rules and domain model
+│   ├── api/                           # API conventions and reference
+│   ├── runbook/                       # Operational procedures
+│   ├── harness/                       # AI agent orchestration docs
 │   └── next-steps.md
 ├── docker-compose.yml
 ├── .env.example
@@ -441,9 +442,9 @@ GlossOps is intended to become a purpose-built operational system for automotive
 
 ## 🗄️ Database
 
-> Full schema with field-level documentation: [`docs/database-schema.dbml`](docs/database-schema.dbml)  
-> Design decisions and architecture: [`docs/database-design.md`](docs/database-design.md)  
-> Cross-table constraints and triggers: [`docs/database-constraints.md`](docs/database-constraints.md)
+> Full schema with field-level documentation: [`docs/database/schema.dbml`](docs/database/schema.dbml)  
+> Design decisions and architecture: [`docs/database/design.md`](docs/database/design.md)  
+> Cross-table constraints and triggers: [`docs/database/constraints.md`](docs/database/constraints.md)
 
 ```mermaid
 erDiagram

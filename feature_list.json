@@ -1,0 +1,355 @@
+{
+  "project": "gloss-ops",
+  "description": "Multi-tenant SaaS platform for automotive wrap, detailing, and restyling shops.",
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_tests_to_close": true,
+    "require_approved_spec_to_implement": true,
+    "valid_status": ["pending", "spec_ready", "in_progress", "done", "blocked"],
+    "sdd_required_when": "feature has \"sdd\": true"
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "monorepo_scaffold",
+      "title": "Monorepo Scaffold",
+      "description": "pnpm workspaces, Husky, docker-compose, turbo.",
+      "acceptance": ["pnpm install succeeds", "turbo build succeeds"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 2,
+      "name": "database_schema",
+      "title": "Database Schema (packages/database)",
+      "description": "Full Prisma schema with all domain entities, migrations, seed script.",
+      "acceptance": [
+        "All 22 domain models defined in schema.prisma",
+        "Migrations applied to dev database",
+        "Seed script populates base data"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 3,
+      "name": "api_config",
+      "title": "API: Config Module",
+      "description": "Zod-validated env schema, barrel export, @config path alias.",
+      "acceptance": ["App fails fast with clear error on missing env vars"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 4,
+      "name": "api_auth",
+      "title": "API: Auth Module",
+      "description": "JWT access + Redis-backed refresh tokens, RBAC guards, repository pattern. 45 tests.",
+      "acceptance": [
+        "POST /auth/register creates account and returns token pair",
+        "POST /auth/login validates credentials",
+        "POST /auth/refresh rotates refresh token",
+        "POST /auth/logout revokes refresh token",
+        "AuthGuard and RolesGuard protect routes correctly"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 5,
+      "name": "api_organizations",
+      "title": "API: Organizations Module",
+      "description": "CRUD, invitations with explicit branchId, soft/hard delete, member listing.",
+      "acceptance": [
+        "Register creates Account + Org + first Branch + OWNER membership",
+        "Invitation requires branchId — never inferred",
+        "Soft delete sets status; permanent=true hard deletes"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 6,
+      "name": "api_customers",
+      "title": "API: Customers Module",
+      "description": "CRUD, soft/hard delete, status filters.",
+      "acceptance": [
+        "Full CRUD at /customers",
+        "Soft delete via status=DELETED"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 7,
+      "name": "api_branches",
+      "title": "API: Branches Module",
+      "description": "CRUD for peer branches — no isMain flag, no hierarchy.",
+      "acceptance": [
+        "Full CRUD at /branches",
+        "Branches are peers with no isMain"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 8,
+      "name": "api_customer_assets",
+      "title": "API: Customer Assets Module",
+      "description": "CRUD nested under customer + flat read/update/delete.",
+      "acceptance": [
+        "POST /customers/:id/assets creates asset",
+        "GET /customer-assets/:id reads asset flat"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 9,
+      "name": "api_services",
+      "title": "API: Services Module",
+      "description": "CRUD with activate/deactivate endpoints.",
+      "acceptance": [
+        "Full CRUD at /services",
+        "POST /services/:id/activate|deactivate"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 10,
+      "name": "api_suppliers",
+      "title": "API: Suppliers Module",
+      "description": "Standard CRUD.",
+      "acceptance": ["Full CRUD at /suppliers"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 11,
+      "name": "api_brands",
+      "title": "API: Brands Module",
+      "description": "CRUD with seeded-brand protection.",
+      "acceptance": ["Full CRUD at /brands", "Seeded brands cannot be deleted"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 12,
+      "name": "api_work_orders",
+      "title": "API: Work Orders Module",
+      "description": "CRUD, status transitions, warranty generation on COMPLETED.",
+      "acceptance": [
+        "Full CRUD at /work-orders",
+        "PATCH /work-orders/:id/status transitions status",
+        "Completing a WO auto-generates warranties for items with warrantyDays > 0"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 13,
+      "name": "api_work_order_assignments",
+      "title": "API: Work Order Assignments",
+      "description": "Assign/unassign technicians with LEAD/ASSISTANT role.",
+      "acceptance": [
+        "POST /work-orders/:id/assignments assigns technician",
+        "DELETE /work-orders/:id/assignments/:id unassigns"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 14,
+      "name": "api_asset_checkpoints",
+      "title": "API: Asset Checkpoints",
+      "description": "Reception/delivery checkpoints per work order.",
+      "acceptance": ["Full CRUD at /work-orders/:id/checkpoints"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 15,
+      "name": "api_activity_logs",
+      "title": "API: Activity Logs",
+      "description": "Append-only audit trail, read-only list endpoint.",
+      "acceptance": ["GET /activity-logs returns paginated log entries"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 16,
+      "name": "api_inventory",
+      "title": "API: Inventory",
+      "description": "List inventory items and rolls; usage history per item.",
+      "acceptance": [
+        "GET /inventory lists all items and rolls",
+        "GET /inventory/:id/usages returns usage history"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 17,
+      "name": "api_purchase_orders",
+      "title": "API: Purchase Orders",
+      "description": "CRUD, receive/cancel flow.",
+      "acceptance": [
+        "Full CRUD at /purchase-orders",
+        "POST /purchase-orders/:id/receive receives items",
+        "POST /purchase-orders/:id/cancel cancels the PO"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 18,
+      "name": "api_warranties",
+      "title": "API: Warranties",
+      "description": "Auto-generated on WO completion, validate/void, find by asset/WO.",
+      "acceptance": [
+        "Warranties auto-created when WO transitions to COMPLETED",
+        "PATCH /warranties/:id/void voids a warranty",
+        "GET /customer-assets/:id/warranties lists warranties per asset"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 19,
+      "name": "api_invoices",
+      "title": "API: Invoices",
+      "description": "CRUD, per-branch folio INV-YYYY-NNNN, DRAFT→ISSUED→PAID transitions.",
+      "acceptance": [
+        "Folio generated as INV-{YYYY}-{NNNN} monotonically per branch",
+        "Status machine: DRAFT → ISSUED → PAID, any → CANCELLED",
+        "DRAFT → ISSUED requires WO to be COMPLETED"
+      ],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 20,
+      "name": "api_swagger",
+      "title": "API: Swagger UI",
+      "description": "OpenAPI decorators, neon dark theme at /docs.",
+      "acceptance": ["GET /docs serves interactive Swagger UI"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 21,
+      "name": "api_ts_aliases",
+      "title": "API: TypeScript Path Aliases",
+      "description": "tsconfig.paths.json, barrel exports, Jest moduleNameMapper.",
+      "acceptance": ["All path aliases resolve correctly in build and tests"],
+      "sdd": false,
+      "status": "done"
+    },
+    {
+      "id": 22,
+      "name": "packages_shared",
+      "title": "Shared Package (packages/shared)",
+      "description": "Zod schemas for domain entities, TypeScript types via z.infer<>, enums, common DTOs.",
+      "acceptance": [
+        "Zod schemas exported for each domain entity",
+        "Enums Role, WorkOrderStatus, ActivityAction exported",
+        "PaginationDto and IdParamDto exported",
+        "Both apps/api and apps/web can import from @glossops/shared"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 23,
+      "name": "web_auth_layout",
+      "title": "Web: Auth + Root Layout (Step 5)",
+      "description": "Login page, auth session management via httpOnly cookie, root layout with sidebar, dashboard home.",
+      "acceptance": [
+        "GET /login renders login form with React Hook Form + Zod",
+        "Successful login stores JWT in httpOnly cookie via Next.js route handler",
+        "Root layout renders sidebar navigation",
+        "GET / renders dashboard home with placeholder stats",
+        "Unauthenticated users are redirected to /login"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 24,
+      "name": "web_customers",
+      "title": "Web: Customers Pages (Step 6a)",
+      "description": "Customers list, customer detail with vehicles tab.",
+      "acceptance": [
+        "GET /customers renders paginated customer list",
+        "GET /customers/[id] renders customer detail with assets",
+        "GET /customers/[id]/vehicles/[vid] renders vehicle detail"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 25,
+      "name": "web_work_orders",
+      "title": "Web: Work Orders Pages (Step 6b)",
+      "description": "Work orders list, detail view, new work order wizard.",
+      "acceptance": [
+        "GET /work-orders renders paginated work orders list",
+        "GET /work-orders/[id] renders work order detail with assignments and checkpoints",
+        "GET /work-orders/new renders multi-step wizard to create a work order"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 26,
+      "name": "web_inventory",
+      "title": "Web: Inventory Page (Step 6c)",
+      "description": "Inventory list showing items and material rolls.",
+      "acceptance": [
+        "GET /inventory renders inventory list with tabs for items and rolls",
+        "Usage history accessible per item"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 27,
+      "name": "web_services",
+      "title": "Web: Services Pages (Step 6d)",
+      "description": "Services catalog list, create, and edit.",
+      "acceptance": [
+        "GET /services renders services list with activate/deactivate actions",
+        "Create and edit forms with validation"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 28,
+      "name": "web_activity_log",
+      "title": "Web: Activity Log Page (Step 6e)",
+      "description": "Read-only activity log viewer.",
+      "acceptance": [
+        "GET /activity-log renders paginated activity log",
+        "Entries are read-only with actor, action, and timestamp"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 29,
+      "name": "infrastructure_ci",
+      "title": "Infrastructure & CI",
+      "description": "Dockerfiles for api and web, docker-compose services, GitHub Actions CI pipeline.",
+      "acceptance": [
+        "apps/api builds with multi-stage Dockerfile",
+        "apps/web builds with multi-stage Dockerfile",
+        "docker-compose up starts api + web + postgres + redis",
+        "GitHub Actions runs lint + typecheck on every PR"
+      ],
+      "sdd": true,
+      "status": "pending"
+    }
+  ]
+}

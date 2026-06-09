@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./init.sh > /tmp/harness_init.log 2>&1 && echo '[harness] OK' || (echo '[harness] FAILED' && tail -20 /tmp/harness_init.log)",
+            "description": "Full harness verification on session close."
+          }
+        ]
+      }
     ]
   }
 }
