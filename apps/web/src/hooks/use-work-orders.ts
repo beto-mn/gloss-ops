@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { WorkOrderStatus } from '@glossops/shared'
+
 import { apiFetch } from '@/lib/api-client'
 import type {
   WorkOrderDetail,
@@ -9,7 +11,6 @@ import type {
   WorkOrderListParams,
   CreateWorkOrderValues,
   UpdateWorkOrderValues,
-  WorkOrderStatus,
 } from '@/lib/schemas/work-order.schema'
 
 const WO_KEY = 'work-orders'

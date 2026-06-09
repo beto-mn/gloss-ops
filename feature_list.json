@@ -258,7 +258,7 @@
         "Both apps/api and apps/web can import from @glossops/shared"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 23,
@@ -273,7 +273,7 @@
         "Unauthenticated users are redirected to /login"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 24,
@@ -286,7 +286,7 @@
         "GET /customers/[id]/vehicles/[vid] renders vehicle detail"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 25,
@@ -299,7 +299,7 @@
         "GET /work-orders/new renders multi-step wizard to create a work order"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 26,
@@ -323,7 +323,7 @@
         "Create and edit forms with validation"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 28,

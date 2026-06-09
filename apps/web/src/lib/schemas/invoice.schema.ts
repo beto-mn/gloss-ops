@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
-export type InvoiceStatus = 'DRAFT' | 'ISSUED' | 'PAID' | 'CANCELLED'
+import { InvoiceStatus } from '@glossops/shared'
+
+export { InvoiceStatus }
 
 export interface Invoice {
   id: string

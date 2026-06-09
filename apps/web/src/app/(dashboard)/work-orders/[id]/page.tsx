@@ -56,10 +56,10 @@ import { useWorkOrderWarranties } from '@/hooks/use-warranties'
 import { useWorkOrderInvoice, useCreateInvoice } from '@/hooks/use-invoices'
 import { useMembers } from '@/hooks/use-members'
 import { ApiError, getUserRole } from '@/lib/api-client'
-import type {
+import {
   WorkOrderStatus,
-  WorkOrderCheckpoint,
-  WorkOrderAssignment,
+  type WorkOrderCheckpoint,
+  type WorkOrderAssignment,
 } from '@/lib/schemas/work-order.schema'
 import {
   createInvoiceSchema,
@@ -714,7 +714,7 @@ export default function WorkOrderDetailPage() {
             <>
               <Button
                 size='sm'
-                onClick={() => doTransition('CONFIRMED')}
+                onClick={() => doTransition(WorkOrderStatus.CONFIRMED)}
                 disabled={transition.isPending || !canConfirmOrder}
                 title={
                   !canConfirmOrder
@@ -761,7 +761,7 @@ export default function WorkOrderDetailPage() {
               {canStart && (
                 <Button
                   size='sm'
-                  onClick={() => doTransition('IN_PROGRESS')}
+                  onClick={() => doTransition(WorkOrderStatus.IN_PROGRESS)}
                   disabled={transition.isPending}
                 >
                   {transition.isPending ? (
@@ -787,7 +787,7 @@ export default function WorkOrderDetailPage() {
             <>
               <Button
                 size='sm'
-                onClick={() => doTransition('COMPLETED')}
+                onClick={() => doTransition(WorkOrderStatus.COMPLETED)}
                 disabled={transition.isPending || !canCompleteOrder}
               >
                 {transition.isPending ? (
@@ -1316,7 +1316,7 @@ export default function WorkOrderDetailPage() {
                 <Button
                   variant='destructive'
                   onClick={() => {
-                    doTransition('CANCELLED')
+                    doTransition(WorkOrderStatus.CANCELLED)
                     setCancelConfirmOpen(false)
                   }}
                   disabled={transition.isPending}

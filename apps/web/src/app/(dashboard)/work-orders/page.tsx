@@ -24,20 +24,20 @@ import {
   useDeleteWorkOrder,
 } from '@/hooks/use-work-orders'
 import { ApiError, getUserRole } from '@/lib/api-client'
-import type {
-  WorkOrderListItem,
+import {
   WorkOrderStatus,
+  type WorkOrderListItem,
 } from '@/lib/schemas/work-order.schema'
 
 type TabValue = 'ALL' | WorkOrderStatus
 
 const TABS: { value: TabValue; label: string }[] = [
   { value: 'ALL', label: 'Todas' },
-  { value: 'DRAFT', label: 'Borrador' },
-  { value: 'CONFIRMED', label: 'Confirmadas' },
-  { value: 'IN_PROGRESS', label: 'En progreso' },
-  { value: 'COMPLETED', label: 'Completadas' },
-  { value: 'CANCELLED', label: 'Canceladas' },
+  { value: WorkOrderStatus.DRAFT, label: 'Borrador' },
+  { value: WorkOrderStatus.CONFIRMED, label: 'Confirmadas' },
+  { value: WorkOrderStatus.IN_PROGRESS, label: 'En progreso' },
+  { value: WorkOrderStatus.COMPLETED, label: 'Completadas' },
+  { value: WorkOrderStatus.CANCELLED, label: 'Canceladas' },
 ]
 
 const STATUS_LABELS: Record<WorkOrderStatus, string> = {
@@ -142,7 +142,7 @@ export default function WorkOrdersPage() {
     try {
       await transition.mutateAsync({
         id: cancelTarget.id,
-        status: 'CANCELLED',
+        status: WorkOrderStatus.CANCELLED,
       })
     } catch (err) {
       if (!(err instanceof ApiError)) console.error(err)
