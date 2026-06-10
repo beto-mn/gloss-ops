@@ -12,6 +12,15 @@ const config: StorybookConfig = {
     options: {},
   },
   staticDirs: ['../public'],
+  async viteFinal(config) {
+    return {
+      ...config,
+      optimizeDeps: {
+        ...config.optimizeDeps,
+        include: [...(config.optimizeDeps?.include ?? []), '@glossops/shared'],
+      },
+    }
+  },
 }
 
 export default config

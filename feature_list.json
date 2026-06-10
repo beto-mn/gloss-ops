@@ -313,7 +313,7 @@
         "Stories cover: happy path, validation error, server error, loading state for all major drawers and forms"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 31,
