@@ -46,11 +46,6 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     return record!
   }
 
-  async delete(id: string): Promise<void> {
-    const result = await this.prisma.organization.deleteMany({ where: { id } })
-    if (result.count === 0) throw new Error('organization not found')
-  }
-
   async createWithBranch(
     data: CreateOrgData,
     accountId: string

@@ -95,4 +95,29 @@ describe('Customers (e2e)', () => {
     const page = parseWith(CustomerPageSchema)(res)
     expect(page.data.find(c => c.id === createdCustomerId)).toBeUndefined()
   })
+
+  it('DELETE /customers/:id?permanent=true — flag is silently ignored, soft-delete only', async () => {
+    const createRes = await http
+      .post('/customers')
+      .set(tenant.authHeaders)
+      .send({
+        firstName: 'Soft',
+        lastName: 'Only',
+        email: `soft-${Date.now()}@e2e.test`,
+        phone: `+52 55 1111 ${Math.floor(Math.random() * 10000)}`,
+      })
+      .expect(201)
+    const target = parseWith(CustomerCreateResponseSchema)(createRes)
+
+    // The validation pipe strips unknown query keys; the request still hits the soft-delete path.
+    await http
+      .delete(`/customers/${target.id}?permanent=true`)
+      .set(tenant.authHeaders)
+      .expect(204)
+
+    // The record still exists (soft-deleted, hidden from default list).
+    const listRes = await http.get('/customers').set(tenant.authHeaders)
+    const list = parseWith(CustomerPageSchema)(listRes)
+    expect(list.data.find(c => c.id === target.id)).toBeUndefined()
+  })
 })

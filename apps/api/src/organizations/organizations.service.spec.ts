@@ -319,7 +319,7 @@ describe('OrganizationService', () => {
         { name: 'T', slug: 't' },
         'acc-1'
       )
-      await service.removeOrganization(organization.id, false)
+      await service.removeOrganization(organization.id)
       await expect(service.getMyOrganization(organization.id)).rejects.toThrow(
         NotFoundException
       )
@@ -331,43 +331,22 @@ describe('OrganizationService', () => {
         'acc-1'
       )
       await organizations.softDelete(organization.id)
-      await expect(
-        service.removeOrganization(organization.id, false)
-      ).rejects.toThrow(NotFoundException)
+      await expect(service.removeOrganization(organization.id)).rejects.toThrow(
+        NotFoundException
+      )
     })
 
     it('throws NotFoundException when soft-deleting a non-existent organization', async () => {
-      await expect(
-        service.removeOrganization('unknown', false)
-      ).rejects.toThrow(NotFoundException)
-    })
-
-    it('permanently deletes an ACTIVE organization', async () => {
-      const { organization } = await organizations.createWithBranch(
-        { name: 'T', slug: 't' },
-        'acc-1'
-      )
-      await service.removeOrganization(organization.id, true)
-      await expect(service.getMyOrganization(organization.id)).rejects.toThrow(
+      await expect(service.removeOrganization('unknown')).rejects.toThrow(
         NotFoundException
       )
     })
 
-    it('permanently deletes an INACTIVE organization (Owner cleaning up)', async () => {
-      const { organization } = await organizations.createWithBranch(
-        { name: 'T', slug: 't' },
-        'acc-1'
-      )
-      await organizations.softDelete(organization.id)
-      await expect(
-        service.removeOrganization(organization.id, true)
-      ).resolves.toBeUndefined()
-    })
-
-    it('throws NotFoundException when permanently deleting a non-existent organization', async () => {
-      await expect(service.removeOrganization('unknown', true)).rejects.toThrow(
-        NotFoundException
-      )
+    it('does not accept a permanent argument (removeOrganization is soft-delete only)', () => {
+      // The removeOrganization signature now only takes organizationId.
+      // This compile-time test guarantees no permanent flag can be supplied.
+      const signatureArity = service.removeOrganization.length
+      expect(signatureArity).toBe(1)
     })
   })
 })

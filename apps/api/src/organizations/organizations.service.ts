@@ -71,21 +71,10 @@ export class OrganizationService {
     return this.organizations.listMembers(organizationId)
   }
 
-  async removeOrganization(
-    organizationId: string,
-    permanent: boolean
-  ): Promise<void> {
-    if (permanent) {
-      try {
-        await this.organizations.delete(organizationId)
-      } catch {
-        throw new NotFoundException({ error: 'organization_not_found' })
-      }
-    } else {
-      const org = await this.organizations.findById(organizationId)
-      if (!org) throw new NotFoundException({ error: 'organization_not_found' })
-      await this.organizations.softDelete(organizationId)
-    }
+  async removeOrganization(organizationId: string): Promise<void> {
+    const org = await this.organizations.findById(organizationId)
+    if (!org) throw new NotFoundException({ error: 'organization_not_found' })
+    await this.organizations.softDelete(organizationId)
   }
 
   async createInvitation(

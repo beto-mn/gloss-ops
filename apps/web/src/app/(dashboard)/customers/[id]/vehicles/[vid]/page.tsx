@@ -401,8 +401,8 @@ export default function VehicleDetailPage() {
               ¿Eliminar vehículo?
             </AlertDialog.Title>
             <AlertDialog.Description className='mt-2 text-sm text-muted-foreground'>
-              Esta acción no se puede deshacer. El vehículo y sus datos serán
-              eliminados permanentemente.
+              El vehículo se archivará y dejará de aparecer en nuevas órdenes.
+              El historial asociado se conserva.
             </AlertDialog.Description>
             <div className='mt-6 flex justify-end gap-3'>
               <AlertDialog.Cancel asChild>

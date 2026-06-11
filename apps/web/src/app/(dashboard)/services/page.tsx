@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import {
   Plus,
@@ -10,7 +9,6 @@ import {
   Pencil,
   PowerOff,
   Power,
-  Trash2,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -22,9 +20,8 @@ import {
   useServicesPage,
   useActivateService,
   useDeactivateService,
-  useDeleteService,
 } from '@/hooks/use-services'
-import { ApiError, getUserRole } from '@/lib/api-client'
+import { getUserRole } from '@/lib/api-client'
 import type { Service, ServiceListParams } from '@/lib/schemas/service.schema'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -76,7 +73,6 @@ export default function ServicesPage() {
     setRole(getUserRole())
   }, [])
   const canWrite = role === 'OWNER' || role === 'MANAGER'
-  const canDelete = role === 'OWNER'
 
   const [tab, setTab] = useState<TabValue>('ALL')
   const [search, setSearch] = useState('')
@@ -85,9 +81,6 @@ export default function ServicesPage() {
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editService, setEditService] = useState<Service | undefined>()
-
-  const [deleteTarget, setDeleteTarget] = useState<Service | null>(null)
-  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -107,7 +100,6 @@ export default function ServicesPage() {
   const { data: servicesPage, isLoading } = useServicesPage(params)
   const activate = useActivateService()
   const deactivate = useDeactivateService()
-  const deleteService = useDeleteService()
 
   const allServices = servicesPage?.data ?? []
   const services =
@@ -122,23 +114,6 @@ export default function ServicesPage() {
   function openEdit(svc: Service) {
     setEditService(svc)
     setDrawerOpen(true)
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return
-    setDeleteError('')
-    try {
-      await deleteService.mutateAsync(deleteTarget.id)
-      setDeleteTarget(null)
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setDeleteError(
-          'El servicio tiene órdenes de trabajo o garantías asociadas y no puede eliminarse.'
-        )
-      } else if (!(err instanceof ApiError)) {
-        console.error(err)
-      }
-    }
   }
 
   return (
@@ -308,22 +283,6 @@ export default function ServicesPage() {
                                 Activar
                               </DropdownMenu.Item>
                             )}
-
-                            {canDelete && (
-                              <>
-                                <DropdownMenu.Separator className='my-1 border-t border-border' />
-                                <DropdownMenu.Item
-                                  onSelect={() => {
-                                    setDeleteError('')
-                                    setDeleteTarget(svc)
-                                  }}
-                                  className='flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm cursor-pointer hover:bg-destructive/10 text-destructive outline-none'
-                                >
-                                  <Trash2 size={14} />
-                                  Eliminar
-                                </DropdownMenu.Item>
-                              </>
-                            )}
                           </DropdownMenu.Content>
                         </DropdownMenu.Portal>
                       </DropdownMenu.Root>
@@ -365,47 +324,6 @@ export default function ServicesPage() {
           </div>
         </div>
       )}
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog.Root
-        open={!!deleteTarget}
-        onOpenChange={open => {
-          if (!open) setDeleteTarget(null)
-        }}
-      >
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay className='fixed inset-0 bg-black/50 z-50' />
-          <AlertDialog.Content className='fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg'>
-            <AlertDialog.Title className='text-lg font-semibold mb-2'>
-              ¿Eliminar servicio?
-            </AlertDialog.Title>
-            <AlertDialog.Description className='text-sm text-muted-foreground mb-4'>
-              Se eliminará permanentemente el servicio{' '}
-              <strong>{deleteTarget?.name}</strong>. Esta acción no se puede
-              deshacer.
-            </AlertDialog.Description>
-
-            {deleteError && (
-              <p className='text-sm text-destructive mb-4'>{deleteError}</p>
-            )}
-
-            <div className='flex justify-end gap-3'>
-              <AlertDialog.Cancel asChild>
-                <Button variant='outline' disabled={deleteService.isPending}>
-                  Cancelar
-                </Button>
-              </AlertDialog.Cancel>
-              <Button
-                variant='destructive'
-                onClick={handleDelete}
-                disabled={deleteService.isPending}
-              >
-                {deleteService.isPending ? 'Eliminando…' : 'Eliminar'}
-              </Button>
-            </div>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog.Root>
 
       {/* Service drawer */}
       <ServiceDrawer

@@ -13,16 +13,6 @@ import type {
 
 export class InMemoryServiceRepository implements ServiceRepositoryInterface {
   private services = new Map<string, Prisma.ServiceModel>()
-  private workOrderItems = new Map<string, { id: string; serviceId: string }>()
-  private warranties = new Map<string, { id: string; serviceId: string }>()
-
-  seedWorkOrderItems(items: { id: string; serviceId: string }[]) {
-    for (const item of items) this.workOrderItems.set(item.id, item)
-  }
-
-  seedWarranties(items: { id: string; serviceId: string }[]) {
-    for (const item of items) this.warranties.set(item.id, item)
-  }
 
   private hasConflictingName(
     organizationId: string,
@@ -167,28 +157,5 @@ export class InMemoryServiceRepository implements ServiceRepositoryInterface {
     const updated = { ...service, isActive: false, updatedAt: new Date() }
     this.services.set(id, updated)
     return Promise.resolve(updated)
-  }
-
-  delete(id: string, organizationId: string): Promise<void> {
-    const service = this.services.get(id)
-    if (!service || service.organizationId !== organizationId) {
-      return Promise.reject(new Error('service not found'))
-    }
-    for (const item of this.workOrderItems.values()) {
-      if (item.serviceId === id) {
-        return Promise.reject(
-          new ConflictException({ error: 'service_has_references' })
-        )
-      }
-    }
-    for (const warranty of this.warranties.values()) {
-      if (warranty.serviceId === id) {
-        return Promise.reject(
-          new ConflictException({ error: 'service_has_references' })
-        )
-      }
-    }
-    this.services.delete(id)
-    return Promise.resolve()
   }
 }

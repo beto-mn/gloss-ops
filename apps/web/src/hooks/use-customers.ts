@@ -79,18 +79,6 @@ export function useArchiveCustomer() {
   })
 }
 
-export function useDeleteCustomer() {
-  const qc = useQueryClient()
-
-  return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch<void>(`/customers/${id}?permanent=true`, { method: 'DELETE' }),
-    onSuccess() {
-      qc.invalidateQueries({ queryKey: [CUSTOMERS_KEY] })
-    },
-  })
-}
-
 export function useReactivateCustomer() {
   const qc = useQueryClient()
 

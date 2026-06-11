@@ -294,31 +294,6 @@ describe('InMemoryCustomerRepository', () => {
     })
   })
 
-  describe('delete', () => {
-    it('removes the customer from the store', async () => {
-      const created = await repo.create('org-1', makeData())
-      await repo.delete(created.id, 'org-1')
-      expect(await repo.findById(created.id, 'org-1')).toBeNull()
-    })
-
-    it('rejects when customer does not belong to the organization', async () => {
-      await expect(repo.delete('unknown', 'org-1')).rejects.toThrow(
-        'customer not found'
-      )
-    })
-
-    it('removes a INACTIVE customer (hard delete regardless of status)', async () => {
-      const created = await repo.create('org-1', makeData())
-      await repo.softDelete(created.id, 'org-1')
-      await repo.delete(created.id, 'org-1')
-      // If the record were still in the map as INACTIVE, a second delete would succeed.
-      // The rejection here proves the map entry is truly gone.
-      await expect(repo.delete(created.id, 'org-1')).rejects.toThrow(
-        'customer not found'
-      )
-    })
-  })
-
   describe('softDelete', () => {
     it('marks the customer as INACTIVE', async () => {
       const created = await repo.create('org-1', makeData())

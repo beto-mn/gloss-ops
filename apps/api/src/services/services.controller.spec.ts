@@ -26,7 +26,6 @@ describe('ServicesController', () => {
     findAll: jest.Mock
     findOne: jest.Mock
     update: jest.Mock
-    remove: jest.Mock
     activate: jest.Mock
     deactivate: jest.Mock
   }
@@ -37,7 +36,6 @@ describe('ServicesController', () => {
       findAll: jest.fn().mockResolvedValue({ data: [], meta: {} }),
       findOne: jest.fn().mockResolvedValue({}),
       update: jest.fn().mockResolvedValue({}),
-      remove: jest.fn().mockResolvedValue(undefined),
       activate: jest.fn().mockResolvedValue({}),
       deactivate: jest.fn().mockResolvedValue({}),
     }
@@ -80,10 +78,11 @@ describe('ServicesController', () => {
     })
   })
 
-  describe('remove', () => {
-    it('calls service.remove with id and organizationId', async () => {
-      await controller.remove(OWNER, 'svc-1')
-      expect(service.remove).toHaveBeenCalledWith('svc-1', 'org-1')
+  describe('remove (route removed)', () => {
+    it('does not expose a remove handler on ServicesController', () => {
+      expect(
+        (controller as unknown as Record<string, unknown>).remove
+      ).toBeUndefined()
     })
   })
 

@@ -199,17 +199,6 @@ export class InMemoryCustomerAssetRepository implements CustomerAssetRepositoryI
     return Promise.resolve(updated)
   }
 
-  delete(id: string, organizationId: string): Promise<void> {
-    const asset = this.assets.get(id)
-    if (!asset) return Promise.reject(new Error('asset not found'))
-    const customer = this.customers.get(asset.customerId)
-    if (!customer || customer.organizationId !== organizationId) {
-      return Promise.reject(new Error('asset not found'))
-    }
-    this.assets.delete(id)
-    return Promise.resolve()
-  }
-
   customerExistsInOrg(
     customerId: string,
     organizationId: string

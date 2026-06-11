@@ -191,20 +191,6 @@ describe('InMemoryCustomerAssetRepository', () => {
     })
   })
 
-  describe('delete', () => {
-    it('removes the asset permanently', async () => {
-      const created = await repo.create(CUSTOMER_ID, makeData())
-      await repo.delete(created.id, ORG)
-      const found = await repo.findById(created.id, ORG)
-      expect(found).toBeNull()
-    })
-
-    it('rejects when asset belongs to another org', async () => {
-      const created = await repo.create(CUSTOMER_ID, makeData())
-      await expect(repo.delete(created.id, OTHER_ORG)).rejects.toThrow()
-    })
-  })
-
   describe('customerExistsInOrg', () => {
     it('returns true when customer is ACTIVE in org', async () => {
       const result = await repo.customerExistsInOrg(CUSTOMER_ID, ORG)

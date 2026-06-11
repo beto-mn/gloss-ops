@@ -66,20 +66,6 @@ Every create and list-by-customer operation SHALL verify that the target custome
 - **WHEN** `PATCH /customer-assets/:id` sets `assetType: "OTHER"` but omits `customAssetType` and the current row has no `customAssetType`
 - **THEN** the response is 422 `custom_asset_type_required`
 
-### Requirement: Delete follows soft/hard pattern with Owner-only hard delete
-
-`DELETE /customer-assets/:id` SHALL soft-delete by default. `?permanent=true` performs a hard delete and MUST be restricted to the `OWNER` role.
-
-#### Scenario: Manager soft-deletes an asset
-
-- **WHEN** a `MANAGER` calls `DELETE /customer-assets/:id` without `?permanent=true`
-- **THEN** the asset's status becomes `DELETED` and the response is 204
-
-#### Scenario: Manager attempts permanent delete
-
-- **WHEN** a `MANAGER` calls `DELETE /customer-assets/:id?permanent=true`
-- **THEN** the response is 403 `forbidden`
-
 ### Requirement: Vehicle table rows are navigable
 
 In the customer detail page (`/customers/[id]`), each vehicle row in the assets table SHALL be clickable and navigate to `/customers/[id]/vehicles/[asset.id]`. The row SHALL display a pointer cursor on hover.
@@ -93,3 +79,34 @@ In the customer detail page (`/customers/[id]`), each vehicle row in the assets 
 
 - **WHEN** the user clicks the `MoreHorizontal` dropdown trigger in a vehicle row
 - **THEN** the dropdown opens and navigation does NOT occur
+
+### Requirement: Customer asset deletion is soft-delete only
+
+`DELETE /customer-assets/:id` SHALL only soft-delete the asset (`status=DELETED`). The `permanent` query parameter — if present in a request — has no effect and is silently stripped by the validation pipe. Customer assets are referenced by `WorkOrder`, `Warranty`, and (transitively) `Invoice` rows; allowing permanent deletion would break warranty and fiscal audit trails.
+
+The `removeCustomerAsset` service method SHALL NOT call `prisma.customerAsset.delete(...)`.
+
+#### Scenario: Soft-delete returns 204 and marks the asset
+
+- **WHEN** an `OWNER` or `MANAGER` calls `DELETE /customer-assets/:id` against an existing active asset
+- **THEN** the asset's `status` is set to `DELETED` and the response is `204`
+
+#### Scenario: `permanent=true` is silently ignored
+
+- **WHEN** an authorized caller calls `DELETE /customer-assets/:id?permanent=true`
+- **THEN** the response is identical to the request without the flag — the asset is soft-deleted, NOT hard-deleted, and no related work orders, warranties, or invoices are removed
+
+#### Scenario: Manager-level role is sufficient for soft-delete
+
+- **WHEN** a `MANAGER` calls `DELETE /customer-assets/:id` (with or without `permanent=true`)
+- **THEN** the request succeeds (soft-delete). The previous "OWNER-only hard delete" gating no longer applies because there is no hard delete.
+
+#### Scenario: Genuine not-found returns 404
+
+- **WHEN** `DELETE /customer-assets/:id` is invoked with an id that does not exist in the caller's org
+- **THEN** the response is `404 Not Found` with `{ error: 'customer_asset_not_found' }`
+
+#### Scenario: removeCustomerAsset never calls prisma.customerAsset.delete
+
+- **WHEN** the service-layer code is inspected
+- **THEN** no code path in `CustomerAssetsService.removeCustomerAsset` calls `prisma.customerAsset.delete(...)` — only the soft-delete repository method is used

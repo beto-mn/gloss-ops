@@ -25,7 +25,6 @@ export interface OrganizationRepositoryInterface {
   findAllByAccountId(accountId: string): Promise<OrganizationWithRole[]>
   update(id: string, data: UpdateOrgData): Promise<Prisma.OrganizationModel>
   softDelete(id: string): Promise<Prisma.OrganizationModel>
-  delete(id: string): Promise<void>
   createWithBranch(
     data: CreateOrgData,
     accountId: string

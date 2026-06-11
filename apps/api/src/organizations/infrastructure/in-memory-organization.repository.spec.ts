@@ -210,36 +210,4 @@ describe('InMemoryOrganizationRepository', () => {
       )
     })
   })
-
-  describe('delete', () => {
-    it('removes an ACTIVE organization from the store', async () => {
-      const { organization } = await repo.createWithBranch(
-        { name: 'T', slug: 't' },
-        'acc-1'
-      )
-      await repo.delete(organization.id)
-      // Verify it's gone by attempting a second delete which should reject
-      await expect(repo.delete(organization.id)).rejects.toThrow(
-        'organization not found'
-      )
-    })
-
-    it('removes an INACTIVE organization from the store (hard delete any status)', async () => {
-      const { organization } = await repo.createWithBranch(
-        { name: 'T', slug: 't' },
-        'acc-1'
-      )
-      await repo.softDelete(organization.id)
-      await repo.delete(organization.id)
-      await expect(repo.delete(organization.id)).rejects.toThrow(
-        'organization not found'
-      )
-    })
-
-    it('rejects when organization does not exist', async () => {
-      await expect(repo.delete('unknown')).rejects.toThrow(
-        'organization not found'
-      )
-    })
-  })
 })

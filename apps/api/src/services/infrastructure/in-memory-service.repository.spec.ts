@@ -181,36 +181,4 @@ describe('InMemoryServiceRepository', () => {
       expect(result.isActive).toBe(true)
     })
   })
-
-  describe('delete', () => {
-    it('removes the service', async () => {
-      const created = await repo.create(ORG, makeData())
-      await repo.delete(created.id, ORG)
-      const found = await repo.findById(created.id, ORG)
-      expect(found).toBeNull()
-    })
-
-    it('throws ConflictException when service has workOrderItem references', async () => {
-      const created = await repo.create(ORG, makeData())
-      repo.seedWorkOrderItems([{ id: 'item-1', serviceId: created.id }])
-      await expect(repo.delete(created.id, ORG)).rejects.toThrow(
-        ConflictException
-      )
-    })
-
-    it('throws ConflictException when service has warranty references', async () => {
-      const created = await repo.create(ORG, makeData())
-      repo.seedWarranties([{ id: 'warranty-1', serviceId: created.id }])
-      await expect(repo.delete(created.id, ORG)).rejects.toThrow(
-        ConflictException
-      )
-    })
-
-    it('succeeds when service has no references', async () => {
-      const first = await repo.create(ORG, makeData())
-      const second = await repo.create(ORG, makeData({ name: 'PPF' }))
-      repo.seedWorkOrderItems([{ id: 'item-1', serviceId: second.id }])
-      await expect(repo.delete(first.id, ORG)).resolves.toBeUndefined()
-    })
-  })
 })

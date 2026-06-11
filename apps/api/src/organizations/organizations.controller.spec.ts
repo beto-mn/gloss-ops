@@ -36,16 +36,10 @@ describe('OrganizationController', () => {
   })
 
   describe('removeOrganization', () => {
-    it('calls orgService.removeOrganization with permanent=true when Owner passes ?permanent=true', () => {
+    it('calls orgService.removeOrganization with only the organizationId (no permanent flag)', () => {
       const account = makeAccount(Role.OWNER)
-      void controller.removeOrganization(account, 'true')
-      expect(orgService.removeOrganization).toHaveBeenCalledWith('org-1', true)
-    })
-
-    it('calls orgService.removeOrganization with permanent=false when permanent is not provided', () => {
-      const account = makeAccount(Role.OWNER)
-      void controller.removeOrganization(account, undefined)
-      expect(orgService.removeOrganization).toHaveBeenCalledWith('org-1', false)
+      void controller.removeOrganization(account)
+      expect(orgService.removeOrganization).toHaveBeenCalledWith('org-1')
     })
   })
 })

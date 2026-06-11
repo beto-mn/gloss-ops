@@ -106,5 +106,16 @@ describe('Organizations (e2e)', () => {
       // After soft-delete the org is INACTIVE; `getMyOrganization` filters on ACTIVE → 404.
       await http.get('/organizations/me').set(tmp.authHeaders).expect(404)
     })
+
+    it('204 — ?permanent=true is silently ignored (soft-delete only)', async () => {
+      const tmp = await seedTenant(http)
+      // The validation pipe strips unknown query keys. The flag has no destructive effect.
+      await http
+        .delete('/organizations/me?permanent=true')
+        .set(tmp.authHeaders)
+        .expect(204)
+
+      await http.get('/organizations/me').set(tmp.authHeaders).expect(404)
+    })
   })
 })

@@ -195,13 +195,4 @@ export class InMemoryCustomerRepository implements CustomerRepositoryInterface {
     this.customers.set(id, updated)
     return Promise.resolve(updated)
   }
-
-  delete(id: string, organizationId: string): Promise<void> {
-    const customer = this.customers.get(id)
-    if (!customer || customer.organizationId !== organizationId) {
-      return Promise.reject(new Error('customer not found'))
-    }
-    this.customers.delete(id)
-    return Promise.resolve()
-  }
 }

@@ -64,6 +64,4 @@ export interface ServiceRepositoryInterface {
 
   activate(id: string, organizationId: string): Promise<Prisma.ServiceModel>
   deactivate(id: string, organizationId: string): Promise<Prisma.ServiceModel>
-
-  delete(id: string, organizationId: string): Promise<void>
 }

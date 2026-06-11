@@ -166,20 +166,8 @@ export class CustomerAssetsService {
     return this.repo.update(id, organizationId, data)
   }
 
-  async remove(
-    id: string,
-    organizationId: string,
-    permanent = false
-  ): Promise<void> {
-    if (permanent) {
-      try {
-        await this.repo.delete(id, organizationId)
-      } catch {
-        throw new NotFoundException({ error: 'customer_asset_not_found' })
-      }
-    } else {
-      await this.findOne(id, organizationId)
-      await this.repo.softDelete(id, organizationId)
-    }
+  async remove(id: string, organizationId: string): Promise<void> {
+    await this.findOne(id, organizationId)
+    await this.repo.softDelete(id, organizationId)
   }
 }

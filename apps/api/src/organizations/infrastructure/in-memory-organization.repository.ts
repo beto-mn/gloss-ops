@@ -72,13 +72,6 @@ export class InMemoryOrganizationRepository implements OrganizationRepositoryInt
     return Promise.resolve(updated)
   }
 
-  delete(id: string): Promise<void> {
-    if (!this.organizations.has(id))
-      return Promise.reject(new Error('organization not found'))
-    this.organizations.delete(id)
-    return Promise.resolve()
-  }
-
   createWithBranch(
     data: CreateOrgData,
     accountId: string

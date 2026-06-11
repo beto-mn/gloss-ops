@@ -164,27 +164,10 @@ describe('ServicesService', () => {
     })
   })
 
-  describe('remove', () => {
-    it('removes the service when it has no references', async () => {
-      const created = await repo.create(ORG, makeData())
-      await expect(service.remove(created.id, ORG)).resolves.toBeUndefined()
-      await expect(service.findOne(created.id, ORG)).rejects.toThrow(
-        NotFoundException
-      )
-    })
-
-    it('throws NotFoundException when service does not exist', async () => {
-      await expect(service.remove('nonexistent', ORG)).rejects.toThrow(
-        NotFoundException
-      )
-    })
-
-    it('propagates ConflictException when service has references', async () => {
-      const created = await repo.create(ORG, makeData())
-      repo.seedWorkOrderItems([{ id: 'item-1', serviceId: created.id }])
-      await expect(service.remove(created.id, ORG)).rejects.toThrow(
-        ConflictException
-      )
+  describe('remove (removed in hard-delete-audit-all-modules)', () => {
+    it('does not expose a remove method on ServicesService', () => {
+      // The DELETE /services/:id route was removed; consumers use deactivate instead.
+      expect((service as Record<string, unknown>).remove).toBeUndefined()
     })
   })
 })

@@ -105,15 +105,3 @@ export function useDeactivateService() {
     },
   })
 }
-
-export function useDeleteService() {
-  const qc = useQueryClient()
-
-  return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch<void>(`/services/${id}`, { method: 'DELETE' }),
-    onSuccess() {
-      qc.invalidateQueries({ queryKey: [SVC_KEY] })
-    },
-  })
-}

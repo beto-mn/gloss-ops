@@ -287,7 +287,7 @@ describe('CustomerAssetsService', () => {
   describe('remove', () => {
     it('soft-deletes an ACTIVE asset', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
-      await service.remove(created.id, ORG, false)
+      await service.remove(created.id, ORG)
       await expect(service.findOne(created.id, ORG)).rejects.toThrow(
         NotFoundException
       )
@@ -296,32 +296,21 @@ describe('CustomerAssetsService', () => {
     it('throws NotFoundException when soft-deleting an already-INACTIVE asset', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
       await repo.softDelete(created.id, ORG)
-      await expect(service.remove(created.id, ORG, false)).rejects.toThrow(
+      await expect(service.remove(created.id, ORG)).rejects.toThrow(
         NotFoundException
       )
     })
 
-    it('permanently deletes an asset', async () => {
+    it('throws NotFoundException when removing an asset from another org', async () => {
       const created = await repo.create(CUSTOMER_ID, makeData())
-      await service.remove(created.id, ORG, true)
-      await expect(service.remove(created.id, ORG, true)).rejects.toThrow(
+      await expect(service.remove(created.id, OTHER_ORG)).rejects.toThrow(
         NotFoundException
       )
     })
 
-    it('permanently deletes an INACTIVE asset (Owner cleaning up)', async () => {
-      const created = await repo.create(CUSTOMER_ID, makeData())
-      await repo.softDelete(created.id, ORG)
-      await expect(
-        service.remove(created.id, ORG, true)
-      ).resolves.toBeUndefined()
-    })
-
-    it('throws NotFoundException when permanently deleting from another org', async () => {
-      const created = await repo.create(CUSTOMER_ID, makeData())
-      await expect(service.remove(created.id, OTHER_ORG, true)).rejects.toThrow(
-        NotFoundException
-      )
+    it('does not accept a permanent argument (remove is soft-delete only)', () => {
+      // Signature now only takes (id, organizationId).
+      expect(service.remove.length).toBe(2)
     })
   })
 })
