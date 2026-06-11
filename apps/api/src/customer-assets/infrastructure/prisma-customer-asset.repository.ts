@@ -138,13 +138,6 @@ export class PrismaCustomerAssetRepository implements CustomerAssetRepositoryInt
     return record!
   }
 
-  async delete(id: string, organizationId: string): Promise<void> {
-    const result = await this.prisma.customerAsset.deleteMany({
-      where: { id, customer: { organizationId } },
-    })
-    if (result.count === 0) throw new Error('asset not found')
-  }
-
   async customerExistsInOrg(
     customerId: string,
     organizationId: string

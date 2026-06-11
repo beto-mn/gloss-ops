@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Patch,
-  Delete,
   Body,
   Param,
   Query,
@@ -57,13 +56,6 @@ export class ServicesController {
     @Body() dto: UpdateServiceDto
   ) {
     return this.service.update(id, account.organizationId!, dto)
-  }
-
-  @Delete(':id')
-  @HttpCode(204)
-  @Roles(Role.OWNER)
-  remove(@CurrentAccount() account: AuthContext, @Param('id') id: string) {
-    return this.service.remove(id, account.organizationId!)
   }
 
   @Post(':id/activate')

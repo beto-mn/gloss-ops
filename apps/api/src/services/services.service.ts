@@ -77,9 +77,4 @@ export class ServicesService {
       throw new ConflictException({ error: 'service_already_inactive' })
     return this.services.deactivate(id, organizationId)
   }
-
-  async remove(id: string, organizationId: string): Promise<void> {
-    await this.findOne(id, organizationId)
-    await this.services.delete(id, organizationId)
-  }
 }

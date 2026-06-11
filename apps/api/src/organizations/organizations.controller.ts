@@ -6,7 +6,6 @@ import {
   HttpCode,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common'
 import { ApiOperation, ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 
@@ -66,17 +65,10 @@ export class OrganizationController {
   @HttpCode(204)
   @Roles(Role.OWNER)
   @ApiOperation({
-    summary:
-      'Delete the current organization. Pass ?permanent=true to hard delete.',
+    summary: 'Soft-delete the current organization.',
   })
-  removeOrganization(
-    @CurrentAccount() account: AuthContext,
-    @Query('permanent') permanent?: string
-  ): Promise<void> {
-    return this.orgService.removeOrganization(
-      account.organizationId!,
-      permanent === 'true'
-    )
+  removeOrganization(@CurrentAccount() account: AuthContext): Promise<void> {
+    return this.orgService.removeOrganization(account.organizationId!)
   }
 
   @Get('me/members')

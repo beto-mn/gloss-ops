@@ -1,11 +1,9 @@
 import {
-  ForbiddenException,
   Controller,
   HttpCode,
   Delete,
   Param,
   Patch,
-  Query,
   Body,
   Get,
 } from '@nestjs/common'
@@ -54,19 +52,11 @@ export class CustomerAssetsController {
   @Delete(':id')
   @HttpCode(204)
   @Roles(Role.OWNER, Role.MANAGER)
-  @ApiOperation({
-    summary:
-      'Soft-delete a customer asset. Pass ?permanent=true (Owner only) to hard delete.',
-  })
+  @ApiOperation({ summary: 'Soft-delete a customer asset.' })
   remove(
     @CurrentAccount() account: AuthContext,
-    @Param('id') id: string,
-    @Query('permanent') permanent?: string
+    @Param('id') id: string
   ): Promise<void> {
-    const isPermanent = permanent === 'true'
-    if (isPermanent && account.role !== Role.OWNER) {
-      throw new ForbiddenException({ error: 'forbidden' })
-    }
-    return this.service.remove(id, account.organizationId!, isPermanent)
+    return this.service.remove(id, account.organizationId!)
   }
 }

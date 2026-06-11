@@ -110,20 +110,8 @@ export class CustomersService {
     }
   }
 
-  async remove(
-    id: string,
-    organizationId: string,
-    permanent = false
-  ): Promise<void> {
-    if (permanent) {
-      try {
-        await this.customers.delete(id, organizationId)
-      } catch {
-        throw new NotFoundException({ error: 'customer_not_found' })
-      }
-    } else {
-      await this.findOne(id, organizationId)
-      await this.customers.softDelete(id, organizationId)
-    }
+  async remove(id: string, organizationId: string): Promise<void> {
+    await this.findOne(id, organizationId)
+    await this.customers.softDelete(id, organizationId)
   }
 }

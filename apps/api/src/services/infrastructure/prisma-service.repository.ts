@@ -133,18 +133,4 @@ export class PrismaServiceRepository implements ServiceRepositoryInterface {
       where: { id, organizationId },
     }))!
   }
-
-  async delete(id: string, organizationId: string): Promise<void> {
-    try {
-      await this.prisma.service.deleteMany({ where: { id, organizationId } })
-    } catch (e) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2003'
-      ) {
-        throw new ConflictException({ error: 'service_has_references' })
-      }
-      throw e
-    }
-  }
 }

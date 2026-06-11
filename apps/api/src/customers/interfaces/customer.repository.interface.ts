@@ -80,5 +80,4 @@ export interface CustomerRepositoryInterface {
   ): Promise<Prisma.CustomerModel>
   softDelete(id: string, organizationId: string): Promise<Prisma.CustomerModel>
   restore(id: string, organizationId: string): Promise<Prisma.CustomerModel>
-  delete(id: string, organizationId: string): Promise<void>
 }

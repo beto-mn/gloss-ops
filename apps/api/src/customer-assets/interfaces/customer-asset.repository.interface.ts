@@ -84,8 +84,6 @@ export interface CustomerAssetRepositoryInterface {
     organizationId: string
   ): Promise<Prisma.CustomerAssetModel>
 
-  delete(id: string, organizationId: string): Promise<void>
-
   customerExistsInOrg(
     customerId: string,
     organizationId: string

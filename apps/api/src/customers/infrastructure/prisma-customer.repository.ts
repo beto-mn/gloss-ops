@@ -171,11 +171,4 @@ export class PrismaCustomerRepository implements CustomerRepositoryInterface {
     })
     return record!
   }
-
-  async delete(id: string, organizationId: string): Promise<void> {
-    const result = await this.prisma.customer.deleteMany({
-      where: { id, organizationId },
-    })
-    if (result.count === 0) throw new Error('customer not found')
-  }
 }
