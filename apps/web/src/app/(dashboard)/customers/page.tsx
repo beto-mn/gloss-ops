@@ -12,7 +12,6 @@ import {
   Pencil,
   PowerOff,
   RotateCcw,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -24,7 +23,6 @@ import { CustomerDrawer } from '@/components/customers/customer-drawer'
 import {
   useCustomers,
   useArchiveCustomer,
-  useDeleteCustomer,
   useReactivateCustomer,
 } from '@/hooks/use-customers'
 import { ApiError, getUserRole } from '@/lib/api-client'
@@ -70,9 +68,6 @@ export default function CustomersPage() {
   const [editCustomer, setEditCustomer] = useState<
     CustomerWithCount | undefined
   >()
-  const [deleteTarget, setDeleteTarget] = useState<CustomerWithCount | null>(
-    null
-  )
   const [archiveTarget, setArchiveTarget] = useState<CustomerWithCount | null>(
     null
   )
@@ -81,7 +76,6 @@ export default function CustomersPage() {
     useState<CustomerWithCount | null>(null)
 
   const archive = useArchiveCustomer()
-  const deleteCustomer = useDeleteCustomer()
   const reactivate = useReactivateCustomer()
 
   const canReactivate = ['OWNER', 'MANAGER'].includes(getUserRole() ?? '')
@@ -142,17 +136,6 @@ export default function CustomersPage() {
       if (!(err instanceof ApiError)) console.error(err)
     } finally {
       setReactivateTarget(null)
-    }
-  }
-
-  async function confirmDelete() {
-    if (!deleteTarget) return
-    try {
-      await deleteCustomer.mutateAsync(deleteTarget.id)
-    } catch (err) {
-      if (!(err instanceof ApiError)) console.error(err)
-    } finally {
-      setDeleteTarget(null)
     }
   }
 
@@ -325,24 +308,15 @@ export default function CustomersPage() {
                                   Desactivar
                                 </DropdownMenu.Item>
                               ) : (
-                                <>
-                                  {canReactivate && (
-                                    <DropdownMenu.Item
-                                      className='flex items-center gap-2 rounded-sm px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none'
-                                      onSelect={() => setReactivateTarget(c)}
-                                    >
-                                      <RotateCcw size={14} />
-                                      Reactivar
-                                    </DropdownMenu.Item>
-                                  )}
+                                canReactivate && (
                                   <DropdownMenu.Item
-                                    className='flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-destructive cursor-pointer hover:bg-destructive/10 outline-none'
-                                    onSelect={() => setDeleteTarget(c)}
+                                    className='flex items-center gap-2 rounded-sm px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none'
+                                    onSelect={() => setReactivateTarget(c)}
                                   >
-                                    <Trash2 size={14} />
-                                    Eliminar
+                                    <RotateCcw size={14} />
+                                    Reactivar
                                   </DropdownMenu.Item>
-                                </>
+                                )
                               )}
                             </DropdownMenu.Content>
                           </DropdownMenu.Portal>
@@ -448,39 +422,6 @@ export default function CustomersPage() {
               <AlertDialog.Action asChild>
                 <Button onClick={confirmArchive} disabled={archive.isPending}>
                   Desactivar
-                </Button>
-              </AlertDialog.Action>
-            </div>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog.Root>
-
-      {/* Delete confirmation */}
-      <AlertDialog.Root
-        open={!!deleteTarget}
-        onOpenChange={o => !o && setDeleteTarget(null)}
-      >
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay className='fixed inset-0 z-50 bg-black/50 animate-in fade-in-0' />
-          <AlertDialog.Content className='fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95'>
-            <AlertDialog.Title className='text-lg font-semibold'>
-              ¿Eliminar cliente?
-            </AlertDialog.Title>
-            <AlertDialog.Description className='mt-2 text-sm text-muted-foreground'>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el
-              registro de {deleteTarget?.firstName} {deleteTarget?.lastName}.
-            </AlertDialog.Description>
-            <div className='mt-6 flex justify-end gap-3'>
-              <AlertDialog.Cancel asChild>
-                <Button variant='outline'>Cancelar</Button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <Button
-                  variant='destructive'
-                  onClick={confirmDelete}
-                  disabled={deleteCustomer.isPending}
-                >
-                  Eliminar
                 </Button>
               </AlertDialog.Action>
             </div>
