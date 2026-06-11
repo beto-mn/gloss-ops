@@ -418,19 +418,23 @@
     },
     {
       "id": 34,
-      "name": "organizations_hard_delete_fix",
-      "title": "Fix hard-delete on organizations (FK cascade + error semantics)",
-      "description": "Surfaced by testing_integration_api: DELETE /organizations/me?permanent=true fails because Branch→Organization has no cascade in the Prisma schema and OrganizationsService.removeOrganization wraps the FK error as 404. The hard-delete scenario in organizations.e2e-spec.ts was dropped as a workaround. Fix the cascade or explicit child cleanup, stop swallowing FK errors as 404, and re-add the e2e scenario.",
+      "name": "hard_delete_audit_all_modules",
+      "title": "Remove unsafe hard-delete endpoints across the API and standardize on soft-delete",
+      "description": "Surfaced by testing_integration_api and confirmed by a cross-module audit: the same swallowing-catch + missing-cascade bug exists in 4 modules — organizations, customers, customer-assets, services. Rather than fix each one with cascade rules and 409 semantics (which preserves an unsafe surface), this feature removes the hard-delete capability outright. Rationale: customers and customer-assets have legal/fiscal retention requirements (invoices reference them for 5+ years); services already expose explicit activate/deactivate semantics that supersede hard-delete; organizations' permanent-delete has no UI caller and no proven product use case (Testcontainers handles test cleanup). Soft-delete (status=DELETED, or isActive=false for services) becomes the single deletion path. If GDPR or tenant-decommissioning needs hard-delete in the future, those flows get a dedicated design with explicit retention rules, not a query-param toggle. Spec at openspec/changes/hard-delete-audit-all-modules/.",
       "acceptance": [
-        "DELETE /organizations/me?permanent=true succeeds when no protected dependencies remain (deletes branches, memberships, etc.)",
-        "OrganizationsService.removeOrganization surfaces FK errors with a meaningful status (409 or 400), never silently as 404",
-        "Prisma schema has the correct onDelete: Cascade (or explicit cleanup) between Organization and its children",
-        "organizations.e2e-spec.ts re-adds the hard-delete scenario without workarounds",
-        "Unit tests cover both the cascade path and the error-surfacing path",
-        "pnpm --filter api test and test:e2e both pass"
+        "Audit data captured in design.md: the 4 affected modules (organizations, customers, customer-assets, services) are listed with their swallowing-catch line ranges. The other 12 modules are documented as CASCADE_SAFE, SOFT_ONLY, or FINANCIAL with one-line reasoning",
+        "permanent query parameter removed from controllers and DTOs in organizations, customers, customer-assets. DELETE endpoints always do soft-delete (status=DELETED)",
+        "DELETE /services/:id endpoint removed entirely; consumers use POST /services/:id/deactivate (already exists)",
+        "All four service methods drop the broad try { delete } catch { throw NotFoundException } block. removeOrganization, removeCustomer, removeCustomerAsset, removeService no longer call prisma.X.delete() — they only soft-delete or no-op",
+        "Hard-delete repository methods (.delete(id)) in the 4 affected modules are removed unless still used internally (e.g., by tests). If kept, they are isolated and documented",
+        "Existing e2e scenarios that exercised permanent=true are removed; new scenarios assert that DELETE still soft-deletes and that the permanent flag (if sent) is ignored or rejected with 400",
+        "Unit tests for the 4 services drop the cascade-path tests and keep the soft-delete-path tests. New tests confirm permanent=true does not bypass soft-delete",
+        "Existing soft-delete behavior is unchanged for callers — DELETE without permanent still returns the same status and result",
+        "No Prisma migration is required (we are removing code paths, not changing schema). Cascade rules stay default — there are no hard-deletes that would trigger them",
+        "pnpm --filter api test (601 tests) and pnpm --filter api test:e2e (94 tests) both pass; ./init.sh green"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 35,

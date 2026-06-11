@@ -1,5 +1,25 @@
 # Session History
 
+## 2026-06-11 — hard_delete_audit_all_modules
+
+**Status:** done
+**Spec:** `openspec/changes/archive/2026-06-11-hard-delete-audit-all-modules/`
+**Agent:** leader + Explore + implementer + reviewer + implementer (cleanup pass)
+
+### Summary
+
+- Original feat 34 was scoped to "fix Organization hard-delete bug" (cascade + 409 + narrow catch). User asked the deeper question — "do these hard-deletes need to exist?" — which reframed the change.
+- Cross-module audit (Explore subagent) confirmed 4 modules with the same LIKE_ORG_BUG pattern (`organizations`, `customers`, `customer-assets`, `services`). The other 12 modules classified CASCADE_SAFE, SOFT_ONLY, or FINANCIAL.
+- User picked "remove the 4 hard-deletes" over "fix them". Rationale: Customer/CustomerAsset are referenced by Invoice/Warranty with legal retention requirements; Service already exposes activate/deactivate (DELETE is redundant); Organization permanent-delete has no UI caller and no documented use case.
+- Feat 34 renamed `organizations_hard_delete_fix` → `hard_delete_audit_all_modules`. Old feat 36 (cross-module audit follow-up) subsumed and deleted. Openspec folder renamed accordingly.
+- All 4 artifacts rewritten for removal scope: `permanent` query param removed from organizations/customers/customer-assets; `DELETE /services/:id` route removed entirely; broad swallowing try/catch blocks deleted; repo `.delete()` methods removed where they had no other callers. No Prisma migration needed (schema untouched).
+- 4 spec deltas published (`organizations`, `customers-module`, `customer-assets-module`, `services-module`) — `ADDED` "deletion is soft-delete only" requirements; `REMOVED` "Delete follows soft/hard pattern" and "FK protection on service deletion"; `MODIFIED` services RBAC scenario to drop the OWNER-only hard-delete gate.
+- E2E gained 3 new "permanent=true silently ignored" scenarios + 1 "DELETE /services returns 404" scenario; lost ~17 hard-delete unit tests.
+- Post-apply scope expansion: reviewer flagged `useDeleteCustomer` in `apps/web/src/hooks/use-customers.ts` (sent `?permanent=true`) and `useDeleteService` (called the removed route). User authorized cleanup pass — deleted both hooks, removed their UI callers (dropdown items + AlertDialogs on `customers/page.tsx` INACTIVE tab and `services/page.tsx`), fixed UX-lying "será eliminado permanentemente" wording on 2 customer-asset pages, purged stale `?permanent=true` docs in `docs/next-steps.md` and `docs/api/overview.md`. Addendum added to `design.md`.
+- Verification (re-run by reviewer + cleanup pass): `pnpm --filter api lint` 0/0; `pnpm --filter web lint` 0/0; `pnpm --filter api test` 54 suites / 579 tests; `pnpm --filter api test:e2e` 17 suites / 97 tests; `pnpm --filter web test` 20 files / 79 tests; `pnpm --filter web typecheck` no new errors (3 baselines pre-existing); `./init.sh` green.
+- 2 surviving `permanent` references in `work-orders/page.tsx` are out of scope — they refer to legitimate DRAFT-only hard-delete paths classified as CASCADE_SAFE by the audit.
+- Follow-up surfaced: consider `forbidNonWhitelisted: true` on the global validation pipe so future stray query params surface as 400 (tracked implicitly via feat 35 Zod migration).
+
 ## 2026-06-11 — shared_schemas_align_with_api
 
 **Status:** done
