@@ -100,12 +100,12 @@ Validation errors (`400`) return an array of messages:
 
 ## Soft delete
 
-Resources with `status` support soft delete via `DELETE /:id`. Hard delete requires `?permanent=true` and `OWNER` role.
+Resources with `status` support soft delete via `DELETE /:id`. There is no hard-delete endpoint: `DELETE` always soft-deletes, and any `?permanent=true` query parameter is silently stripped by the validation pipe.
 
-| Status    | Meaning                         |
-| --------- | ------------------------------- |
-| `ACTIVE`  | Normal state                    |
-| `DELETED` | Soft deleted, hidden from lists |
+| Status     | Meaning                         |
+| ---------- | ------------------------------- |
+| `ACTIVE`   | Normal state                    |
+| `INACTIVE` | Soft deleted, hidden from lists |
 
 ## Common ID param
 

@@ -109,15 +109,15 @@ Create `src/index.ts` and export:
 
 Endpoints:
 
-| Method   | Path                                | Description                                         |
-| -------- | ----------------------------------- | --------------------------------------------------- |
-| `GET`    | `/organizations/me`                 | Return the current organization                     |
-| `GET`    | `/organizations`                    | List orgs the current account belongs to            |
-| `PATCH`  | `/organizations/me`                 | Update current organization                         |
-| `DELETE` | `/organizations/me`                 | Soft delete (Owner) — `?permanent=true` hard delete |
-| `GET`    | `/organizations/members`            | List members of the current organization            |
-| `POST`   | `/organizations/invitations`        | Create invitation — requires `branchId`             |
-| `POST`   | `/organizations/invitations/accept` | Accept invitation, create account if needed         |
+| Method   | Path                                | Description                                 |
+| -------- | ----------------------------------- | ------------------------------------------- |
+| `GET`    | `/organizations/me`                 | Return the current organization             |
+| `GET`    | `/organizations`                    | List orgs the current account belongs to    |
+| `PATCH`  | `/organizations/me`                 | Update current organization                 |
+| `DELETE` | `/organizations/me`                 | Soft delete (Owner)                         |
+| `GET`    | `/organizations/members`            | List members of the current organization    |
+| `POST`   | `/organizations/invitations`        | Create invitation — requires `branchId`     |
+| `POST`   | `/organizations/invitations/accept` | Accept invitation, create account if needed |
 
 Highlights:
 
@@ -131,7 +131,7 @@ Highlights:
 
 ## ✅ Step 4b — API: Customers module — DONE
 
-CRUD `/customers` with soft delete (`status = DELETED`) and Owner-only hard delete via `?permanent=true`. Status filters on list endpoint. Repository pattern with Prisma + in-memory variants.
+CRUD `/customers` with soft delete (`status = INACTIVE`) only. Status filters on list endpoint. Repository pattern with Prisma + in-memory variants.
 
 ---
 

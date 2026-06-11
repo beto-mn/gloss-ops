@@ -38,17 +38,6 @@ The system SHALL enforce uniqueness of `(organizationId, name)` at the database 
 
 ---
 
-### Requirement: FK protection on service deletion
-
-The system SHALL block hard deletion of a service that has WorkOrderItem or Warranty references.
-
-#### Scenario: Service with references cannot be deleted
-
-- **WHEN** a caller attempts to DELETE a service that has WorkOrderItem or Warranty references
-- **THEN** the system returns HTTP 409 with `{ error: 'service_has_references' }`
-
----
-
 ### Requirement: isActive excluded from PATCH body
 
 The system SHALL NOT allow changing `isActive` via `PATCH /services/:id`; activation state MUST only be changed via the dedicated `/activate` and `/deactivate` endpoints.
@@ -80,7 +69,26 @@ The system SHALL restrict write and lifecycle operations to authorized roles.
 - **WHEN** a caller with TECHNICIAN or FRONT_DESK role attempts POST, PATCH, or lifecycle endpoints on `/services`
 - **THEN** the system returns HTTP 403
 
-#### Scenario: Only OWNER can hard delete a service
+#### Scenario: DELETE route does not exist
 
-- **WHEN** a caller with MANAGER role attempts DELETE on `/services/:id`
-- **THEN** the system returns HTTP 403
+- **WHEN** any caller (regardless of role) sends `DELETE /services/:id`
+- **THEN** the response is `404 Not Found` (route not registered). The previous "Only OWNER can hard delete a service" scenario is removed because there is no hard delete to gate.
+
+### Requirement: Service deletion is via deactivate, not DELETE
+
+The `DELETE /services/:id` endpoint SHALL NOT exist. The `services` module exposes activation lifecycle endpoints (`POST /services/:id/activate` and `POST /services/:id/deactivate`) as the only way to retire a catalog entry. The `delete` method on `ServicesService` and the repository layer are removed (unless an internal caller other than the controller still references them — in which case they are kept but isolated).
+
+#### Scenario: DELETE returns 404 (route does not exist)
+
+- **WHEN** any caller sends `DELETE /services/:id`
+- **THEN** Nest returns `404 Not Found` because the route is not registered (no controller method handles it)
+
+#### Scenario: Deactivate replaces delete
+
+- **WHEN** an `OWNER` or `MANAGER` calls `POST /services/:id/deactivate`
+- **THEN** the service's `isActive` is set to `false` and it is excluded from `GET /services` unless `?includeInactive=true` is provided
+
+#### Scenario: Service code has no hard-delete path
+
+- **WHEN** the service-layer code is inspected
+- **THEN** no code path in `ServicesService` calls `prisma.service.delete(...)` from a public-controller-reachable method
