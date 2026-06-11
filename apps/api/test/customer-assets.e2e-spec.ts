@@ -99,4 +99,30 @@ describe('Customer Assets (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(204)
   })
+
+  it('DELETE /customer-assets/:id?permanent=true — flag is silently ignored, soft-delete only', async () => {
+    const created = await http
+      .post(`/customers/${customerId}/assets`)
+      .set(tenant.authHeaders)
+      .send({
+        assetType: 'VEHICLE',
+        brandId,
+        model: 'Accord',
+        identifier: 'XYZ-' + Date.now(),
+      })
+    const asset = parseWith(CustomerAssetSchema)(created)
+
+    // The validation pipe strips unknown query keys; the request still hits the soft-delete path.
+    await http
+      .delete(`/customer-assets/${asset.id}?permanent=true`)
+      .set(tenant.authHeaders)
+      .expect(204)
+
+    // The asset is soft-deleted; querying without status filter would not return it.
+    const listRes = await http
+      .get(`/customers/${customerId}/assets`)
+      .set(tenant.authHeaders)
+    const page = parseWith(CustomerAssetPageSchema)(listRes)
+    expect(page.data.find(a => a.id === asset.id)).toBeUndefined()
+  })
 })

@@ -90,12 +90,15 @@ describe('Services (e2e)', () => {
     expect(svc.isActive).toBe(true)
   })
 
-  it('DELETE /services/:id — deletes a service', async () => {
+  it('DELETE /services/:id — route is not registered (404)', async () => {
     const tmpRes = await http
       .post('/services')
       .set(tenant.authHeaders)
-      .send({ name: 'To Delete ' + Date.now() })
+      .send({ name: 'No Delete ' + Date.now() })
     const tmp = parseWith(ServiceSchema)(tmpRes)
-    await http.delete(`/services/${tmp.id}`).set(tenant.authHeaders).expect(204)
+    await http.delete(`/services/${tmp.id}`).set(tenant.authHeaders).expect(404)
+
+    // The service still exists; consumers retire catalog entries via deactivate.
+    await http.get(`/services/${tmp.id}`).set(tenant.authHeaders).expect(200)
   })
 })
