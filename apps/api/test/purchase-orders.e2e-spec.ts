@@ -1,7 +1,12 @@
 import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
 
-import { SupplierSchema } from '@glossops/shared'
+import {
+  PurchaseOrderPageSchema,
+  InventoryRecordSchema,
+  PurchaseOrderSchema,
+  SupplierSchema,
+} from '@glossops/shared'
 
 import {
   createTestApp,
@@ -9,31 +14,6 @@ import {
   seedTenant,
   type SeededTenant,
 } from './helpers'
-
-// no shared schema yet — TODO publish InventoryRecordSchema in @glossops/shared
-interface InventoryRecordResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish PurchaseOrderResponseSchema in @glossops/shared
-// (PurchaseOrderSchema does not include the items array the API returns)
-interface PurchaseOrderItemResponse {
-  id: string
-}
-interface PurchaseOrderResponse {
-  id: string
-  branchId: string
-  supplierId: string
-  status: string
-  items: PurchaseOrderItemResponse[]
-  note?: string
-}
-
-// no shared schema yet — TODO publish PurchaseOrderPageSchema in @glossops/shared
-interface PurchaseOrderPageResponse {
-  data: PurchaseOrderResponse[]
-  meta: Record<string, unknown>
-}
 
 describe('Purchase Orders (e2e)', () => {
   let app: INestApplication
@@ -58,7 +38,7 @@ describe('Purchase Orders (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ name: 'PO Item ' + Date.now(), unit: 'pza', stock: 0 })
       .expect(201)
-    inventoryId = (iRes.body as InventoryRecordResponse).id
+    inventoryId = parseWith(InventoryRecordSchema)(iRes).id
   })
 
   afterAll(async () => {
@@ -75,18 +55,14 @@ describe('Purchase Orders (e2e)', () => {
       })
       .expect(201)
 
-    // no shared schema yet — TODO publish PurchaseOrderResponseSchema in @glossops/shared (current schema lacks items)
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: expect.any(String) as unknown,
-        branchId: tenant.branchId,
-        supplierId,
-        status: 'DRAFT',
-        items: expect.any(Array) as unknown,
-      })
-    )
-    const po = res.body as PurchaseOrderResponse
+    const po = parseWith(PurchaseOrderSchema)(res)
+    expect(po.branchId).toBe(tenant.branchId)
+    expect(po.supplierId).toBe(supplierId)
+    expect(po.status).toBe('DRAFT')
     expect(po.items).toHaveLength(1)
+    // D7: Decimal fields on line items arrive as JS numbers after parsing
+    expect(typeof po.items[0].unitCost).toBe('number')
+    expect(typeof po.items[0].quantity).toBe('number')
     purchaseOrderId = po.id
   })
 
@@ -96,14 +72,7 @@ describe('Purchase Orders (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(200)
 
-    // no shared schema yet — TODO publish PurchaseOrderPageSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        data: expect.any(Array) as unknown,
-        meta: expect.any(Object) as unknown,
-      })
-    )
-    const page = res.body as PurchaseOrderPageResponse
+    const page = parseWith(PurchaseOrderPageSchema)(res)
     expect(page.data.some(p => p.id === purchaseOrderId)).toBe(true)
   })
 
@@ -113,8 +82,7 @@ describe('Purchase Orders (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(200)
 
-    // no shared schema yet — TODO publish PurchaseOrderResponseSchema in @glossops/shared
-    const po = res.body as PurchaseOrderResponse
+    const po = parseWith(PurchaseOrderSchema)(res)
     expect(po.id).toBe(purchaseOrderId)
     expect(po.items.length).toBe(1)
   })
@@ -125,14 +93,16 @@ describe('Purchase Orders (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ note: 'Updated note' })
       .expect(200)
-    expect((res.body as PurchaseOrderResponse).note).toBe('Updated note')
+    const po = parseWith(PurchaseOrderSchema)(res)
+    expect(po.note).toBe('Updated note')
   })
 
   it('POST /purchase-orders/:id/receive — batch receive', async () => {
     const detailRes = await http
       .get(`/purchase-orders/${purchaseOrderId}`)
       .set(tenant.authHeaders)
-    const itemId = (detailRes.body as PurchaseOrderResponse).items[0].id
+    const detail = parseWith(PurchaseOrderSchema)(detailRes)
+    const itemId = detail.items[0].id
 
     const res = await http
       .post(`/purchase-orders/${purchaseOrderId}/receive`)
@@ -141,7 +111,8 @@ describe('Purchase Orders (e2e)', () => {
         items: [{ itemId, receivedQuantity: 10 }],
       })
       .expect(201)
-    expect((res.body as PurchaseOrderResponse).status).toBe('RECEIVED')
+    const po = parseWith(PurchaseOrderSchema)(res)
+    expect(po.status).toBe('RECEIVED')
   })
 
   it('POST /purchase-orders/:id/cancel — cancels a PO', async () => {
@@ -153,14 +124,14 @@ describe('Purchase Orders (e2e)', () => {
         items: [{ inventoryId, quantity: 5, unitCost: 50 }],
       })
       .expect(201)
+    const draft = parseWith(PurchaseOrderSchema)(draftRes)
 
     const res = await http
-      .post(
-        `/purchase-orders/${(draftRes.body as PurchaseOrderResponse).id}/cancel`
-      )
+      .post(`/purchase-orders/${draft.id}/cancel`)
       .set(tenant.authHeaders)
       .expect(201)
-    expect((res.body as PurchaseOrderResponse).status).toBe('CANCELLED')
+    const po = parseWith(PurchaseOrderSchema)(res)
+    expect(po.status).toBe('CANCELLED')
   })
 
   it('DELETE /purchase-orders/:id — deletes a DRAFT PO (204)', async () => {
@@ -172,9 +143,10 @@ describe('Purchase Orders (e2e)', () => {
         items: [{ inventoryId, quantity: 2, unitCost: 50 }],
       })
       .expect(201)
+    const tmp = parseWith(PurchaseOrderSchema)(tmpRes)
 
     await http
-      .delete(`/purchase-orders/${(tmpRes.body as PurchaseOrderResponse).id}`)
+      .delete(`/purchase-orders/${tmp.id}`)
       .set(tenant.authHeaders)
       .expect(204)
   })

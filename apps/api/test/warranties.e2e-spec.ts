@@ -2,10 +2,12 @@ import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
 
 import {
-  BrandSchema,
+  WorkOrderCreateResponseSchema,
+  CustomerCreateResponseSchema,
   CustomerAssetSchema,
   ServiceSchema,
   WarrantySchema,
+  BrandSchema,
 } from '@glossops/shared'
 
 import {
@@ -14,16 +16,6 @@ import {
   seedTenant,
   type SeededTenant,
 } from './helpers'
-
-// no shared schema yet — TODO publish CustomerCreateResponseSchema in @glossops/shared
-interface CustomerCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish WorkOrderCreateResponseSchema in @glossops/shared
-interface WorkOrderCreateResponse {
-  id: string
-}
 
 describe('Warranties (e2e)', () => {
   let app: INestApplication
@@ -41,7 +33,7 @@ describe('Warranties (e2e)', () => {
       .post('/customers')
       .set(tenant.authHeaders)
       .send({ firstName: 'War', lastName: 'Claim' })
-    const customerId = (cRes.body as CustomerCreateResponse).id
+    const customerId = parseWith(CustomerCreateResponseSchema)(cRes).id
 
     const bRes = await http
       .post('/brands')
@@ -84,7 +76,7 @@ describe('Warranties (e2e)', () => {
         items: [{ serviceId, quantity: 1, unitPrice: 1000 }],
       })
       .expect(201)
-    workOrderId = (woRes.body as WorkOrderCreateResponse).id
+    workOrderId = parseWith(WorkOrderCreateResponseSchema)(woRes).id
 
     for (const status of ['CONFIRMED', 'IN_PROGRESS', 'COMPLETED']) {
       await http

@@ -1,24 +1,21 @@
 import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
+import { z } from 'zod'
 
-import { createTestApp, seedTenant, type SeededTenant } from './helpers'
+import {
+  InventoryRecordSchema,
+  InventoryUsageSchema,
+  InventoryPageSchema,
+} from '@glossops/shared'
 
-// no shared schema yet — TODO publish InventoryRecordSchema in @glossops/shared
-// (current InventoryItemSchema models a discriminated union by `type`, but the API returns a Prisma.InventoryModel
-// with separate `inventoryItem`/`materialRoll` sub-records; either flatten the server payload or rework the schema)
-interface InventoryItemRecord {
-  id: string
-  branchId: string
-  type: 'ITEM' | 'ROLL'
-  inventoryItem?: { unit: string; stock: string }
-  materialRoll?: { series: string; remainingLength: string }
-}
+import {
+  createTestApp,
+  parseWith,
+  seedTenant,
+  type SeededTenant,
+} from './helpers'
 
-// no shared schema yet — TODO publish InventoryPageSchema in @glossops/shared
-interface InventoryPageResponse {
-  data: InventoryItemRecord[]
-  meta: { total: number; page: number; limit: number }
-}
+const InventoryUsageListSchema = z.array(InventoryUsageSchema)
 
 describe('Inventory (e2e)', () => {
   let app: INestApplication
@@ -49,16 +46,14 @@ describe('Inventory (e2e)', () => {
       })
       .expect(201)
 
-    // no shared schema yet — TODO publish InventoryRecordSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: expect.any(String) as unknown,
-        branchId: tenant.branchId,
-        type: 'ITEM',
-        inventoryItem: expect.objectContaining({ unit: 'pza' }) as unknown,
-      })
-    )
-    itemId = (res.body as InventoryItemRecord).id
+    const record = parseWith(InventoryRecordSchema)(res)
+    expect(record.branchId).toBe(tenant.branchId)
+    expect(record.type).toBe('ITEM')
+    expect(record.inventoryItem?.unit).toBe('pza')
+    // D7: Decimal field arrives as a JS number after parsing
+    expect(typeof record.inventoryItem?.stock).toBe('number')
+    expect(typeof record.unitCost).toBe('number')
+    itemId = record.id
   })
 
   it('POST /inventory/material-rolls — creates a material roll', async () => {
@@ -75,36 +70,20 @@ describe('Inventory (e2e)', () => {
       })
       .expect(201)
 
-    // no shared schema yet — TODO publish InventoryRecordSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: expect.any(String) as unknown,
-        branchId: tenant.branchId,
-        type: 'ROLL',
-        materialRoll: expect.objectContaining({
-          series: 'Pro',
-          remainingLength: '30',
-        }) as unknown,
-      })
-    )
-    rollId = (res.body as InventoryItemRecord).id
+    const record = parseWith(InventoryRecordSchema)(res)
+    expect(record.branchId).toBe(tenant.branchId)
+    expect(record.type).toBe('ROLL')
+    expect(record.materialRoll?.series).toBe('Pro')
+    // D7: Decimal field on a roll item arrives as a JS number after parsing
+    expect(typeof record.materialRoll?.remainingLength).toBe('number')
+    expect(record.materialRoll?.remainingLength).toBe(30)
+    rollId = record.id
   })
 
   it('GET /inventory — lists all inventory for the branch', async () => {
     const res = await http.get('/inventory').set(tenant.authHeaders).expect(200)
 
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        data: expect.any(Array) as unknown,
-        meta: expect.objectContaining({
-          total: expect.any(Number) as unknown,
-          page: expect.any(Number) as unknown,
-          limit: expect.any(Number) as unknown,
-        }) as unknown,
-      })
-    )
-    // no shared schema yet — TODO publish InventoryPageSchema in @glossops/shared
-    const page = res.body as InventoryPageResponse
+    const page = parseWith(InventoryPageSchema)(res)
     const ids = page.data.map(r => r.id)
     expect(ids).toEqual(expect.arrayContaining([itemId, rollId]))
   })
@@ -115,7 +94,7 @@ describe('Inventory (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(200)
 
-    const page = res.body as InventoryPageResponse
+    const page = parseWith(InventoryPageSchema)(res)
     page.data.forEach(r => expect(r.type).toBe('ITEM'))
   })
 
@@ -125,8 +104,8 @@ describe('Inventory (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ stock: 20 })
       .expect(200)
-    const record = res.body as InventoryItemRecord
-    expect(record.inventoryItem?.stock).toBe('20')
+    const record = parseWith(InventoryRecordSchema)(res)
+    expect(record.inventoryItem?.stock).toBe(20)
   })
 
   it('PATCH /inventory/material-rolls/:id — updates a roll', async () => {
@@ -135,8 +114,8 @@ describe('Inventory (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ remainingLength: 25 })
       .expect(200)
-    const record = res.body as InventoryItemRecord
-    expect(record.materialRoll?.remainingLength).toBe('25')
+    const record = parseWith(InventoryRecordSchema)(res)
+    expect(record.materialRoll?.remainingLength).toBe(25)
   })
 
   it('GET /inventory/:id/usages — lists usages (empty initially)', async () => {
@@ -145,8 +124,8 @@ describe('Inventory (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(200)
 
-    // no shared schema yet — TODO follow-up: publish InventoryUsageSchema in @glossops/shared
-    expect(Array.isArray(res.body)).toBe(true)
+    const usages = parseWith(InventoryUsageListSchema)(res)
+    expect(Array.isArray(usages)).toBe(true)
   })
 
   it('DELETE /inventory/items/:id — deletes (204)', async () => {

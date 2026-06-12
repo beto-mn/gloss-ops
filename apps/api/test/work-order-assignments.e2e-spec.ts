@@ -1,7 +1,15 @@
 import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
+import { z } from 'zod'
 
-import { BrandSchema, CustomerAssetSchema } from '@glossops/shared'
+import {
+  WorkOrderAssignmentResponseSchema,
+  WorkOrderCreateResponseSchema,
+  CustomerCreateResponseSchema,
+  MemberWithAccountSchema,
+  CustomerAssetSchema,
+  BrandSchema,
+} from '@glossops/shared'
 
 import {
   createTestApp,
@@ -10,30 +18,8 @@ import {
   type SeededTenant,
 } from './helpers'
 
-// no shared schema yet — TODO publish CustomerCreateResponseSchema in @glossops/shared
-interface CustomerCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish WorkOrderCreateResponseSchema in @glossops/shared
-interface WorkOrderCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish MemberWithAccountSchema in @glossops/shared
-interface MemberWithAccount {
-  id: string
-  accountId: string
-}
-
-// no shared schema yet — TODO publish WorkOrderAssignmentResponseSchema in @glossops/shared
-// (current WorkOrderAssignmentSchema requires nested account object; controller returns flat repository record)
-interface WorkOrderAssignmentResponse {
-  id: string
-  memberId: string
-  role: string
-  workOrderId: string
-}
+const MemberWithAccountListSchema = z.array(MemberWithAccountSchema)
+const WorkOrderAssignmentListSchema = z.array(WorkOrderAssignmentResponseSchema)
 
 describe('Work Order Assignments (e2e)', () => {
   let app: INestApplication
@@ -50,7 +36,7 @@ describe('Work Order Assignments (e2e)', () => {
     const membersRes = await http
       .get('/organizations/me/members')
       .set(tenant.authHeaders)
-    const members = membersRes.body as MemberWithAccount[]
+    const members = parseWith(MemberWithAccountListSchema)(membersRes)
     const owner = members.find(m => m.accountId === tenant.accountId)
     if (!owner) throw new Error('owner member not found')
     memberId = owner.id
@@ -60,7 +46,7 @@ describe('Work Order Assignments (e2e)', () => {
       .post('/customers')
       .set(tenant.authHeaders)
       .send({ firstName: 'Assign', lastName: 'Test' })
-    const customerId = (cRes.body as CustomerCreateResponse).id
+    const customerId = parseWith(CustomerCreateResponseSchema)(cRes).id
 
     const bRes = await http
       .post('/brands')
@@ -87,7 +73,7 @@ describe('Work Order Assignments (e2e)', () => {
       .post('/work-orders')
       .set(tenant.authHeaders)
       .send({ assetId, type: 'STANDARD' })
-    workOrderId = (woRes.body as WorkOrderCreateResponse).id
+    workOrderId = parseWith(WorkOrderCreateResponseSchema)(woRes).id
   })
 
   afterAll(async () => {
@@ -103,16 +89,11 @@ describe('Work Order Assignments (e2e)', () => {
       .send({ memberId, role: 'LEAD' })
       .expect(201)
 
-    // no shared schema yet — TODO publish WorkOrderAssignmentResponseSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: expect.any(String) as unknown,
-        memberId,
-        role: 'LEAD',
-        workOrderId,
-      })
-    )
-    assignmentId = (res.body as WorkOrderAssignmentResponse).id
+    const assignment = parseWith(WorkOrderAssignmentResponseSchema)(res)
+    expect(assignment.memberId).toBe(memberId)
+    expect(assignment.role).toBe('LEAD')
+    expect(assignment.workOrderId).toBe(workOrderId)
+    assignmentId = assignment.id
   })
 
   it('GET /work-orders/:id/assignments — lists assignments', async () => {
@@ -121,9 +102,7 @@ describe('Work Order Assignments (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(200)
 
-    // no shared schema yet — TODO publish WorkOrderAssignmentResponseSchema in @glossops/shared
-    const list = res.body as WorkOrderAssignmentResponse[]
-    expect(Array.isArray(list)).toBe(true)
+    const list = parseWith(WorkOrderAssignmentListSchema)(res)
     expect(list.some(a => a.id === assignmentId)).toBe(true)
   })
 

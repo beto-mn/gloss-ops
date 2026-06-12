@@ -2,7 +2,12 @@ import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
 import { z } from 'zod'
 
-import { OrganizationSchema } from '@glossops/shared'
+import {
+  OrganizationWithRoleSchema,
+  InvitationCreatedSchema,
+  MemberWithAccountSchema,
+  OrganizationSchema,
+} from '@glossops/shared'
 
 import {
   createTestApp,
@@ -11,26 +16,8 @@ import {
   type SeededTenant,
 } from './helpers'
 
-// no shared schema yet — TODO publish OrganizationWithRoleSchema in @glossops/shared (Organization + role)
-interface OrganizationWithRole {
-  id: string
-  name: string
-  slug: string
-  role: string
-}
-
-// no shared schema yet — TODO publish MemberWithAccountSchema in @glossops/shared
-interface MemberWithAccount {
-  id: string
-  branchId: string
-  accountId: string
-  role: string
-}
-
-// no shared schema yet — TODO publish InvitationCreatedSchema in @glossops/shared
-interface InvitationCreated {
-  invitationUrl: string
-}
+const OrganizationWithRoleListSchema = z.array(OrganizationWithRoleSchema)
+const MemberWithAccountListSchema = z.array(MemberWithAccountSchema)
 
 describe('Organizations (e2e)', () => {
   let app: INestApplication
@@ -53,18 +40,9 @@ describe('Organizations (e2e)', () => {
         .set('Authorization', `Bearer ${tenant.accessToken}`)
         .expect(200)
 
-      // no shared schema yet — TODO publish OrganizationWithRoleSchema in @glossops/shared (Organization + role)
-      const list = res.body as OrganizationWithRole[]
-      expect(Array.isArray(list)).toBe(true)
+      const list = parseWith(OrganizationWithRoleListSchema)(res)
       expect(list.length).toBeGreaterThanOrEqual(1)
-      expect(list[0]).toEqual(
-        expect.objectContaining({
-          id: expect.any(String) as unknown,
-          name: expect.any(String) as unknown,
-          slug: expect.any(String) as unknown,
-          role: expect.any(String) as unknown,
-        })
-      )
+      expect(list[0].role).toEqual(expect.any(String))
     })
   })
 
@@ -96,17 +74,10 @@ describe('Organizations (e2e)', () => {
         .set(tenant.authHeaders)
         .expect(200)
 
-      // no shared schema yet — TODO publish MemberWithAccountSchema in @glossops/shared
-      const members = res.body as MemberWithAccount[]
-      expect(Array.isArray(members)).toBe(true)
-      expect(members[0]).toEqual(
-        expect.objectContaining({
-          id: expect.any(String) as unknown,
-          branchId: expect.any(String) as unknown,
-          accountId: tenant.accountId,
-          role: 'OWNER',
-        })
-      )
+      const members = parseWith(MemberWithAccountListSchema)(res)
+      const owner = members.find(m => m.accountId === tenant.accountId)
+      expect(owner).toBeDefined()
+      expect(owner?.role).toBe('OWNER')
     })
   })
 
@@ -122,15 +93,8 @@ describe('Organizations (e2e)', () => {
         })
         .expect(201)
 
-      // no shared schema yet — TODO publish InvitationCreatedSchema in @glossops/shared
-      expect(res.body).toEqual(
-        expect.objectContaining({
-          invitationUrl: expect.any(String) as unknown,
-        })
-      )
-      expect((res.body as InvitationCreated).invitationUrl).toContain(
-        'invitations/accept'
-      )
+      const body = parseWith(InvitationCreatedSchema)(res)
+      expect(body.invitationUrl).toContain('invitations/accept')
     })
   })
 
@@ -143,7 +107,4 @@ describe('Organizations (e2e)', () => {
       await http.get('/organizations/me').set(tmp.authHeaders).expect(404)
     })
   })
-
-  // touch z to ensure import stays even if all schemas removed
-  void z
 })
