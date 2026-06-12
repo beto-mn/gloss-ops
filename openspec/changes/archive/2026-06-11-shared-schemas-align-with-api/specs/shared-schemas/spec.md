@@ -1,10 +1,4 @@
-# shared-schemas
-
-## Purpose
-
-Defines the canonical Zod response schemas and inferred TypeScript types published by `@glossops/shared`. These schemas are the single source of truth for what every successful response from `apps/api` looks like; both `apps/web` (via TanStack Query hooks) and the API integration test suites (via `parseWith(...)`) consume them. The capability also codifies cross-cutting contracts: the Decimal coercion convention, the generic page-schema factory used by every paginated list endpoint, the schema-variant naming convention (`<Entity>ListItemSchema` / `<Entity>DetailSchema` / `<Entity>CreateResponseSchema`), and the drift-prevention rule that e2e suites must validate responses through published schemas instead of inline interfaces.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Entity response schemas exported
 
@@ -34,28 +28,7 @@ The published surface SHALL include, at minimum:
 - **WHEN** the file contents under `apps/api/test/*.e2e-spec.ts` are inspected
 - **THEN** zero occurrences of the string `no shared schema yet` exist, AND zero `interface ...Response` declarations exist inside e2e spec files, AND every successful response asserted by a suite is parsed via `parseWith(<published schema>)`
 
-### Requirement: Types derived via z.infer
-
-All entity types exported from `@glossops/shared` SHALL be derived via `z.infer<typeof Schema>` — no manually written interface duplicates the schema shape.
-
-#### Scenario: Type matches schema
-
-- **WHEN** the TypeScript compiler checks an assignment of a parsed entity to its exported type
-- **THEN** no type error is raised
-
-### Requirement: Web schemas import from shared
-
-`apps/web/src/lib/schemas/` SHALL replace inline `z.enum([...])` calls and entity response shape definitions with imports from `@glossops/shared`. Form-specific value types (e.g., `CreateWorkOrderValues`) MUST remain local.
-
-#### Scenario: Work order hook uses shared type
-
-- **WHEN** `use-work-orders.ts` references `WorkOrderStatus`
-- **THEN** the import path is `@glossops/shared`, not a local schema file
-
-#### Scenario: Local form schemas still compile
-
-- **WHEN** `pnpm --filter apps/web typecheck` is run after the migration
-- **THEN** it exits with code 0 and no type errors are reported
+## ADDED Requirements
 
 ### Requirement: Decimal fields use coercion
 

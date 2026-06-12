@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { ActivityAction } from '../enums'
+import { createFlatPageSchema } from './pagination'
 
 export const ActivityLogSchema = z.object({
   id: z.string(),
@@ -14,4 +15,7 @@ export const ActivityLogSchema = z.object({
   createdAt: z.string(),
 })
 
+export const ActivityLogPageSchema = createFlatPageSchema(ActivityLogSchema)
+
 export type ActivityLog = z.infer<typeof ActivityLogSchema>
+export type ActivityLogPage = z.infer<typeof ActivityLogPageSchema>

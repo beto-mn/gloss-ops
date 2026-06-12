@@ -2,9 +2,13 @@ import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
 
 import {
-  BrandSchema,
+  WorkOrderCreateResponseSchema,
+  CustomerCreateResponseSchema,
   CustomerAssetSchema,
+  InvoicePageSchema,
   ServiceSchema,
+  InvoiceSchema,
+  BrandSchema,
 } from '@glossops/shared'
 
 import {
@@ -13,35 +17,6 @@ import {
   seedTenant,
   type SeededTenant,
 } from './helpers'
-
-// no shared schema yet — TODO publish CustomerCreateResponseSchema in @glossops/shared
-interface CustomerCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish WorkOrderCreateResponseSchema in @glossops/shared
-interface WorkOrderCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish InvoiceResponseSchema in @glossops/shared
-// (InvoiceSchema declares subtotal/tax/total as z.number(), API returns Prisma.Decimal serialized as strings)
-interface InvoiceResponse {
-  id: string
-  workOrderId: string
-  status: string
-  folio: string
-  customerName?: string
-}
-
-// no shared schema yet — TODO publish InvoicePageSchema in @glossops/shared
-// (list wrapper is flat {data, total, page, limit}, unlike branches/customers nested meta)
-interface InvoicePageResponse {
-  data: InvoiceResponse[]
-  total: number
-  page: number
-  limit: number
-}
 
 describe('Invoices (e2e)', () => {
   let app: INestApplication
@@ -58,7 +33,7 @@ describe('Invoices (e2e)', () => {
       .post('/customers')
       .set(tenant.authHeaders)
       .send({ firstName: 'Inv', lastName: 'Customer' })
-    const customerId = (cRes.body as CustomerCreateResponse).id
+    const customerId = parseWith(CustomerCreateResponseSchema)(cRes).id
 
     const bRes = await http
       .post('/brands')
@@ -96,7 +71,7 @@ describe('Invoices (e2e)', () => {
         items: [{ serviceId, quantity: 1, unitPrice: 1500 }],
       })
       .expect(201)
-    workOrderId = (woRes.body as WorkOrderCreateResponse).id
+    workOrderId = parseWith(WorkOrderCreateResponseSchema)(woRes).id
 
     for (const status of ['CONFIRMED', 'IN_PROGRESS', 'COMPLETED']) {
       await http
@@ -118,32 +93,23 @@ describe('Invoices (e2e)', () => {
       .send({ workOrderId })
       .expect(201)
 
-    // no shared schema yet — TODO publish InvoiceResponseSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: expect.any(String) as unknown,
-        workOrderId,
-        status: 'DRAFT',
-        folio: expect.any(String) as unknown,
-      })
-    )
-    invoiceId = (res.body as InvoiceResponse).id
+    const invoice = parseWith(InvoiceSchema)(res)
+    expect(invoice.workOrderId).toBe(workOrderId)
+    expect(invoice.status).toBe('DRAFT')
+    expect(invoice.folio).toEqual(expect.any(String))
+    // D7: Decimal fields arrive as JS numbers after parsing
+    expect(typeof invoice.total).toBe('number')
+    expect(typeof invoice.subtotal).toBe('number')
+    expect(typeof invoice.taxAmount).toBe('number')
+    invoiceId = invoice.id
   })
 
   it('GET /invoices — lists invoices for the branch', async () => {
     const res = await http.get('/invoices').set(tenant.authHeaders).expect(200)
 
-    // no shared schema yet — TODO publish InvoicePageSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        data: expect.any(Array) as unknown,
-        total: expect.any(Number) as unknown,
-        page: expect.any(Number) as unknown,
-        limit: expect.any(Number) as unknown,
-      })
-    )
-    const page = res.body as InvoicePageResponse
+    const page = parseWith(InvoicePageSchema)(res)
     expect(page.data.some(i => i.id === invoiceId)).toBe(true)
+    expect(typeof page.total).toBe('number')
   })
 
   it('GET /invoices/:id — returns invoice detail', async () => {
@@ -151,8 +117,8 @@ describe('Invoices (e2e)', () => {
       .get(`/invoices/${invoiceId}`)
       .set(tenant.authHeaders)
       .expect(200)
-    // no shared schema yet — TODO publish InvoiceResponseSchema in @glossops/shared
-    expect((res.body as InvoiceResponse).id).toBe(invoiceId)
+    const invoice = parseWith(InvoiceSchema)(res)
+    expect(invoice.id).toBe(invoiceId)
   })
 
   it('PATCH /invoices/:id — updates fiscal data on DRAFT invoice', async () => {
@@ -161,7 +127,8 @@ describe('Invoices (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ customerName: 'Test Customer', customerTaxId: 'TEST123' })
       .expect(200)
-    expect((res.body as InvoiceResponse).customerName).toBe('Test Customer')
+    const invoice = parseWith(InvoiceSchema)(res)
+    expect(invoice.customerName).toBe('Test Customer')
   })
 
   it('PATCH /invoices/:id/status — DRAFT → ISSUED', async () => {
@@ -170,7 +137,8 @@ describe('Invoices (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ status: 'ISSUED' })
       .expect(200)
-    expect((res.body as InvoiceResponse).status).toBe('ISSUED')
+    const invoice = parseWith(InvoiceSchema)(res)
+    expect(invoice.status).toBe('ISSUED')
   })
 
   it('GET /work-orders/:id/invoice — returns invoice for a work order', async () => {
@@ -178,7 +146,7 @@ describe('Invoices (e2e)', () => {
       .get(`/work-orders/${workOrderId}/invoice`)
       .set(tenant.authHeaders)
       .expect(200)
-    // no shared schema yet — TODO publish InvoiceResponseSchema in @glossops/shared
-    expect((res.body as InvoiceResponse).workOrderId).toBe(workOrderId)
+    const invoice = parseWith(InvoiceSchema)(res)
+    expect(invoice.workOrderId).toBe(workOrderId)
   })
 })

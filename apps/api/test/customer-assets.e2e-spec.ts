@@ -1,8 +1,12 @@
 import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
-import { z } from 'zod'
 
-import { CustomerAssetSchema, BrandSchema } from '@glossops/shared'
+import {
+  CustomerCreateResponseSchema,
+  CustomerAssetSchema,
+  createPageSchema,
+  BrandSchema,
+} from '@glossops/shared'
 
 import {
   createTestApp,
@@ -11,22 +15,7 @@ import {
   type SeededTenant,
 } from './helpers'
 
-// no shared schema yet — TODO publish CustomerCreateResponseSchema in @glossops/shared
-interface CustomerCreateResponse {
-  id: string
-}
-
-const CustomerAssetPageSchema = z.object({
-  data: z.array(CustomerAssetSchema),
-  meta: z.object({
-    page: z.number(),
-    limit: z.number(),
-    total: z.number(),
-    totalPages: z.number(),
-    hasNext: z.boolean(),
-    hasPrev: z.boolean(),
-  }),
-})
+const CustomerAssetPageSchema = createPageSchema(CustomerAssetSchema)
 
 describe('Customer Assets (e2e)', () => {
   let app: INestApplication
@@ -44,7 +33,7 @@ describe('Customer Assets (e2e)', () => {
       .post('/customers')
       .set(tenant.authHeaders)
       .send({ firstName: 'Owner', lastName: 'Of Asset' })
-    customerId = (cRes.body as CustomerCreateResponse).id
+    customerId = parseWith(CustomerCreateResponseSchema)(cRes).id
 
     const bRes = await http
       .post('/brands')

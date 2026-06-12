@@ -1,7 +1,14 @@
 import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
+import { z } from 'zod'
 
-import { BrandSchema, CustomerAssetSchema } from '@glossops/shared'
+import {
+  WorkOrderCreateResponseSchema,
+  CustomerCreateResponseSchema,
+  AssetCheckpointSchema,
+  CustomerAssetSchema,
+  BrandSchema,
+} from '@glossops/shared'
 
 import {
   createTestApp,
@@ -10,39 +17,7 @@ import {
   type SeededTenant,
 } from './helpers'
 
-// no shared schema yet — TODO publish CustomerCreateResponseSchema in @glossops/shared
-interface CustomerCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish WorkOrderCreateResponseSchema in @glossops/shared
-interface WorkOrderCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish AssetCheckpointSchema in @glossops/shared
-// (current schema declares photo as object but API returns array of URL strings)
-interface AssetCheckpointResponse {
-  id: string
-  workOrderId: string
-  type: string
-  generalCondition: string
-  note?: string
-  photo: unknown
-}
-
-function expectCheckpointShape(
-  body: unknown
-): asserts body is AssetCheckpointResponse {
-  expect(body).toEqual(
-    expect.objectContaining({
-      id: expect.any(String) as unknown,
-      workOrderId: expect.any(String) as unknown,
-      type: expect.any(String) as unknown,
-      generalCondition: expect.any(String) as unknown,
-    })
-  )
-}
+const AssetCheckpointListSchema = z.array(AssetCheckpointSchema)
 
 describe('Asset Checkpoints (e2e)', () => {
   let app: INestApplication
@@ -58,7 +33,7 @@ describe('Asset Checkpoints (e2e)', () => {
       .post('/customers')
       .set(tenant.authHeaders)
       .send({ firstName: 'CP', lastName: 'Test' })
-    const customerId = (cRes.body as CustomerCreateResponse).id
+    const customerId = parseWith(CustomerCreateResponseSchema)(cRes).id
 
     const bRes = await http
       .post('/brands')
@@ -85,7 +60,7 @@ describe('Asset Checkpoints (e2e)', () => {
       .post('/work-orders')
       .set(tenant.authHeaders)
       .send({ assetId, type: 'STANDARD' })
-    workOrderId = (woRes.body as WorkOrderCreateResponse).id
+    workOrderId = parseWith(WorkOrderCreateResponseSchema)(woRes).id
   })
 
   afterAll(async () => {
@@ -105,9 +80,9 @@ describe('Asset Checkpoints (e2e)', () => {
         fuelLevel: 'HALF',
       })
       .expect(201)
-    expectCheckpointShape(res.body)
-    expect(res.body.workOrderId).toBe(workOrderId)
-    checkpointId = res.body.id
+    const checkpoint = parseWith(AssetCheckpointSchema)(res)
+    expect(checkpoint.workOrderId).toBe(workOrderId)
+    checkpointId = checkpoint.id
   })
 
   it('GET /work-orders/:id/checkpoints — lists checkpoints', async () => {
@@ -116,9 +91,7 @@ describe('Asset Checkpoints (e2e)', () => {
       .set(tenant.authHeaders)
       .expect(200)
 
-    const list = res.body as AssetCheckpointResponse[]
-    expect(Array.isArray(list)).toBe(true)
-    list.forEach((cp: unknown) => expectCheckpointShape(cp))
+    const list = parseWith(AssetCheckpointListSchema)(res)
     expect(list.some(cp => cp.id === checkpointId)).toBe(true)
   })
 
@@ -127,8 +100,8 @@ describe('Asset Checkpoints (e2e)', () => {
       .get(`/work-orders/${workOrderId}/checkpoints/${checkpointId}`)
       .set(tenant.authHeaders)
       .expect(200)
-    expectCheckpointShape(res.body)
-    expect(res.body.id).toBe(checkpointId)
+    const checkpoint = parseWith(AssetCheckpointSchema)(res)
+    expect(checkpoint.id).toBe(checkpointId)
   })
 
   it('PATCH /work-orders/:id/checkpoints/:id — updates a checkpoint', async () => {
@@ -137,9 +110,9 @@ describe('Asset Checkpoints (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ note: 'Updated note', generalCondition: 'EXCELLENT' })
       .expect(200)
-    expectCheckpointShape(res.body)
-    expect(res.body.note).toBe('Updated note')
-    expect(res.body.generalCondition).toBe('EXCELLENT')
+    const checkpoint = parseWith(AssetCheckpointSchema)(res)
+    expect(checkpoint.note).toBe('Updated note')
+    expect(checkpoint.generalCondition).toBe('EXCELLENT')
   })
 
   it('DELETE /work-orders/:id/checkpoints/:id — deletes (204)', async () => {

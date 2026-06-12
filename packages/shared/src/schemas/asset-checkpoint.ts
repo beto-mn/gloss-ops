@@ -11,7 +11,7 @@ export const AssetCheckpointSchema = z.object({
   fuelLevel: z.nativeEnum(FuelLevel).nullable(),
   generalCondition: z.nativeEnum(AssetCondition),
   note: z.string().nullable(),
-  photo: z.record(z.unknown()),
+  photo: z.array(z.string()),
   customerSignatureUrl: z.string().nullable(),
   recordedAt: z.string(),
   recordedById: z.string(),

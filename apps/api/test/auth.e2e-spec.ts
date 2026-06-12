@@ -2,13 +2,9 @@ import { randomUUID } from 'crypto'
 import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
 
-import { createTestApp, seedTenant } from './helpers'
+import { AuthTokensSchema } from '@glossops/shared'
 
-interface TokenPairBody {
-  accessToken: string
-  refreshToken: string
-  expiresIn: number
-}
+import { createTestApp, parseWith, seedTenant } from './helpers'
 
 interface ErrorBody {
   error: string
@@ -39,8 +35,7 @@ describe('Auth (e2e)', () => {
         })
         .expect(201)
 
-      // no shared schema yet — TODO follow-up: publish AuthTokensSchema in @glossops/shared
-      const body = res.body as TokenPairBody
+      const body = parseWith(AuthTokensSchema)(res)
       expect(body.accessToken).toEqual(expect.any(String))
       expect(body.refreshToken).toMatch(/^[^:]+:[^:]+$/)
       expect(body.expiresIn).toBe(900)
@@ -84,8 +79,7 @@ describe('Auth (e2e)', () => {
         .send({ email: tenant.email, password: tenant.password })
         .expect(200)
 
-      // no shared schema yet — TODO follow-up: publish AuthTokensSchema in @glossops/shared
-      const body = res.body as TokenPairBody
+      const body = parseWith(AuthTokensSchema)(res)
       expect(body.accessToken).toEqual(expect.any(String))
       expect(body.refreshToken).toMatch(/^[^:]+:[^:]+$/)
       expect(body.expiresIn).toBe(900)
@@ -120,8 +114,7 @@ describe('Auth (e2e)', () => {
         .send({ refreshToken: tenant.refreshToken })
         .expect(200)
 
-      // no shared schema yet — TODO follow-up: publish AuthTokensSchema in @glossops/shared
-      const body = res.body as TokenPairBody
+      const body = parseWith(AuthTokensSchema)(res)
       expect(body.accessToken).toEqual(expect.any(String))
       expect(body.refreshToken).toMatch(/^[^:]+:[^:]+$/)
       expect(body.refreshToken).not.toBe(tenant.refreshToken)

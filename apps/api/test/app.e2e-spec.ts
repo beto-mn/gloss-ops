@@ -17,7 +17,7 @@ describe('AppController (e2e)', () => {
 
   it('GET / — returns Hello World!', async () => {
     const res = await http.get('/').expect(200)
-    // no shared schema yet — TODO follow-up: root endpoint returns plain text
+    // Root endpoint returns plain text, not JSON — assert response text directly.
     expect(res.text).toBe('Hello World!')
   })
 })

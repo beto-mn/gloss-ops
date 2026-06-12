@@ -2,9 +2,13 @@ import type { INestApplication } from '@nestjs/common'
 import type TestAgent from 'supertest/lib/agent'
 
 import {
+  WorkOrderCreateResponseSchema,
+  CustomerCreateResponseSchema,
+  WorkOrderDetailSchema,
   CustomerAssetSchema,
-  BrandSchema,
+  WorkOrderPageSchema,
   ServiceSchema,
+  BrandSchema,
 } from '@glossops/shared'
 
 import {
@@ -13,35 +17,6 @@ import {
   seedTenant,
   type SeededTenant,
 } from './helpers'
-
-// no shared schema yet — TODO publish CustomerCreateResponseSchema in @glossops/shared
-interface CustomerCreateResponse {
-  id: string
-}
-
-// no shared schema yet — TODO publish WorkOrderResponseSchema in @glossops/shared
-// (POST/GET/PATCH return raw Prisma.WorkOrderModel; WorkOrderDetailSchema requires folio field that WorkOrder lacks)
-interface WorkOrderResponse {
-  id: string
-  status: string
-  type: string
-  note?: string
-  items: unknown[]
-  total: number
-  asset: { id: string }
-  customer: { id: string }
-}
-
-// no shared schema yet — TODO publish WorkOrderListItemSchema in @glossops/shared aligned with current payload (drop folio)
-interface WorkOrderListItem {
-  id: string
-}
-
-// no shared schema yet — TODO publish WorkOrderPageSchema in @glossops/shared
-interface WorkOrderPageResponse {
-  data: WorkOrderListItem[]
-  meta: { page: number; limit: number; total: number }
-}
 
 describe('Work Orders (e2e)', () => {
   let app: INestApplication
@@ -61,7 +36,7 @@ describe('Work Orders (e2e)', () => {
       .post('/customers')
       .set(tenant.authHeaders)
       .send({ firstName: 'WO', lastName: 'Customer' })
-    customerId = (cRes.body as CustomerCreateResponse).id
+    customerId = parseWith(CustomerCreateResponseSchema)(cRes).id
 
     const bRes = await http
       .post('/brands')
@@ -120,15 +95,10 @@ describe('Work Orders (e2e)', () => {
       })
       .expect(201)
 
-    // no shared schema yet — TODO publish WorkOrderResponseSchema in @glossops/shared
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: expect.any(String) as unknown,
-        status: 'DRAFT',
-        type: 'STANDARD',
-      })
-    )
-    workOrderId = (res.body as WorkOrderResponse).id
+    const created = parseWith(WorkOrderCreateResponseSchema)(res)
+    expect(created.status).toBe('DRAFT')
+    expect(created.type).toBe('STANDARD')
+    workOrderId = created.id
   })
 
   it('GET /work-orders — lists work orders', async () => {
@@ -136,16 +106,11 @@ describe('Work Orders (e2e)', () => {
       .get('/work-orders')
       .set(tenant.authHeaders)
       .expect(200)
-    // no shared schema yet — TODO publish WorkOrderListItemSchema/WorkOrderPageSchema in @glossops/shared (drop folio)
-    const page = res.body as WorkOrderPageResponse
+    const page = parseWith(WorkOrderPageSchema)(res)
     expect(page.data.some(w => w.id === workOrderId)).toBe(true)
-    expect(page.meta).toEqual(
-      expect.objectContaining({
-        page: expect.any(Number) as unknown,
-        limit: expect.any(Number) as unknown,
-        total: expect.any(Number) as unknown,
-      })
-    )
+    expect(page.meta.page).toEqual(expect.any(Number))
+    expect(page.meta.limit).toEqual(expect.any(Number))
+    expect(page.meta.total).toEqual(expect.any(Number))
   })
 
   it('GET /work-orders/:id — returns full detail', async () => {
@@ -153,23 +118,12 @@ describe('Work Orders (e2e)', () => {
       .get(`/work-orders/${workOrderId}`)
       .set(tenant.authHeaders)
       .expect(200)
-    // no shared schema yet — TODO publish WorkOrderResponseSchema in @glossops/shared (drop folio)
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        id: workOrderId,
-        items: expect.any(Array) as unknown,
-        total: expect.any(Number) as unknown,
-        asset: expect.objectContaining({
-          id: expect.any(String) as unknown,
-        }) as unknown,
-        customer: expect.objectContaining({
-          id: expect.any(String) as unknown,
-        }) as unknown,
-      })
-    )
-    expect((res.body as WorkOrderResponse).items.length).toBeGreaterThanOrEqual(
-      1
-    )
+    const detail = parseWith(WorkOrderDetailSchema)(res)
+    expect(detail.id).toBe(workOrderId)
+    expect(detail.items.length).toBeGreaterThanOrEqual(1)
+    expect(detail.asset.id).toEqual(expect.any(String))
+    expect(detail.customer.id).toEqual(expect.any(String))
+    expect(typeof detail.total).toBe('number')
   })
 
   it('PATCH /work-orders/:id — updates note', async () => {
@@ -178,8 +132,8 @@ describe('Work Orders (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ note: 'Adjusted' })
       .expect(200)
-    // no shared schema yet — TODO publish WorkOrderResponseSchema in @glossops/shared
-    expect((res.body as WorkOrderResponse).note).toBe('Adjusted')
+    const updated = parseWith(WorkOrderCreateResponseSchema)(res)
+    expect(updated.note).toBe('Adjusted')
   })
 
   it('PATCH /work-orders/:id/status — DRAFT → CONFIRMED → IN_PROGRESS → COMPLETED, auto-generates warranty', async () => {
@@ -192,7 +146,7 @@ describe('Work Orders (e2e)', () => {
         items: [{ serviceId: warrantyServiceId, quantity: 1, unitPrice: 2000 }],
       })
       .expect(201)
-    const woId = (woRes.body as WorkOrderResponse).id
+    const woId = parseWith(WorkOrderCreateResponseSchema)(woRes).id
 
     // DRAFT → CONFIRMED
     await http
@@ -215,8 +169,8 @@ describe('Work Orders (e2e)', () => {
       .send({ status: 'COMPLETED' })
       .expect(200)
 
-    // no shared schema yet — TODO publish WorkOrderResponseSchema in @glossops/shared
-    expect((completedRes.body as WorkOrderResponse).status).toBe('COMPLETED')
+    const completed = parseWith(WorkOrderCreateResponseSchema)(completedRes)
+    expect(completed.status).toBe('COMPLETED')
 
     // Warranty auto-generated for items with warrantyDays > 0
     const warrantiesRes = await http
@@ -234,8 +188,9 @@ describe('Work Orders (e2e)', () => {
       .set(tenant.authHeaders)
       .send({ assetId, type: 'STANDARD' })
       .expect(201)
+    const tmp = parseWith(WorkOrderCreateResponseSchema)(tmpRes)
     await http
-      .delete(`/work-orders/${(tmpRes.body as WorkOrderResponse).id}`)
+      .delete(`/work-orders/${tmp.id}`)
       .set(tenant.authHeaders)
       .expect(204)
   })
