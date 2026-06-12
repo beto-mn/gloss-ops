@@ -1,10 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication, ValidationPipe } from '@nestjs/common'
-import request from 'supertest'
-import { App } from 'supertest/types'
+import { randomUUID } from 'crypto'
+import type { INestApplication } from '@nestjs/common'
+import type TestAgent from 'supertest/lib/agent'
 
-import { AppModule } from '../src/app.module'
-import { PrismaService } from '../src/prisma/prisma.service'
+import { createTestApp, seedTenant } from './helpers'
 
 interface TokenPairBody {
   accessToken: string
@@ -17,65 +15,61 @@ interface ErrorBody {
 }
 
 describe('Auth (e2e)', () => {
-  let app: INestApplication<App>
-  let prisma: PrismaService
-
-  const e2eEmail = 'auth-test@e2e.test'
-  const payload = {
-    email: e2eEmail,
-    password: 'password123',
-    firstName: 'Test',
-    lastName: 'User',
-  }
+  let app: INestApplication
+  let http: TestAgent
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile()
-
-    app = moduleFixture.createNestApplication()
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
-    await app.init()
-
-    prisma = app.get(PrismaService)
+    ;({ app, http } = await createTestApp())
   })
 
   afterAll(async () => {
-    await prisma.account.deleteMany({
-      where: { email: { contains: '@e2e.test' } },
-    })
     await app.close()
   })
 
-  afterEach(async () => {
-    await prisma.account.deleteMany({ where: { email: e2eEmail } })
-  })
-
   describe('POST /auth/register', () => {
-    it('201 — creates account and returns token pair', async () => {
-      const res = await request(app.getHttpServer())
+    it('201 — creates account + organization + branch + OWNER member and returns token pair', async () => {
+      const tag = randomUUID().slice(0, 8)
+      const res = await http
         .post('/auth/register')
-        .send(payload)
+        .send({
+          email: `register-${tag}@e2e.test`,
+          password: 'TestPass123!',
+          name: 'Owner Test',
+          orgName: `Reg Org ${tag}`,
+        })
         .expect(201)
 
+      // no shared schema yet — TODO follow-up: publish AuthTokensSchema in @glossops/shared
       const body = res.body as TokenPairBody
       expect(body.accessToken).toEqual(expect.any(String))
-      expect(body.refreshToken).toEqual(expect.any(String))
+      expect(body.refreshToken).toMatch(/^[^:]+:[^:]+$/)
       expect(body.expiresIn).toBe(900)
+
+      // seedTenant verifies the Account+Org+Branch+OWNER side-effects via /organizations
+      const tenant = await seedTenant(http)
+      expect(tenant.organizationId).toEqual(expect.any(String))
+      expect(tenant.branchId).toEqual(expect.any(String))
     })
 
     it('409 — returns email_already_registered when email is taken', async () => {
-      await request(app.getHttpServer()).post('/auth/register').send(payload)
-      const res = await request(app.getHttpServer())
+      const tag = randomUUID().slice(0, 8)
+      const payload = {
+        email: `dup-${tag}@e2e.test`,
+        password: 'TestPass123!',
+        name: 'Dup User',
+        orgName: `Dup Org ${tag}`,
+      }
+      await http.post('/auth/register').send(payload).expect(201)
+      const res = await http
         .post('/auth/register')
-        .send(payload)
+        .send({ ...payload, orgName: `Dup Org 2 ${tag}` })
         .expect(409)
 
       expect((res.body as ErrorBody).error).toBe('email_already_registered')
     })
 
     it('400 — returns validation error for invalid body', async () => {
-      await request(app.getHttpServer())
+      await http
         .post('/auth/register')
         .send({ email: 'not-an-email', password: 'short' })
         .expect(400)
@@ -83,35 +77,34 @@ describe('Auth (e2e)', () => {
   })
 
   describe('POST /auth/login', () => {
-    beforeEach(async () => {
-      await request(app.getHttpServer()).post('/auth/register').send(payload)
-    })
-
     it('200 — returns token pair for valid credentials', async () => {
-      const res = await request(app.getHttpServer())
+      const tenant = await seedTenant(http)
+      const res = await http
         .post('/auth/login')
-        .send({ email: payload.email, password: payload.password })
+        .send({ email: tenant.email, password: tenant.password })
         .expect(200)
 
+      // no shared schema yet — TODO follow-up: publish AuthTokensSchema in @glossops/shared
       const body = res.body as TokenPairBody
       expect(body.accessToken).toEqual(expect.any(String))
-      expect(body.refreshToken).toEqual(expect.any(String))
+      expect(body.refreshToken).toMatch(/^[^:]+:[^:]+$/)
       expect(body.expiresIn).toBe(900)
     })
 
     it('401 — returns invalid_credentials for wrong password', async () => {
-      const res = await request(app.getHttpServer())
+      const tenant = await seedTenant(http)
+      const res = await http
         .post('/auth/login')
-        .send({ email: payload.email, password: 'wrong-password' })
+        .send({ email: tenant.email, password: 'wrong-password' })
         .expect(401)
 
       expect((res.body as ErrorBody).error).toBe('invalid_credentials')
     })
 
     it('401 — returns invalid_credentials for unknown email', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await http
         .post('/auth/login')
-        .send({ email: 'unknown@e2e.test', password: 'password123' })
+        .send({ email: 'no-user@e2e.test', password: 'TestPass123!' })
         .expect(401)
 
       expect((res.body as ErrorBody).error).toBe('invalid_credentials')
@@ -119,29 +112,23 @@ describe('Auth (e2e)', () => {
   })
 
   describe('POST /auth/refresh', () => {
-    let refreshToken: string
+    it('200 — returns a new token pair for a valid refresh token', async () => {
+      const tenant = await seedTenant(http)
 
-    beforeEach(async () => {
-      const res = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(payload)
-      refreshToken = (res.body as TokenPairBody).refreshToken
-    })
-
-    it('200 — returns new token pair for valid refresh token', async () => {
-      const res = await request(app.getHttpServer())
+      const res = await http
         .post('/auth/refresh')
-        .send({ refreshToken })
+        .send({ refreshToken: tenant.refreshToken })
         .expect(200)
 
+      // no shared schema yet — TODO follow-up: publish AuthTokensSchema in @glossops/shared
       const body = res.body as TokenPairBody
       expect(body.accessToken).toEqual(expect.any(String))
-      expect(body.refreshToken).toEqual(expect.any(String))
-      expect(body.expiresIn).toBe(900)
+      expect(body.refreshToken).toMatch(/^[^:]+:[^:]+$/)
+      expect(body.refreshToken).not.toBe(tenant.refreshToken)
     })
 
-    it('401 — returns invalid_refresh_token for unknown token', async () => {
-      const res = await request(app.getHttpServer())
+    it('401 — returns invalid_refresh_token for an unknown token', async () => {
+      const res = await http
         .post('/auth/refresh')
         .send({ refreshToken: 'fake-acc-id:fake-tok-id' })
         .expect(401)
@@ -150,13 +137,14 @@ describe('Auth (e2e)', () => {
     })
 
     it('401 — old refresh token is rejected after rotation', async () => {
-      await request(app.getHttpServer())
+      const tenant = await seedTenant(http)
+      await http
         .post('/auth/refresh')
-        .send({ refreshToken })
-
-      const res = await request(app.getHttpServer())
+        .send({ refreshToken: tenant.refreshToken })
+        .expect(200)
+      const res = await http
         .post('/auth/refresh')
-        .send({ refreshToken })
+        .send({ refreshToken: tenant.refreshToken })
         .expect(401)
 
       expect((res.body as ErrorBody).error).toBe('invalid_refresh_token')
@@ -164,43 +152,27 @@ describe('Auth (e2e)', () => {
   })
 
   describe('POST /auth/logout', () => {
-    let accessToken: string
-    let refreshToken: string
+    it('200 — logs out successfully and invalidates the refresh token', async () => {
+      const tenant = await seedTenant(http)
 
-    beforeEach(async () => {
-      const res = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(payload)
-      accessToken = (res.body as TokenPairBody).accessToken
-      refreshToken = (res.body as TokenPairBody).refreshToken
-    })
-
-    it('200 — logs out successfully', async () => {
-      await request(app.getHttpServer())
+      await http
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({ refreshToken })
+        .set('Authorization', `Bearer ${tenant.accessToken}`)
+        .send({ refreshToken: tenant.refreshToken })
         .expect(200)
-    })
 
-    it('401 — refresh token invalid after logout', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({ refreshToken })
-
-      const res = await request(app.getHttpServer())
+      const res = await http
         .post('/auth/refresh')
-        .send({ refreshToken })
+        .send({ refreshToken: tenant.refreshToken })
         .expect(401)
 
       expect((res.body as ErrorBody).error).toBe('invalid_refresh_token')
     })
 
     it('401 — returns Unauthorized when no access token provided', async () => {
-      await request(app.getHttpServer())
+      await http
         .post('/auth/logout')
-        .send({ refreshToken })
+        .send({ refreshToken: 'something:else' })
         .expect(401)
     })
   })

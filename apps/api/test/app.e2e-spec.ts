@@ -1,29 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication } from '@nestjs/common'
-import request from 'supertest'
-import { App } from 'supertest/types'
-import { AppModule } from './../src/app.module'
+import type { INestApplication } from '@nestjs/common'
+import type TestAgent from 'supertest/lib/agent'
+
+import { createTestApp } from './helpers'
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication<App>
+  let app: INestApplication
+  let http: TestAgent
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile()
-
-    app = moduleFixture.createNestApplication()
-    await app.init()
+  beforeAll(async () => {
+    ;({ app, http } = await createTestApp())
   })
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!')
-  })
-
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close()
+  })
+
+  it('GET / — returns Hello World!', async () => {
+    const res = await http.get('/').expect(200)
+    // no shared schema yet — TODO follow-up: root endpoint returns plain text
+    expect(res.text).toBe('Hello World!')
   })
 })
