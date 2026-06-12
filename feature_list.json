@@ -400,7 +400,7 @@
       "id": 33,
       "name": "shared_schemas_align_with_api",
       "title": "Align @glossops/shared schemas with actual API payloads",
-      "description": "Surfaced by testing_integration_api: integration tests revealed multiple drift points between @glossops/shared Zod schemas and what the API actually returns. Suites currently bypass parseWith with inline shape assertions and `// no shared schema yet` comments. This change fixes the schemas so apps/web can rely on them and the e2e suites can drop the workarounds.",
+      "description": "Surfaced by testing_integration_api: integration tests revealed multiple drift points between @glossops/shared Zod schemas and what the API actually returns. Suites currently bypass parseWith with inline shape assertions and `// no shared schema yet` comments. This change fixes the schemas so apps/web can rely on them and the e2e suites can drop the workarounds. Spec at openspec/changes/shared-schemas-align-with-api/.",
       "acceptance": [
         "AssetCheckpointSchema.photo modelled as z.array(z.string().url()) matching API output (not z.record)",
         "WorkOrderListItemSchema and WorkOrderDetailSchema no longer require non-existent folio field",
@@ -414,7 +414,7 @@
         "pnpm --filter api test:e2e still passes"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 34,
@@ -428,6 +428,27 @@
         "organizations.e2e-spec.ts re-adds the hard-delete scenario without workarounds",
         "Unit tests cover both the cascade path and the error-surfacing path",
         "pnpm --filter api test and test:e2e both pass"
+      ],
+      "sdd": true,
+      "status": "pending"
+    },
+    {
+      "id": 35,
+      "name": "shared_request_schemas_zod_migration",
+      "title": "Migrate API request validation to Zod via ZodValidationPipe and publish request schemas in @glossops/shared",
+      "description": "Surfaced while reviewing the shared schemas alignment: today there is duplication between the API DTOs (class-validator, 49 files under apps/api/src/<module>/dto/) and the web form schemas (Zod, 7 files in apps/web/src/lib/schemas/). The two sides describe the same request shape with different tools and drift over time. This feature replaces class-validator in apps/api with a custom ZodValidationPipe, publishes every request schema in @glossops/shared as a single source of truth, and points both apps/api and apps/web at the published schemas. Depends on (and should land after) feat 33 to start from a clean Zod foundation in shared.",
+      "acceptance": [
+        "ZodValidationPipe implemented in apps/api/src/common (or equivalent) and wired as a global pipe in main.ts, replacing the class-validator ValidationPipe",
+        "Every request body, query, and route param across all 16 modules is validated via a Zod schema imported from @glossops/shared",
+        "All 49 class-validator DTOs under apps/api/src/<module>/dto/ are deleted; their Zod replacements live in @glossops/shared/request-schemas (or equivalent namespace)",
+        "All 7 form schemas under apps/web/src/lib/schemas/ are deleted; apps/web imports the request schemas from @glossops/shared and derives form value types via z.infer",
+        "Partial updates (PATCH endpoints) are typed via .partial() on the create schema where applicable",
+        "OpenAPI/Swagger metadata is preserved (either via the chosen Zod-to-OpenAPI integration or hand-authored decorators on the pipe layer)",
+        "All existing unit tests (currently 601 across 54 suites) continue to pass",
+        "All integration tests (17 suites / 94 tests after feat 33) continue to pass",
+        "apps/web typecheck stays green and existing form behavior (validation errors, defaults, transformations) is preserved",
+        "pnpm --filter api lint and pnpm --filter web lint both pass",
+        "class-validator and class-transformer are removed from apps/api dependencies"
       ],
       "sdd": true,
       "status": "pending"

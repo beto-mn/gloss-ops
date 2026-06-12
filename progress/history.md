@@ -1,5 +1,23 @@
 # Session History
 
+## 2026-06-11 — shared_schemas_align_with_api
+
+**Status:** done
+**Spec:** `openspec/changes/archive/2026-06-11-shared-schemas-align-with-api/`
+**Agent:** leader + implementer + reviewer
+
+### Summary
+
+- Closed every drift point between `@glossops/shared` Zod schemas and the actual `apps/api` response payloads, without touching `apps/api/src/` (per D1 "API is the source of truth").
+- New shared schemas published: `auth.ts` (`AuthTokensSchema`), `pagination.ts` (TWO factories — `createPageSchema` for the meta-shape used by most modules, `createFlatPageSchema` for the flat shape used by Invoice/ActivityLog; emergent from D1 — real API uses both), `inventory-usage.ts`, `work-order-assignment.ts`.
+- Existing schemas corrected in-place: `asset-checkpoint` (`photo` → `z.array(z.string())`), `work-order` (dropped non-existent `folio`), `customer` (`activeWorkOrderCount` only on list variant), `inventory` (replaced discriminated union with real `{ items, materialRolls }` payload), `invoice` (added `folio`/`taxRate`/`taxAmount` + `z.coerce.number()` on Decimal fields), `purchase-order` (added `items` array with `unitCost`/`quantity` matching Prisma), `organization` (added `OrganizationWithRole` + `MemberWithAccount` + `InvitationCreated`), `activity-log` (page wrapper).
+- Decimal contract codified (D2): every Prisma `Decimal` uses `z.coerce.number()` — accepts string or number on the wire, hands `number` to TypeScript. D7 runtime asserts (`typeof === 'number'` after parse) added in invoices/purchase-orders/inventory e2e.
+- Migrated 12 e2e suites to `parseWith(<published schema>)`. Zero `// no shared schema yet` comments remain, zero local `interface ...Response` declarations remain (D6 grep gates green).
+- Verification re-run by reviewer: `pnpm --filter shared build` PASS; `api lint` 0 errors; `web lint` 0 errors; `api test` 54/601; `api test:e2e` 17/94; `web typecheck` no new errors (3 pre-existing in `api-client.test.ts` from `93ad18a` baseline); `./init.sh` green.
+- New capability requirements added to `openspec/specs/shared-schemas/spec.md`: Decimal coercion, generic page schema factory, schema variants per endpoint shape, no-source-of-truth-drift rule. Main spec also restructured with `## Purpose` + `## Requirements` headers (was using delta-only format leftover from `packages_shared` archive — fixed during this archive).
+- Decisions surfaced and accepted under D1: schema must follow actual API output, not the planned design — hence two pagination factories instead of one, `CustomerCreateResponseSchema` as alias of `CustomerSchema`, `WorkOrderAssignmentResponseSchema` mirroring the nested `WorkOrderAssignmentSchema` because the controller emits both flat + nested fields on every record.
+- Follow-ups surfaced (not blocking): `apps/web/src/lib/api-client.test.ts` TS18046 baseline noise (catch-clause `unknown`); optional publish of list helpers `InventoryUsageListSchema`/etc. if more suites need them.
+
 ## 2026-06-11 — testing_integration_api
 
 **Status:** done
