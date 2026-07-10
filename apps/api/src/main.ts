@@ -1,11 +1,12 @@
 import 'dotenv/config'
 
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import { ValidationPipe } from '@nestjs/common'
+import { cleanupOpenApiDoc, ZodValidationPipe } from 'nestjs-zod'
 import { NestFactory } from '@nestjs/core'
 
 import { envs } from '@config'
 
+import { ZodValidationExceptionFilter } from './common'
 import { AppModule } from './app.module'
 
 const DARK_CSS = `
@@ -95,7 +96,8 @@ const DARK_CSS = `
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   app.enableCors({ origin: envs.app.frontendUrl, credentials: true })
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
+  app.useGlobalPipes(new ZodValidationPipe())
+  app.useGlobalFilters(new ZodValidationExceptionFilter())
 
   const config = new DocumentBuilder()
     .setTitle('GlossOps API')
@@ -104,7 +106,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build()
 
-  const document = SwaggerModule.createDocument(app, config)
+  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config))
   SwaggerModule.setup('api-docs', app, document, {
     customCss: DARK_CSS,
     customSiteTitle: 'GlossOps API',

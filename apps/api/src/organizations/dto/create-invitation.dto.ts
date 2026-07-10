@@ -1,18 +1,5 @@
-import { IsEmail, IsEnum, IsUUID } from 'class-validator'
-import { ApiProperty } from '@nestjs/swagger'
+import { createZodDto } from 'nestjs-zod'
 
-import { Role } from '@glossops/database'
+import { CreateInvitationSchema } from '@glossops/shared'
 
-export class CreateInvitationDto {
-  @ApiProperty({ example: 'technician@glossops.com' })
-  @IsEmail()
-  email: string
-
-  @ApiProperty({ enum: Role, example: Role.TECHNICIAN })
-  @IsEnum(Role)
-  role: Role
-
-  @ApiProperty({ example: 'd3f5a1b2-0000-0000-0000-000000000000' })
-  @IsUUID()
-  branchId: string
-}
+export class CreateInvitationDto extends createZodDto(CreateInvitationSchema) {}

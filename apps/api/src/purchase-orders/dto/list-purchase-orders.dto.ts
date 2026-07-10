@@ -1,26 +1,7 @@
-import { Type } from 'class-transformer'
-import { IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-import { PurchaseOrderStatus } from '@glossops/database'
+import { ListPurchaseOrdersQuerySchema } from '@glossops/shared'
 
-export class ListPurchaseOrdersDto {
-  @IsOptional()
-  @IsEnum(PurchaseOrderStatus)
-  status?: PurchaseOrderStatus
-
-  @IsOptional()
-  @IsUUID()
-  supplierId?: string
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
-  page?: number
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Type(() => Number)
-  limit?: number
-}
+export class ListPurchaseOrdersDto extends createZodDto(
+  ListPurchaseOrdersQuerySchema
+) {}

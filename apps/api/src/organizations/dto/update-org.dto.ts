@@ -1,19 +1,5 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
-import { ApiPropertyOptional } from '@nestjs/swagger'
+import { createZodDto } from 'nestjs-zod'
 
-export class UpdateOrgDto {
-  @ApiPropertyOptional({ example: 'GlossOps Taller', maxLength: 100 })
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  name?: string
+import { UpdateOrganizationSchema } from '@glossops/shared'
 
-  @ApiPropertyOptional({
-    example: 'https://cdn.example.com/logo.png',
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  logoUrl?: string | null
-}
+export class UpdateOrgDto extends createZodDto(UpdateOrganizationSchema) {}

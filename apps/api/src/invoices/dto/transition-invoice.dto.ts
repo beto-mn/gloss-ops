@@ -1,8 +1,7 @@
-import { IsEnum } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-import { InvoiceStatus } from '@glossops/database'
+import { TransitionInvoiceSchema } from '@glossops/shared'
 
-export class TransitionInvoiceDto {
-  @IsEnum(InvoiceStatus)
-  status: InvoiceStatus
-}
+export class TransitionInvoiceDto extends createZodDto(
+  TransitionInvoiceSchema
+) {}

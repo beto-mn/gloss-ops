@@ -1,7 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-export class VoidWarrantyDto {
-  @IsString()
-  @IsNotEmpty()
-  reason!: string
-}
+import { VoidWarrantySchema } from '@glossops/shared'
+
+export class VoidWarrantyDto extends createZodDto(VoidWarrantySchema) {}

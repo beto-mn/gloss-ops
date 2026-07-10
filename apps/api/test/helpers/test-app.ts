@@ -1,9 +1,11 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common'
+import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
+import { ZodValidationPipe } from 'nestjs-zod'
 import request from 'supertest'
 import type TestAgent from 'supertest/lib/agent'
 import type { App } from 'supertest/types'
 
+import { ZodValidationExceptionFilter } from '../../src/common'
 import { AppModule } from '../../src/app.module'
 
 export interface TestApp {
@@ -17,7 +19,8 @@ export async function createTestApp(): Promise<TestApp> {
   }).compile()
 
   const app = moduleFixture.createNestApplication()
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
+  app.useGlobalPipes(new ZodValidationPipe())
+  app.useGlobalFilters(new ZodValidationExceptionFilter())
   await app.init()
 
   const http = request(app.getHttpServer() as App)
