@@ -1,49 +1,48 @@
 import { describe, it, expect } from 'vitest'
-import { ZodError } from 'zod'
 
-import { createInvoiceSchema } from './invoice.schema'
+import { CreateInvoiceSchema } from './invoice.schema'
 
-describe('createInvoiceSchema', () => {
-  it('parses valid invoice', () => {
-    const result = createInvoiceSchema.parse({
-      workOrderId: 'wo-1',
-      subtotal: 1000,
-      tax: 160,
-      total: 1160,
+const validWorkOrderId = '11111111-1111-4111-8111-111111111111'
+
+describe('CreateInvoiceSchema (web form)', () => {
+  it('parses a minimal invoice with only workOrderId', () => {
+    const result = CreateInvoiceSchema.safeParse({
+      workOrderId: validWorkOrderId,
     })
-    expect(result.workOrderId).toBe('wo-1')
-    expect(result.total).toBe(1160)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.workOrderId).toBe(validWorkOrderId)
+    }
   })
 
-  it('coerces string numbers', () => {
-    const result = createInvoiceSchema.parse({
-      workOrderId: 'wo-1',
-      subtotal: '500',
-      tax: '80',
-      total: '580',
+  it('accepts optional CFDI fields', () => {
+    const result = CreateInvoiceSchema.safeParse({
+      workOrderId: validWorkOrderId,
+      customerTaxId: 'XAXX010101000',
+      customerName: 'Cliente Demo',
+      customerAddress: 'Calle 1',
+      customerZipCode: '01000',
+      customerFiscalRegime: '601',
+      cfdiUse: 'G03',
+      paymentMethod: 'PUE',
+      paymentForm: '03',
     })
-    expect(result.subtotal).toBe(500)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.paymentMethod).toBe('PUE')
+    }
   })
 
-  it('throws ZodError when workOrderId is empty', () => {
-    expect(() =>
-      createInvoiceSchema.parse({
-        workOrderId: '',
-        subtotal: 100,
-        tax: 16,
-        total: 116,
-      })
-    ).toThrow(ZodError)
+  it('rejects a non-uuid workOrderId', () => {
+    const result = CreateInvoiceSchema.safeParse({ workOrderId: 'wo-1' })
+    expect(result.success).toBe(false)
   })
 
-  it('throws ZodError when subtotal is negative', () => {
-    expect(() =>
-      createInvoiceSchema.parse({
-        workOrderId: 'wo-1',
-        subtotal: -10,
-        tax: 0,
-        total: 0,
-      })
-    ).toThrow(ZodError)
+  it('rejects an invalid paymentMethod', () => {
+    const result = CreateInvoiceSchema.safeParse({
+      workOrderId: validWorkOrderId,
+      paymentMethod: 'CASH',
+    })
+    expect(result.success).toBe(false)
   })
 })

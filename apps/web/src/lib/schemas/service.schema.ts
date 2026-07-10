@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { CreateServiceSchema } from '@glossops/shared'
+
 export interface Service {
   id: string
   name: string
@@ -30,9 +32,26 @@ export interface ServiceListParams {
   limit?: number
 }
 
-export const createServiceSchema = z.object({
-  name: z.string().min(1, 'El nombre es requerido'),
-  description: z.string().optional().or(z.literal('')),
+/**
+ * Web service form schema. Composes the shared `CreateServiceSchema` field
+ * shape and layers web-only UX concerns: Spanish messages, `z.coerce.number()`
+ * on the numeric inputs (the `type=number` inputs return strings that RHF must
+ * coerce for the form), and empty-string acceptance for the optional string
+ * inputs. The shared `warrantyDescription`/`warrantyTerm` fields are not
+ * collected by this form and are omitted. The clave regex is relaxed to allow
+ * the empty input (`*` vs the shared `+`) since blank values are cleaned to
+ * `undefined` before submit.
+ */
+export const createServiceSchema = CreateServiceSchema.omit({
+  basePrice: true,
+  warrantyDays: true,
+  warrantyDescription: true,
+  warrantyTerm: true,
+  claveProdServ: true,
+  claveUnidad: true,
+}).extend({
+  name: z.string().min(1, 'El nombre es requerido').max(200),
+  description: z.string().max(1000).optional().or(z.literal('')),
   basePrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
   warrantyDays: z.coerce
     .number()

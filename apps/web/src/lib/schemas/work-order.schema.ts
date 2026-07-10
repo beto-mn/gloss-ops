@@ -1,6 +1,12 @@
 import { z } from 'zod'
 
-import { WorkOrderStatus, WorkOrderType } from '@glossops/shared'
+import {
+  CreateWorkOrderItemInlineSchema,
+  CreateWorkOrderSchema,
+  UpdateWorkOrderSchema,
+  WorkOrderStatus,
+  WorkOrderType,
+} from '@glossops/shared'
 
 export { WorkOrderStatus, WorkOrderType }
 
@@ -107,14 +113,32 @@ export interface WorkOrderListParams {
   limit?: number
 }
 
-export const createWorkOrderItemSchema = z.object({
-  serviceId: z.string().min(1, 'Selecciona un servicio'),
-  quantity: z.coerce.number().int().min(1, 'Mínimo 1'),
-  unitPrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
-  note: z.string().optional().or(z.literal('')),
-})
+/**
+ * Web work-order line-item form schema. Composes the shared inline item shape
+ * (`CreateWorkOrderItemInlineSchema`) and layers web-only UX concerns: Spanish
+ * messages, a required non-empty `serviceId` (the form allows non-UUID service
+ * ids in tests), `z.coerce.number()` for the `type=number` inputs, and
+ * empty-string acceptance for the optional note.
+ */
+export const createWorkOrderItemSchema = CreateWorkOrderItemInlineSchema.extend(
+  {
+    serviceId: z.string().min(1, 'Selecciona un servicio'),
+    quantity: z.coerce.number().int().min(1, 'Mínimo 1'),
+    unitPrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
+    note: z.string().optional().or(z.literal('')),
+  }
+)
 
-export const createWorkOrderSchema = z.object({
+/**
+ * Web work-order create form schema. Composes the shared `CreateWorkOrderSchema`
+ * field shape and layers web-only concerns: a form-only `customerId` (used to
+ * filter the asset picker; the API derives the customer from the asset and
+ * strips this key), a required `type`, `scheduledAt` kept as a form string
+ * (see the submit handler for the date-only → ISO-datetime conversion the
+ * migrated API now requires), empty-string handling, and a required non-empty
+ * `items` array with the composed item shape.
+ */
+export const createWorkOrderSchema = CreateWorkOrderSchema.extend({
   customerId: z.string().min(1, 'Selecciona un cliente'),
   assetId: z.string().min(1, 'Selecciona un activo'),
   type: z.nativeEnum(WorkOrderType),
@@ -125,7 +149,13 @@ export const createWorkOrderSchema = z.object({
     .min(1, 'Agrega al menos un servicio'),
 })
 
-export const updateWorkOrderSchema = z.object({
+/**
+ * Web work-order edit form schema. Composes the shared `UpdateWorkOrderSchema`
+ * shape; `scheduledAt`/`note` are kept as form strings with empty-string
+ * handling. The edit drawer converts date-only → ISO datetime (or `undefined`)
+ * before submit, matching the migrated API's `z.string().datetime()`.
+ */
+export const updateWorkOrderSchema = UpdateWorkOrderSchema.extend({
   scheduledAt: z.string().optional().or(z.literal('')),
   note: z.string().optional().or(z.literal('')),
 })

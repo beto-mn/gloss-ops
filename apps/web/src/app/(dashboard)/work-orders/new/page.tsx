@@ -173,7 +173,11 @@ export default function NewWorkOrderPage() {
   async function onSubmit(values: CreateWorkOrderValues) {
     const clean: CreateWorkOrderValues = {
       ...values,
-      scheduledAt: values.scheduledAt || undefined,
+      // The `type=date` input yields `YYYY-MM-DD`; the API requires a full ISO
+      // datetime (`z.string().datetime()`), so widen the date-only value.
+      scheduledAt: values.scheduledAt
+        ? new Date(`${values.scheduledAt}T00:00:00.000Z`).toISOString()
+        : undefined,
       note: values.note || undefined,
       items: values.items.map(item => ({
         ...item,
