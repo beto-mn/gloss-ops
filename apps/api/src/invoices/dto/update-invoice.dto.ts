@@ -1,37 +1,5 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-import { CfdiPaymentMethod } from '@glossops/database'
+import { UpdateInvoiceSchema } from '@glossops/shared'
 
-export class UpdateInvoiceDto {
-  @IsOptional()
-  @IsString()
-  customerTaxId?: string
-
-  @IsOptional()
-  @IsString()
-  customerName?: string
-
-  @IsOptional()
-  @IsString()
-  customerAddress?: string
-
-  @IsOptional()
-  @IsString()
-  customerZipCode?: string
-
-  @IsOptional()
-  @IsString()
-  customerFiscalRegime?: string
-
-  @IsOptional()
-  @IsString()
-  cfdiUse?: string
-
-  @IsOptional()
-  @IsEnum(CfdiPaymentMethod)
-  paymentMethod?: CfdiPaymentMethod
-
-  @IsOptional()
-  @IsString()
-  paymentForm?: string
-}
+export class UpdateInvoiceDto extends createZodDto(UpdateInvoiceSchema) {}

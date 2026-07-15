@@ -1,16 +1,31 @@
 import { z } from 'zod'
 
-export const createCustomerSchema = z.object({
+import { CreateCustomerSchema } from '@glossops/shared'
+
+/**
+ * Web customer form schema. Composes the shared `CreateCustomerSchema` field
+ * shape and layers web-only UX concerns: Spanish `.min(1)` messages for the
+ * required names, an `.email()` format check that the shared body schema omits,
+ * and empty-string acceptance (`.or(z.literal(''))`) so RHF inputs default to
+ * `''`. The submit handler maps `''` → `undefined` before hitting the API.
+ * Optional-field max lengths come from the shared schema (the source of truth).
+ */
+export const createCustomerSchema = CreateCustomerSchema.extend({
   firstName: z.string().min(1, 'El nombre es requerido'),
   lastName: z.string().min(1, 'El apellido es requerido'),
-  email: z.string().email('Correo inválido').optional().or(z.literal('')),
-  phone: z.string().max(20).optional().or(z.literal('')),
-  address: z.string().max(200).optional().or(z.literal('')),
-  taxId: z.string().max(20).optional().or(z.literal('')),
-  fiscalRegime: z.string().max(100).optional().or(z.literal('')),
-  zipCode: z.string().max(10).optional().or(z.literal('')),
-  source: z.string().max(50).optional().or(z.literal('')),
-  note: z.string().max(500).optional().or(z.literal('')),
+  email: z
+    .string()
+    .max(254)
+    .email('Correo inválido')
+    .optional()
+    .or(z.literal('')),
+  phone: CreateCustomerSchema.shape.phone.or(z.literal('')),
+  address: CreateCustomerSchema.shape.address.or(z.literal('')),
+  taxId: CreateCustomerSchema.shape.taxId.or(z.literal('')),
+  fiscalRegime: CreateCustomerSchema.shape.fiscalRegime.or(z.literal('')),
+  zipCode: CreateCustomerSchema.shape.zipCode.or(z.literal('')),
+  source: CreateCustomerSchema.shape.source.or(z.literal('')),
+  note: CreateCustomerSchema.shape.note.or(z.literal('')),
 })
 
 export type CreateCustomerValues = z.infer<typeof createCustomerSchema>

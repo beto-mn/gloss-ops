@@ -1,7 +1,7 @@
-import { PartialType } from '@nestjs/swagger'
+import { createZodDto } from 'nestjs-zod'
 
-import { CreateCustomerAssetDto } from './create-customer-asset.dto'
+import { UpdateCustomerAssetSchema } from '@glossops/shared'
 
-export class UpdateCustomerAssetDto extends PartialType(
-  CreateCustomerAssetDto
+export class UpdateCustomerAssetDto extends createZodDto(
+  UpdateCustomerAssetSchema
 ) {}

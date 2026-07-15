@@ -1,37 +1,7 @@
-import { Type } from 'class-transformer'
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-import { ActivityAction } from '@glossops/database'
+import { ListActivityLogsQuerySchema } from '@glossops/shared'
 
-export class ListActivityLogsDto {
-  @IsOptional()
-  @IsString()
-  entity?: string
-
-  @IsOptional()
-  @IsUUID()
-  entityId?: string
-
-  @IsOptional()
-  @IsEnum(ActivityAction)
-  action?: ActivityAction
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number
-}
+export class ListActivityLogsDto extends createZodDto(
+  ListActivityLogsQuerySchema
+) {}

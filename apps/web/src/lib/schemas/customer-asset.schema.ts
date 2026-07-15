@@ -1,27 +1,34 @@
 import { z } from 'zod'
 
-import { AssetType, ResourceStatus } from '@glossops/shared'
+import {
+  AssetType,
+  CreateCustomerAssetSchema,
+  ResourceStatus,
+} from '@glossops/shared'
 
 export { AssetType }
 
 export const ASSET_TYPES = Object.values(AssetType) as AssetType[]
 
-export const createVehicleSchema = z.object({
-  assetType: z.nativeEnum(AssetType),
-  customAssetType: z.string().max(50).optional().or(z.literal('')),
+/**
+ * Web vehicle form schema. Composes the shared `CreateCustomerAssetSchema`
+ * field shape (`metadata` is omitted — the web form does not collect it) and
+ * layers web-only UX concerns: Spanish messages for the required fields and
+ * empty-string acceptance (`.or(z.literal(''))`) so RHF inputs default to `''`.
+ * The submit handler maps `''`/`undefined` → `undefined` before hitting the API.
+ */
+export const createVehicleSchema = CreateCustomerAssetSchema.omit({
+  metadata: true,
+}).extend({
   brandId: z.string().uuid('Selecciona una marca válida'),
   model: z.string().min(1, 'El modelo es requerido').max(100),
-  year: z
-    .number()
-    .int()
-    .min(1900)
-    .max(2100)
-    .optional()
-    .or(z.literal(undefined)),
   identifier: z.string().min(1, 'La placa o VIN es requerida').max(50),
-  country: z.string().length(2).optional().or(z.literal('')),
-  color: z.string().max(30).optional().or(z.literal('')),
-  note: z.string().max(500).optional().or(z.literal('')),
+  customAssetType: CreateCustomerAssetSchema.shape.customAssetType.or(
+    z.literal('')
+  ),
+  country: CreateCustomerAssetSchema.shape.country.or(z.literal('')),
+  color: CreateCustomerAssetSchema.shape.color.or(z.literal('')),
+  note: CreateCustomerAssetSchema.shape.note.or(z.literal('')),
 })
 
 export type CreateVehicleValues = z.infer<typeof createVehicleSchema>

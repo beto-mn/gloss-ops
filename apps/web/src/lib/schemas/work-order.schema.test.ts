@@ -1,15 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { ZodError } from 'zod'
 
 import { WorkOrderType } from '@glossops/shared'
 
 import {
-  createWorkOrderSchema,
   createWorkOrderItemSchema,
+  createWorkOrderSchema,
   updateWorkOrderSchema,
 } from './work-order.schema'
 
-describe('createWorkOrderItemSchema', () => {
+// Targets the web composition layer (`work-order.schema.ts`) over the shared
+// `CreateWorkOrderSchema` / `CreateWorkOrderItemInlineSchema` /
+// `UpdateWorkOrderSchema`: the form-only `customerId`, required `type`,
+// required non-empty `items`, coerced numeric inputs, and empty-string
+// handling. `success` is asserted instead of `instanceof ZodError`
+// (cross-realm zod instance).
+
+describe('createWorkOrderItemSchema (web composition)', () => {
   it('parses valid item', () => {
     const result = createWorkOrderItemSchema.parse({
       serviceId: 'svc-1',
@@ -20,28 +26,28 @@ describe('createWorkOrderItemSchema', () => {
     expect(result.quantity).toBe(2)
   })
 
-  it('throws ZodError when serviceId is empty', () => {
-    expect(() =>
-      createWorkOrderItemSchema.parse({
+  it('rejects when serviceId is empty', () => {
+    expect(
+      createWorkOrderItemSchema.safeParse({
         serviceId: '',
         quantity: 1,
         unitPrice: 100,
-      })
-    ).toThrow(ZodError)
+      }).success
+    ).toBe(false)
   })
 
-  it('throws ZodError when quantity is 0', () => {
-    expect(() =>
-      createWorkOrderItemSchema.parse({
+  it('rejects when quantity is 0', () => {
+    expect(
+      createWorkOrderItemSchema.safeParse({
         serviceId: 'svc-1',
         quantity: 0,
         unitPrice: 100,
-      })
-    ).toThrow(ZodError)
+      }).success
+    ).toBe(false)
   })
 })
 
-describe('createWorkOrderSchema', () => {
+describe('createWorkOrderSchema (web composition)', () => {
   const validWO = {
     customerId: 'cust-1',
     assetId: 'asset-1',
@@ -55,22 +61,22 @@ describe('createWorkOrderSchema', () => {
     expect(result.items).toHaveLength(1)
   })
 
-  it('throws ZodError when customerId is missing', () => {
-    expect(() =>
-      createWorkOrderSchema.parse({ ...validWO, customerId: '' })
-    ).toThrow(ZodError)
+  it('rejects when customerId is missing (form-only field)', () => {
+    expect(
+      createWorkOrderSchema.safeParse({ ...validWO, customerId: '' }).success
+    ).toBe(false)
   })
 
-  it('throws ZodError when items array is empty', () => {
-    expect(() =>
-      createWorkOrderSchema.parse({ ...validWO, items: [] })
-    ).toThrow(ZodError)
+  it('rejects when items array is empty', () => {
+    expect(
+      createWorkOrderSchema.safeParse({ ...validWO, items: [] }).success
+    ).toBe(false)
   })
 })
 
-describe('updateWorkOrderSchema', () => {
+describe('updateWorkOrderSchema (web composition)', () => {
   it('parses empty object', () => {
-    expect(() => updateWorkOrderSchema.parse({})).not.toThrow()
+    expect(updateWorkOrderSchema.safeParse({}).success).toBe(true)
   })
 
   it('parses valid update data', () => {

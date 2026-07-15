@@ -1,14 +1,5 @@
-import { IsDateString, IsOptional, IsString } from 'class-validator'
-import { ApiPropertyOptional } from '@nestjs/swagger'
+import { createZodDto } from 'nestjs-zod'
 
-export class UpdateWorkOrderDto {
-  @ApiPropertyOptional({ example: '2026-05-10T10:00:00Z', nullable: true })
-  @IsOptional()
-  @IsDateString()
-  scheduledAt?: string | null
+import { UpdateWorkOrderSchema } from '@glossops/shared'
 
-  @ApiPropertyOptional({ example: 'Updated note', nullable: true })
-  @IsOptional()
-  @IsString()
-  note?: string | null
-}
+export class UpdateWorkOrderDto extends createZodDto(UpdateWorkOrderSchema) {}

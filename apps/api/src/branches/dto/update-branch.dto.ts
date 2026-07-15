@@ -1,5 +1,5 @@
-import { PartialType } from '@nestjs/swagger'
+import { createZodDto } from 'nestjs-zod'
 
-import { CreateBranchDto } from './create-branch.dto'
+import { UpdateBranchSchema } from '@glossops/shared'
 
-export class UpdateBranchDto extends PartialType(CreateBranchDto) {}
+export class UpdateBranchDto extends createZodDto(UpdateBranchSchema) {}

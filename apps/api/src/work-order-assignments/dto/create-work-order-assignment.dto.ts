@@ -1,12 +1,7 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-import { AssignmentRole } from '@glossops/database'
+import { CreateWorkOrderAssignmentSchema } from '@glossops/shared'
 
-export class CreateWorkOrderAssignmentDto {
-  @IsUUID()
-  memberId: string
-
-  @IsOptional()
-  @IsEnum(AssignmentRole)
-  role?: AssignmentRole
-}
+export class CreateWorkOrderAssignmentDto extends createZodDto(
+  CreateWorkOrderAssignmentSchema
+) {}

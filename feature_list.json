@@ -455,7 +455,7 @@
         "class-validator and class-transformer are removed from apps/api dependencies"
       ],
       "sdd": true,
-      "status": "pending"
+      "status": "done"
     }
   ]
 }

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useForm, useWatch } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import {
   ChevronRight,
@@ -20,15 +19,6 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
 import {
   Sheet,
   SheetContent,
@@ -61,10 +51,6 @@ import {
   type WorkOrderCheckpoint,
   type WorkOrderAssignment,
 } from '@/lib/schemas/work-order.schema'
-import {
-  createInvoiceSchema,
-  type CreateInvoiceValues,
-} from '@/lib/schemas/invoice.schema'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -423,18 +409,9 @@ function InvoiceDrawer({
 }: InvoiceDrawerProps) {
   const createInvoice = useCreateInvoice()
 
-  const form = useForm<CreateInvoiceValues>({
-    resolver: zodResolver(createInvoiceSchema),
-    defaultValues: { workOrderId, subtotal: 0, tax: 0, total: 0 },
-  })
-
-  useEffect(() => {
-    if (open) form.reset({ workOrderId, subtotal: 0, tax: 0, total: 0 })
-  }, [open, workOrderId, form])
-
-  async function onSubmit(values: CreateInvoiceValues) {
+  async function handleConfirm() {
     try {
-      await createInvoice.mutateAsync(values)
+      await createInvoice.mutateAsync({ workOrderId })
       onOpenChange(false)
     } catch (err) {
       if (!(err instanceof ApiError)) console.error(err)
@@ -451,90 +428,38 @@ function InvoiceDrawer({
           <SheetTitle>Crear factura</SheetTitle>
         </SheetHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-            <FormField
-              control={form.control}
-              name='subtotal'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subtotal *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      min={0}
-                      step={0.01}
-                      disabled={createInvoice.isPending}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className='space-y-6'>
+          <p className='text-sm text-muted-foreground'>
+            El folio y los totales de la factura (subtotal, IVA y total) se
+            generan automáticamente a partir de la orden de trabajo completada.
+            Confirma para emitir la factura.
+          </p>
 
-            <FormField
-              control={form.control}
-              name='tax'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Impuesto (IVA)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      min={0}
-                      step={0.01}
-                      disabled={createInvoice.isPending}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+          <div className='flex justify-end gap-3 pt-2'>
+            <Button
+              type='button'
+              variant='outline'
+              disabled={createInvoice.isPending}
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type='button'
+              onClick={handleConfirm}
+              disabled={createInvoice.isPending}
+            >
+              {createInvoice.isPending ? (
+                <>
+                  <Loader2 size={16} className='animate-spin' />
+                  Creando…
+                </>
+              ) : (
+                'Crear factura'
               )}
-            />
-
-            <FormField
-              control={form.control}
-              name='total'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Total *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      min={0}
-                      step={0.01}
-                      disabled={createInvoice.isPending}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className='flex justify-end gap-3 pt-2'>
-              <Button
-                type='button'
-                variant='outline'
-                disabled={createInvoice.isPending}
-                onClick={() => onOpenChange(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type='submit' disabled={createInvoice.isPending}>
-                {createInvoice.isPending ? (
-                  <>
-                    <Loader2 size={16} className='animate-spin' />
-                    Creando…
-                  </>
-                ) : (
-                  'Crear factura'
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+            </Button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   )

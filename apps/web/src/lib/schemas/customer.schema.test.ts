@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { ZodError } from 'zod'
 
 import { createCustomerSchema, updateCustomerSchema } from './customer.schema'
 
-describe('createCustomerSchema', () => {
+// Targets the web composition layer (`customer.schema.ts`) over the shared
+// `CreateCustomerSchema`: Spanish required-name messages, the `.email()` UX
+// check the shared body schema omits, and empty-string acceptance. `success`
+// is asserted instead of `instanceof ZodError` (cross-realm zod instance).
+
+describe('createCustomerSchema (web composition)', () => {
   it('parses valid input', () => {
     const result = createCustomerSchema.parse({
       firstName: 'Ana',
@@ -15,36 +19,48 @@ describe('createCustomerSchema', () => {
     expect(result.lastName).toBe('García')
   })
 
-  it('throws ZodError when firstName is missing', () => {
-    expect(() =>
-      createCustomerSchema.parse({ firstName: '', lastName: 'García' })
-    ).toThrow(ZodError)
+  it('accepts empty strings for optional fields', () => {
+    const result = createCustomerSchema.parse({
+      firstName: 'Ana',
+      lastName: 'García',
+      email: '',
+      phone: '',
+      note: '',
+    })
+    expect(result.email).toBe('')
   })
 
-  it('throws ZodError when lastName is missing', () => {
-    expect(() =>
-      createCustomerSchema.parse({ firstName: 'Ana', lastName: '' })
-    ).toThrow(ZodError)
+  it('rejects when firstName is missing', () => {
+    expect(
+      createCustomerSchema.safeParse({ firstName: '', lastName: 'García' })
+        .success
+    ).toBe(false)
   })
 
-  it('throws ZodError for invalid email', () => {
-    expect(() =>
-      createCustomerSchema.parse({
+  it('rejects when lastName is missing', () => {
+    expect(
+      createCustomerSchema.safeParse({ firstName: 'Ana', lastName: '' }).success
+    ).toBe(false)
+  })
+
+  it('rejects invalid email (web-only UX check)', () => {
+    expect(
+      createCustomerSchema.safeParse({
         firstName: 'Ana',
         lastName: 'García',
         email: 'not-an-email',
-      })
-    ).toThrow(ZodError)
+      }).success
+    ).toBe(false)
   })
 })
 
-describe('updateCustomerSchema', () => {
+describe('updateCustomerSchema (web composition)', () => {
   it('parses partial input', () => {
     const result = updateCustomerSchema.parse({ firstName: 'Beto' })
     expect(result.firstName).toBe('Beto')
   })
 
   it('parses empty object', () => {
-    expect(() => updateCustomerSchema.parse({})).not.toThrow()
+    expect(updateCustomerSchema.safeParse({}).success).toBe(true)
   })
 })

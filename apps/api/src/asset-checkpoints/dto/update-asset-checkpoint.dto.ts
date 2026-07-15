@@ -1,39 +1,7 @@
-import {
-  IsArray,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUrl,
-  Min,
-} from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-import { AssetCondition, FuelLevel } from '@glossops/database'
+import { UpdateAssetCheckpointSchema } from '@glossops/shared'
 
-export class UpdateAssetCheckpointDto {
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  mileage?: number | null
-
-  @IsOptional()
-  @IsEnum(FuelLevel)
-  fuelLevel?: FuelLevel | null
-
-  @IsOptional()
-  @IsEnum(AssetCondition)
-  generalCondition?: AssetCondition
-
-  @IsOptional()
-  @IsString()
-  note?: string | null
-
-  @IsOptional()
-  @IsArray()
-  @IsUrl({}, { each: true })
-  photo?: string[]
-
-  @IsOptional()
-  @IsUrl()
-  customerSignatureUrl?: string | null
-}
+export class UpdateAssetCheckpointDto extends createZodDto(
+  UpdateAssetCheckpointSchema
+) {}

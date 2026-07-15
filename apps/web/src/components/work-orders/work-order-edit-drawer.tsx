@@ -63,7 +63,11 @@ export function WorkOrderEditDrawer({
       await update.mutateAsync({
         id: workOrder.id,
         data: {
-          scheduledAt: values.scheduledAt || undefined,
+          // The `type=date` input yields `YYYY-MM-DD`; the API requires a full
+          // ISO datetime (`z.string().datetime()`), so widen the date-only value.
+          scheduledAt: values.scheduledAt
+            ? new Date(`${values.scheduledAt}T00:00:00.000Z`).toISOString()
+            : undefined,
           note: values.note || undefined,
         },
       })

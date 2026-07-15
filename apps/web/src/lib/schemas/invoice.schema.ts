@@ -1,8 +1,8 @@
-import { z } from 'zod'
+import type { z } from 'zod'
 
-import { InvoiceStatus } from '@glossops/shared'
+import { CreateInvoiceSchema, InvoiceStatus } from '@glossops/shared'
 
-export { InvoiceStatus }
+export { CreateInvoiceSchema, InvoiceStatus }
 
 export interface Invoice {
   id: string
@@ -16,11 +16,10 @@ export interface Invoice {
   updatedAt: string
 }
 
-export const createInvoiceSchema = z.object({
-  workOrderId: z.string().min(1),
-  subtotal: z.coerce.number().min(0, 'El subtotal no puede ser negativo'),
-  tax: z.coerce.number().min(0, 'El impuesto no puede ser negativo'),
-  total: z.coerce.number().min(0, 'El total no puede ser negativo'),
-})
-
-export type CreateInvoiceValues = z.infer<typeof createInvoiceSchema>
+/**
+ * Web create-invoice form values. Single source of truth is the shared
+ * `CreateInvoiceSchema` (`POST /invoices`). Totals are computed server-side
+ * from the completed work order, so the form only submits `{ workOrderId }`
+ * plus optional CFDI fields.
+ */
+export type CreateInvoiceValues = z.infer<typeof CreateInvoiceSchema>

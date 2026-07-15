@@ -1,10 +1,7 @@
-import { IsEnum } from 'class-validator'
-import { ApiProperty } from '@nestjs/swagger'
+import { createZodDto } from 'nestjs-zod'
 
-import { WorkOrderStatus } from '@glossops/database'
+import { TransitionWorkOrderStatusSchema } from '@glossops/shared'
 
-export class TransitionStatusDto {
-  @ApiProperty({ enum: WorkOrderStatus })
-  @IsEnum(WorkOrderStatus)
-  status: WorkOrderStatus
-}
+export class TransitionStatusDto extends createZodDto(
+  TransitionWorkOrderStatusSchema
+) {}

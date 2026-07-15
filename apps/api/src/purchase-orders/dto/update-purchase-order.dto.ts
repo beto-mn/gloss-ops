@@ -1,15 +1,7 @@
-import { IsDateString, IsOptional, IsString, IsUUID } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-export class UpdatePurchaseOrderDto {
-  @IsOptional()
-  @IsUUID()
-  supplierId?: string
+import { UpdatePurchaseOrderSchema } from '@glossops/shared'
 
-  @IsOptional()
-  @IsDateString()
-  expectedAt?: string | null
-
-  @IsOptional()
-  @IsString()
-  note?: string | null
-}
+export class UpdatePurchaseOrderDto extends createZodDto(
+  UpdatePurchaseOrderSchema
+) {}

@@ -74,10 +74,7 @@ describe('useCreateInvoice', () => {
       wrapper: makeWrapper(),
     })
     result.current.mutate({
-      workOrderId: 'wo-1',
-      subtotal: 1000,
-      tax: 160,
-      total: 1160,
+      workOrderId: '11111111-1111-4111-8111-111111111111',
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))

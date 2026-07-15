@@ -86,3 +86,10 @@
 **Agent:** leader + implementer + reviewer
 **Summary:** Created `packages/shared` entity Zod schemas (14 entities), consolidated all domain enums, wired `@glossops/shared` in both apps, migrated inline `z.enum([...])` in `apps/web` to shared imports.
 **Result:** done
+
+## 2026-07-04 — shared_request_schemas_zod_migration (feat 35)
+
+**Agent:** leader + implementer (×6) + reviewer
+**Summary:** Migrated API request validation from class-validator to Zod via nestjs-zod. Published pure-Zod request schemas for all 16 modules in `@glossops/shared/request-schemas` (single source of truth); collapsed 49 DTOs to one-line `createZodDto` wrappers; global bare `ZodValidationPipe` + `ZodValidationExceptionFilter` + `cleanupOpenApiDoc`; web forms consume shared schemas via composition; removed class-validator/class-transformer. Reconciled web invoice form to the CFDI-based `CreateInvoiceSchema` (dropped dead manual-totals UX). Reviewer APPROVE WITH NOTES (0 CRITICAL/MAJOR); closed M1 (datetime date-only rejection tests).
+**Result:** done (archived 2026-07-04-shared-request-schemas-zod-migration; API 70/692 unit, 17/97 e2e, web 81; init.sh exit 0)
+**Notes:** zod bumped ^3.24.2→^3.25.76 in api+shared. `pnpm install` needs `--registry=https://registry.npmjs.org/` (CodeArtifact token expired). Pre-existing unrelated: `/work-orders/new` next-build suspense error; 3 api-client.test.ts tsc `unknown` errors.

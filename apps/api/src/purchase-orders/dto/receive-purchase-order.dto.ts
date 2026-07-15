@@ -1,18 +1,14 @@
-import { Type } from 'class-transformer'
-import { IsArray, IsNumber, IsUUID, Min, ValidateNested } from 'class-validator'
+import { createZodDto } from 'nestjs-zod'
 
-export class ReceiveItemDto {
-  @IsUUID()
-  itemId: string
+import {
+  ReceivePurchaseOrderSchema,
+  ReceivePurchaseOrderItemSchema,
+} from '@glossops/shared'
 
-  @IsNumber()
-  @Min(0.001)
-  receivedQuantity: number
-}
+export class ReceiveItemDto extends createZodDto(
+  ReceivePurchaseOrderItemSchema
+) {}
 
-export class ReceivePurchaseOrderDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ReceiveItemDto)
-  items: ReceiveItemDto[]
-}
+export class ReceivePurchaseOrderDto extends createZodDto(
+  ReceivePurchaseOrderSchema
+) {}
